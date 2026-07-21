@@ -1,8 +1,17 @@
 @import "tailwindcss";
 
+@font-face {
+  font-family: "Vazirmatn";
+  src: url("/fonts/Vazirmatn-Variable.woff2") format("woff2-variations");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme {
-  --font-vazir: "Vazirmatn", system-ui, sans-serif;
-  --font-display: "Tajawal", "Vazirmatn", system-ui, sans-serif;
+  --font-vazir: "Vazirmatn", sans-serif;
+  --font-display: "Vazirmatn", sans-serif;
+  --font-mono: "Vazirmatn", sans-serif;
 
   /* Electric premium palette */
   --color-brand-50: #ecfeff;
