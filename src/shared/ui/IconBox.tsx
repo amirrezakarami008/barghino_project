@@ -1,6 +1,6 @@
 import { cn } from "@/shared/lib/utils";
 import { getIcon } from "@/shared/lib/icons";
-import type { ReactNode } from "react";
+import { createElement, type ReactNode } from "react";
 
 interface IconBoxProps {
   icon: string;
@@ -31,8 +31,6 @@ export function IconBox({
   variant = "soft",
   gradient,
 }: IconBoxProps) {
-  const Icon = getIcon(icon);
-
   const variantStyles = {
     solid: "bg-brand-600 text-white shadow-lg shadow-brand-500/25",
     soft: "bg-brand-50 text-brand-600 ring-1 ring-brand-100",
@@ -51,7 +49,9 @@ export function IconBox({
         className,
       )}
     >
-      <Icon className={cn(iconSizeStyles[size], iconClassName)} />
+      {createElement(getIcon(icon), {
+        className: cn(iconSizeStyles[size], iconClassName),
+      })}
     </div>
   );
 }

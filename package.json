@@ -7,8 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "add-to-git" : "git add . && git commit -m 'test' && git push",
-    "check-push": "git add . && read -p 'commit message:' message && git commit -m \"$message\" && echo 'pushing to git'"
+    "add-to-git" : "git add . && read -p 'commit message:' message && git commit -m \"message\" && git push",
+    "check-push": " pnpm lint && pnpm build && git add . && read -p 'commit message:' message && git commit -m \"$message\" && git push"
   },
   "dependencies": {
     "clsx": "^2.1.1",
@@ -19,7 +19,6 @@
     "tailwind-merge": "^3.3.0"
   },
   "devDependencies": {
-    "@eslint/eslintrc": "^3.3.1",
     "@tailwindcss/postcss": "^4.1.8",
     "@types/node": "^22.15.29",
     "@types/react": "^19.1.6",

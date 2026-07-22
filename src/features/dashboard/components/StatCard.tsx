@@ -1,6 +1,7 @@
 import { getDashboardIcon } from "@/features/dashboard/lib/icons";
 import { cn } from "@/shared/lib/utils";
 import type { DashboardStat } from "@/shared/types/dashboard";
+import { createElement } from "react";
 
 const colorStyles = {
   blue: "bg-brand-50 text-brand-600 ring-1 ring-brand-100",
@@ -16,8 +17,6 @@ const trendStyles = {
 };
 
 export function StatCard({ label, value, suffix, change, trend, icon, color }: DashboardStat) {
-  const Icon = getDashboardIcon(icon);
-
   return (
     <div className="group rounded-2xl border border-slate-200/60 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:border-brand-200/60 hover:shadow-lg hover:shadow-brand-500/5">
       <div className="mb-4 flex items-start justify-between">
@@ -27,7 +26,7 @@ export function StatCard({ label, value, suffix, change, trend, icon, color }: D
             colorStyles[color],
           )}
         >
-          <Icon className="h-5 w-5" />
+          {createElement(getDashboardIcon(icon), { className: "h-5 w-5" })}
         </div>
       </div>
       <p className="text-sm font-medium text-slate-500">{label}</p>

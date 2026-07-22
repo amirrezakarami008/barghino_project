@@ -6,7 +6,7 @@ import { getDashboardIcon } from "@/features/dashboard/lib/icons";
 import { cn } from "@/shared/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState } from "react";
+import { createElement, useState } from "react";
 import { Menu, X, Zap } from "@/shared/lib/icons";
 
 export function DashboardSidebar() {
@@ -32,7 +32,6 @@ export function DashboardSidebar() {
 
       <nav className="flex-1 space-y-1 overflow-y-auto">
         {DASHBOARD_NAV.map((item) => {
-          const Icon = getDashboardIcon(item.icon);
           const active = isActive(item.href);
           return (
             <Link
@@ -46,7 +45,7 @@ export function DashboardSidebar() {
                   : "text-slate-400 hover:bg-slate-800/80 hover:text-white",
               )}
             >
-              <Icon className="h-5 w-5 shrink-0" />
+              {createElement(getDashboardIcon(item.icon), { className: "h-5 w-5 shrink-0" })}
               <span className="flex-1">{item.label}</span>
               {item.badge && (
                 <span
