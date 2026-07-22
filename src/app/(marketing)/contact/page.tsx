@@ -1,12 +1,13 @@
-import { CTASection } from "@/components/sections/CTASection";
-import { PageBanner } from "@/components/pages/PageBanner";
-import { Container } from "@/components/ui/Container";
-import { Form } from "@/components/ui/Form";
-import { Section } from "@/components/ui/Section";
-import { IMAGES, SITE_CONFIG } from "@/lib/constants";
-import { CONTACT_PAGE } from "@/lib/constants/pages";
-import { Mail, Phone } from "@/lib/icons";
-import type { FormField } from "@/types";
+import { CTASection } from "@/features/marketing/home/sections/CTASection";
+import { PageBanner } from "@/features/marketing/components/PageBanner";
+import { Container } from "@/shared/ui/Container";
+import { Form } from "@/shared/ui/Form";
+import { Section } from "@/shared/ui/Section";
+import { SITE_CONFIG } from "@/config";
+import { IMAGES } from "@/features/marketing/constants";
+import { CONTACT_PAGE } from "@/features/marketing/constants/pages";
+import { Mail, Phone } from "@/shared/lib/icons";
+import type { FormField } from "@/shared/types";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {

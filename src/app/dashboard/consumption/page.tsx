@@ -4,8 +4,8 @@ import {
   Panel,
   PanelHeader,
   UsageSummary,
-} from "@/components/dashboard";
-import { DAILY_CONSUMPTION, MONTHLY_CONSUMPTION } from "@/lib/constants";
+} from "@/features/dashboard/components";
+import { DAILY_CONSUMPTION, MONTHLY_CONSUMPTION } from "@/features/dashboard/constants";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "مصرف و تحلیل" };

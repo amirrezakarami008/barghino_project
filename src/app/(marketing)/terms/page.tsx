@@ -1,8 +1,8 @@
-import { Breadcrumb } from "@/components/pages/Breadcrumb";
-import { ProseContent } from "@/components/pages/ProseContent";
-import { Container } from "@/components/ui/Container";
-import { Section } from "@/components/ui/Section";
-import { LEGAL_PAGES } from "@/lib/constants/pages";
+import { Breadcrumb } from "@/features/marketing/components/Breadcrumb";
+import { ProseContent } from "@/features/marketing/components/ProseContent";
+import { Container } from "@/shared/ui/Container";
+import { Section } from "@/shared/ui/Section";
+import { LEGAL_PAGES } from "@/features/marketing/constants/pages";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {

@@ -1,11 +1,11 @@
-import { CTASection } from "@/components/sections/CTASection";
-import { PageBanner } from "@/components/pages/PageBanner";
-import { ProseContent } from "@/components/pages/ProseContent";
-import { Button, LinkArrow } from "@/components/ui/Button";
-import { Container } from "@/components/ui/Container";
-import { BlogCard } from "@/components/ui/Interactive";
-import { Section } from "@/components/ui/Section";
-import { BLOG_POSTS, getAllBlogSlugs, getBlogPostBySlug, getBlogImage } from "@/lib/constants";
+import { CTASection } from "@/features/marketing/home/sections/CTASection";
+import { PageBanner } from "@/features/marketing/components/PageBanner";
+import { ProseContent } from "@/features/marketing/components/ProseContent";
+import { Button, LinkArrow } from "@/shared/ui/Button";
+import { Container } from "@/shared/ui/Container";
+import { BlogCard } from "@/shared/ui/Interactive";
+import { Section } from "@/shared/ui/Section";
+import { BLOG_POSTS, getAllBlogSlugs, getBlogPostBySlug, getBlogImage } from "@/features/marketing/constants";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 

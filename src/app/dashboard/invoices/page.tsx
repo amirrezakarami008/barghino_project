@@ -1,6 +1,6 @@
-import { DashboardPage, MobileDataCard, Panel, PanelHeader, ResponsiveTable, StatusBadge } from "@/components/dashboard";
-import { Button } from "@/components/ui/Button";
-import { INVOICES } from "@/lib/constants";
+import { DashboardPage, MobileDataCard, Panel, PanelHeader, ResponsiveTable, StatusBadge } from "@/features/dashboard/components";
+import { Button } from "@/shared/ui/Button";
+import { INVOICES } from "@/features/dashboard/constants";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "فاکتورها" };

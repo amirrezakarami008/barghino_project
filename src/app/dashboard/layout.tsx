@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { DashboardSidebar } from "@/components/dashboard/DashboardSidebar";
+import { DashboardSidebar } from "@/features/dashboard/components/DashboardSidebar";
 
 export const metadata: Metadata = {
   title: {

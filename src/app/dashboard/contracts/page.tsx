@@ -1,6 +1,6 @@
-import { DashboardPage, Panel, StatusBadge } from "@/components/dashboard";
-import { Button, LinkArrow } from "@/components/ui/Button";
-import { CONTRACTS } from "@/lib/constants";
+import { DashboardPage, Panel, StatusBadge } from "@/features/dashboard/components";
+import { Button, LinkArrow } from "@/shared/ui/Button";
+import { CONTRACTS } from "@/features/dashboard/constants";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "قراردادها" };

@@ -1,10 +1,10 @@
-import { CTASection } from "@/components/sections/CTASection";
-import { PageBanner } from "@/components/pages/PageBanner";
-import { Container } from "@/components/ui/Container";
-import { MediaImage } from "@/components/ui/MediaImage";
-import { Section, SectionHeader } from "@/components/ui/Section";
-import { IMAGES, STATS } from "@/lib/constants";
-import { ABOUT_PAGE } from "@/lib/constants/pages";
+import { CTASection } from "@/features/marketing/home/sections/CTASection";
+import { PageBanner } from "@/features/marketing/components/PageBanner";
+import { Container } from "@/shared/ui/Container";
+import { MediaImage } from "@/shared/ui/MediaImage";
+import { Section, SectionHeader } from "@/shared/ui/Section";
+import { IMAGES, STATS } from "@/features/marketing/constants";
+import { ABOUT_PAGE } from "@/features/marketing/constants/pages";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {

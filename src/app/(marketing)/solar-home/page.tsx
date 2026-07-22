@@ -1,5 +1,5 @@
-import { LandingPageTemplate } from "@/components/pages/LandingPageTemplate";
-import { SOLAR_HOME_PAGE } from "@/lib/constants";
+import { LandingPageTemplate } from "@/features/marketing/components/LandingPageTemplate";
+import { SOLAR_HOME_PAGE } from "@/features/marketing/constants";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {

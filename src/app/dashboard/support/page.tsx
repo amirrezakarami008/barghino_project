@@ -1,10 +1,10 @@
 "use client";
 
-import { DashboardPage, Panel, PanelHeader, StatusBadge } from "@/components/dashboard";
-import { Button } from "@/components/ui/Button";
-import { Form } from "@/components/ui/Form";
-import { SUPPORT_TICKETS } from "@/lib/constants";
-import type { FormField } from "@/types";
+import { DashboardPage, Panel, PanelHeader, StatusBadge } from "@/features/dashboard/components";
+import { Button } from "@/shared/ui/Button";
+import { Form } from "@/shared/ui/Form";
+import { SUPPORT_TICKETS } from "@/features/dashboard/constants";
+import type { FormField } from "@/shared/types";
 import { useState } from "react";
 
 const ticketFields: FormField[] = [

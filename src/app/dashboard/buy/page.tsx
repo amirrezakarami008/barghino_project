@@ -1,7 +1,7 @@
-import { DashboardPage, Panel, PanelHeader } from "@/components/dashboard";
-import { Button } from "@/components/ui/Button";
-import { BILL_ACCOUNTS, POWER_PACKAGES } from "@/lib/constants";
-import { cn } from "@/lib/utils";
+import { DashboardPage, Panel, PanelHeader } from "@/features/dashboard/components";
+import { Button } from "@/shared/ui/Button";
+import { BILL_ACCOUNTS, POWER_PACKAGES } from "@/features/dashboard/constants";
+import { cn } from "@/shared/lib/utils";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "خرید برق" };

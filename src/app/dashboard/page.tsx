@@ -8,18 +8,9 @@ import {
   ResponsiveTable,
   StatCard,
   StatusBadge,
-} from "@/components/dashboard";
-import { Button, LinkArrow } from "@/components/ui/Button";
-import {
-  BILL_ACCOUNTS,
-  CONTRACTS,
-  DASHBOARD_STATS,
-  DASHBOARD_USER,
-  INVOICES,
-  MONTHLY_CONSUMPTION,
-  NOTIFICATIONS,
-  QUICK_ACTIONS,
-} from "@/lib/constants";
+} from "@/features/dashboard/components";
+import { Button, LinkArrow } from "@/shared/ui/Button";
+import { BILL_ACCOUNTS, CONTRACTS, DASHBOARD_STATS, DASHBOARD_USER, INVOICES, MONTHLY_CONSUMPTION, NOTIFICATIONS, QUICK_ACTIONS } from "@/features/dashboard/constants";
 import Link from "next/link";
 import type { Metadata } from "next";
 

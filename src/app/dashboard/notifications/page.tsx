@@ -1,8 +1,8 @@
 "use client";
 
-import { DashboardPage, Panel, StatusBadge } from "@/components/dashboard";
-import { NOTIFICATIONS } from "@/lib/constants";
-import { cn } from "@/lib/utils";
+import { DashboardPage, Panel, StatusBadge } from "@/features/dashboard/components";
+import { NOTIFICATIONS } from "@/features/dashboard/constants";
+import { cn } from "@/shared/lib/utils";
 import { useState } from "react";
 
 const typeIcons: Record<string, string> = {

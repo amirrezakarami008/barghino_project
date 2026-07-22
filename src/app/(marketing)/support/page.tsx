@@ -1,11 +1,12 @@
-import { CTASection } from "@/components/sections/CTASection";
-import { LandingPageTemplate } from "@/components/pages/LandingPageTemplate";
-import { Container } from "@/components/ui/Container";
-import { Form } from "@/components/ui/Form";
-import { Section } from "@/components/ui/Section";
-import { SITE_CONFIG, SUPPORT_PAGE } from "@/lib/constants";
-import { Mail, Phone } from "@/lib/icons";
-import type { FormField } from "@/types";
+import { CTASection } from "@/features/marketing/home/sections/CTASection";
+import { LandingPageTemplate } from "@/features/marketing/components/LandingPageTemplate";
+import { Container } from "@/shared/ui/Container";
+import { Form } from "@/shared/ui/Form";
+import { Section } from "@/shared/ui/Section";
+import { SITE_CONFIG } from "@/config";
+import { SUPPORT_PAGE } from "@/features/marketing/constants";
+import { Mail, Phone } from "@/shared/lib/icons";
+import type { FormField } from "@/shared/types";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {

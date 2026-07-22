@@ -1,5 +1,5 @@
-import { DashboardPage, Panel, PanelHeader, StatusBadge } from "@/components/dashboard";
-import { PAYMENTS } from "@/lib/constants";
+import { DashboardPage, Panel, PanelHeader, StatusBadge } from "@/features/dashboard/components";
+import { PAYMENTS } from "@/features/dashboard/constants";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "پرداخت‌ها" };

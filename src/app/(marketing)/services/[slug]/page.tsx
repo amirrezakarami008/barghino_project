@@ -1,5 +1,5 @@
-import { ServiceDetailTemplate } from "@/components/pages/ServiceDetailTemplate";
-import { getAllServiceSlugs, getServiceDetail } from "@/lib/constants";
+import { ServiceDetailTemplate } from "@/features/marketing/components/ServiceDetailTemplate";
+import { getAllServiceSlugs, getServiceDetail } from "@/features/marketing/constants";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 

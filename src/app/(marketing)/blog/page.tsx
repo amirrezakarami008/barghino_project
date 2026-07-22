@@ -1,9 +1,9 @@
-import { CTASection } from "@/components/sections/CTASection";
-import { PageBanner } from "@/components/pages/PageBanner";
-import { Container } from "@/components/ui/Container";
-import { BlogCard } from "@/components/ui/Interactive";
-import { Section } from "@/components/ui/Section";
-import { BLOG_POSTS, IMAGES } from "@/lib/constants";
+import { CTASection } from "@/features/marketing/home/sections/CTASection";
+import { PageBanner } from "@/features/marketing/components/PageBanner";
+import { Container } from "@/shared/ui/Container";
+import { BlogCard } from "@/shared/ui/Interactive";
+import { Section } from "@/shared/ui/Section";
+import { BLOG_POSTS, IMAGES } from "@/features/marketing/constants";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {

@@ -1,9 +1,9 @@
 "use client";
 
-import { DashboardPage, Panel, PanelHeader } from "@/components/dashboard";
-import { Button } from "@/components/ui/Button";
-import { Form } from "@/components/ui/Form";
-import type { FormField } from "@/types";
+import { DashboardPage, Panel, PanelHeader } from "@/features/dashboard/components";
+import { Button } from "@/shared/ui/Button";
+import { Form } from "@/shared/ui/Form";
+import type { FormField } from "@/shared/types";
 import { useState } from "react";
 
 const passwordFields: FormField[] = [

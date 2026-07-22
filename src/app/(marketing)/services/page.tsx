@@ -1,11 +1,11 @@
-import { CTASection } from "@/components/sections/CTASection";
-import { PageBanner } from "@/components/pages/PageBanner";
-import { Button, LinkArrow } from "@/components/ui/Button";
-import { Container } from "@/components/ui/Container";
-import { IconBox } from "@/components/ui/IconBox";
-import { ImageCard } from "@/components/ui/MediaImage";
-import { Section, SectionHeader } from "@/components/ui/Section";
-import { IMAGES, SERVICES, getServiceImage } from "@/lib/constants";
+import { CTASection } from "@/features/marketing/home/sections/CTASection";
+import { PageBanner } from "@/features/marketing/components/PageBanner";
+import { Button, LinkArrow } from "@/shared/ui/Button";
+import { Container } from "@/shared/ui/Container";
+import { IconBox } from "@/shared/ui/IconBox";
+import { ImageCard } from "@/shared/ui/MediaImage";
+import { Section, SectionHeader } from "@/shared/ui/Section";
+import { IMAGES, SERVICES, getServiceImage } from "@/features/marketing/constants";
 import type { Metadata } from "next";
 import Link from "next/link";
 

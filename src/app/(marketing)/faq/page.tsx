@@ -1,9 +1,9 @@
-import { CTASection } from "@/components/sections/CTASection";
-import { Breadcrumb } from "@/components/pages/Breadcrumb";
-import { Container } from "@/components/ui/Container";
-import { Accordion } from "@/components/ui/Interactive";
-import { Section } from "@/components/ui/Section";
-import { FAQ_ITEMS } from "@/lib/constants";
+import { CTASection } from "@/features/marketing/home/sections/CTASection";
+import { Breadcrumb } from "@/features/marketing/components/Breadcrumb";
+import { Container } from "@/shared/ui/Container";
+import { Accordion } from "@/shared/ui/Interactive";
+import { Section } from "@/shared/ui/Section";
+import { FAQ_ITEMS } from "@/features/marketing/constants";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {

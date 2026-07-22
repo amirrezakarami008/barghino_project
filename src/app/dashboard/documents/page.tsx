@@ -1,6 +1,6 @@
-import { DashboardPage, Panel, PanelHeader } from "@/components/dashboard";
-import { Button } from "@/components/ui/Button";
-import { DOCUMENTS } from "@/lib/constants";
+import { DashboardPage, Panel, PanelHeader } from "@/features/dashboard/components";
+import { Button } from "@/shared/ui/Button";
+import { DOCUMENTS } from "@/features/dashboard/constants";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "اسناد" };

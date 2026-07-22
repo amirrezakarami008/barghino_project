@@ -1,50 +1,52 @@
 # برق ما — سامانه آنلاین خرید برق
 
-فرانت‌اند حرفه‌ای و مدرن برای پلتفرم [برق ما](https://bargheto.com/) با Next.js 15، TypeScript و Tailwind CSS v4.
+فرانت‌اند پلتفرم [برق ما](https://bargheto.com/) با **Next.js 16**، TypeScript و Tailwind CSS v4.
 
-## ویژگی‌ها
+## معماری
 
-- **Next.js 15** با App Router و Turbopack
-- **TypeScript** با تایپ‌های strict
-- **Tailwind CSS v4** با طراحی RTL و فونت Vazirmatn
-- **معماری تمیز** — جداسازی داده، UI و بخش‌ها
-- **کامپوننت‌های قابل استفاده مجدد** — بدون تکرار کد
-- **طراحی مدرن** — گرادیان، Glass morphism، انیمیشن‌های ظریف
-
-## ساختار پروژه
+Hybrid feature-based:
 
 ```
 src/
-├── app/              # صفحات و layout
-├── components/
-│   ├── layout/       # Header, Footer
-│   ├── sections/     # بخش‌های صفحه اصلی
-│   └── ui/           # کامپوننت‌های پایه
-├── lib/
-│   ├── constants/    # داده‌های استاتیک
-│   ├── icons.ts      # رجیstry آیکون‌ها
-│   └── utils.ts      # توابع کمکی
-└── types/            # TypeScript interfaces
+├── app/                 # فقط routing و layout (نازک)
+├── features/
+│   ├── auth/            # احراز هویت (scaffold)
+│   ├── marketing/       # سایت مارکتینگ
+│   └── dashboard/       # پنل کاربری
+├── shared/
+│   ├── ui/              # کامپوننت‌های پایه
+│   ├── layout/          # Header / Footer
+│   ├── lib/             # utils، icons
+│   ├── constants/       # دارایی مشترک (مثلاً تصاویر)
+│   └── types/
+├── config/              # سایت و env
+└── proxy.ts             # محافظت route (Next 16)
 ```
+
+**قوانین:**
+- صفحات در `app/` فقط shell هستند؛ منطق دامنه در `features/`
+- featureها از `shared` و `config` استفاده می‌کنند، نه مستقیم از یکدیگر
+- داده mock فعلی داخل همان feature است و بعداً با API جایگزین می‌شود
 
 ## اجرا
 
 ```bash
-npm install
-npm run dev
+pnpm install
+pnpm dev
 ```
 
-سایت روی [http://localhost:3000](http://localhost:3000) در دسترس است.
+سایت روی [http://localhost:3000](http://localhost:3000)
 
-## بیلد
+## اسکریپت‌ها
 
-```bash
-npm run build
-npm start
-```
+| دستور | کاربرد |
+|--------|--------|
+| `pnpm dev` | توسعه (Turbopack پیش‌فرض در Next 16) |
+| `pnpm build` | بیلد پروداکشن |
+| `pnpm start` | اجرای بیلد |
+| `pnpm lint` | ESLint |
 
-## اصول طراحی کد
+## نیازمندی‌ها
 
-- **Single Responsibility**: هر کامپوننت یک وظیفه
-- **Open/Closed**: variantها از طریق props
-- **Dependency Inversion**: بخش‌ها به constants وابسته‌اند، نه داده hardcode
+- Node.js **20.9+**
+- pnpm

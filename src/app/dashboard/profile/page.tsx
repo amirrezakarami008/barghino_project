@@ -1,10 +1,10 @@
 "use client";
 
-import { DashboardPage, Panel, PanelHeader } from "@/components/dashboard";
-import { Avatar } from "@/components/ui/MediaImage";
-import { Form } from "@/components/ui/Form";
-import { DASHBOARD_USER } from "@/lib/constants";
-import type { FormField } from "@/types";
+import { DashboardPage, Panel, PanelHeader } from "@/features/dashboard/components";
+import { Avatar } from "@/shared/ui/MediaImage";
+import { Form } from "@/shared/ui/Form";
+import { DASHBOARD_USER } from "@/features/dashboard/constants";
+import type { FormField } from "@/shared/types";
 
 const profileFields: FormField[] = [
   { name: "name", label: "نام و نام خانوادگی", type: "text", required: true },

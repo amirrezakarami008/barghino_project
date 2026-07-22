@@ -8,7 +8,7 @@ import {
   StepsSection,
   TestimonialsSection,
   WhyUsSection,
-} from "@/components/sections";
+} from "@/features/marketing";
 
 export default function HomePage() {
   return (
