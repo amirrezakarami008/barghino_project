@@ -110,36 +110,3 @@ function FormFieldInput({ field }: { field: FormField }) {
   );
 }
 
-export function AuthForm({
-  title,
-  description,
-  fields,
-  submitLabel,
-  alternateLabel,
-  alternateHref,
-  alternateLinkText,
-  redirectTo,
-}: {
-  title: string;
-  description: string;
-  fields: readonly FormField[];
-  submitLabel: string;
-  alternateLabel: string;
-  alternateHref: string;
-  alternateLinkText: string;
-  redirectTo?: string;
-}) {
-  return (
-    <div className="w-full max-w-md">
-      <h1 className="mb-2 font-display text-3xl font-extrabold text-slate-900">{title}</h1>
-      <p className="mb-8 text-slate-600">{description}</p>
-      <Form fields={fields} submitLabel={submitLabel} redirectTo={redirectTo} />
-      <p className="mt-6 text-center text-sm text-slate-600">
-        {alternateLabel}{" "}
-        <a href={alternateHref} className="font-medium text-brand-600 hover:text-brand-700">
-          {alternateLinkText}
-        </a>
-      </p>
-    </div>
-  );
-}

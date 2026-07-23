@@ -7,6 +7,7 @@ import {
   FolderOpen,
   Headphones,
   LayoutDashboard,
+  Newspaper,
   Receipt,
   Settings,
   ShoppingCart,
@@ -28,6 +29,7 @@ const DASHBOARD_ICON_MAP: Record<DashboardNavIcon, LucideIcon> = {
   FolderOpen,
   User,
   Settings,
+  Newspaper,
 };
 
 export function getDashboardIcon(name: DashboardNavIcon): LucideIcon {

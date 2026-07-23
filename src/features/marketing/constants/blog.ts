@@ -151,4 +151,11 @@ export function getAllBlogSlugs() {
   return BLOG_POSTS.map((post) => post.slug);
 }
 
-export const BLOG_CATEGORIES = ["همه", "بهینه‌سازی", "صنعت", "تجدیدپذیر"] as const;
+export const BLOG_CATEGORIES = [
+  "همه",
+  "بهینه‌سازی",
+  "صنعت",
+  "تجدیدپذیر",
+  "بازار برق",
+  "راهنما",
+] as const;

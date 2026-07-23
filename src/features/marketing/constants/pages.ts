@@ -137,31 +137,3 @@ export const LEGAL_PAGES: Record<string, { meta: { title: string; description: s
   },
 };
 
-export const AUTH_PAGES = {
-  login: {
-    title: "ورود به حساب کاربری",
-    description: "به پنل مدیریت برق خود دسترسی پیدا کنید",
-    fields: [
-      { name: "phone", label: "شماره موبایل", type: "tel" as const, placeholder: "۰۹۱۲۳۴۵۶۷۸۹", required: true },
-      { name: "password", label: "رمز عبور", type: "password" as const, placeholder: "رمز عبور خود را وارد کنید", required: true },
-    ],
-    submitLabel: "ورود",
-    alternateLabel: "حساب کاربری ندارید؟",
-    alternateHref: "/register",
-    alternateLinkText: "ثبت‌نام کنید",
-  },
-  register: {
-    title: "ثبت‌نام در برق ما",
-    description: "در کمتر از ۳ دقیقه برق خود را تامین کنید",
-    fields: [
-      { name: "fullName", label: "نام و نام خانوادگی", type: "text" as const, placeholder: "نام کامل", required: true },
-      { name: "phone", label: "شماره موبایل", type: "tel" as const, placeholder: "۰۹۱۲۳۴۵۶۷۸۹", required: true },
-      { name: "nationalId", label: "کد ملی", type: "text" as const, placeholder: "کد ملی ۱۰ رقمی", required: true },
-      { name: "password", label: "رمز عبور", type: "password" as const, placeholder: "حداقل ۸ کاراکتر", required: true },
-    ],
-    submitLabel: "ثبت‌نام",
-    alternateLabel: "قبلاً ثبت‌نام کرده‌اید؟",
-    alternateHref: "/login",
-    alternateLinkText: "وارد شوید",
-  },
-} as const;

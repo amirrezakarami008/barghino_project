@@ -196,6 +196,8 @@ export interface FAQItem {
   answer: string;
 }
 
+export type BlogPostStatus = "published" | "draft";
+
 export interface BlogPost {
   id: string;
   slug: string;
@@ -208,6 +210,9 @@ export interface BlogPost {
   author?: string;
   readTime?: string;
   content: ContentSection[];
+  status?: BlogPostStatus;
+  featured?: boolean;
+  source?: "seed" | "custom";
 }
 
 export interface FooterLinkGroup {

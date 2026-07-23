@@ -10,13 +10,15 @@ export type DashboardNavIcon =
   | "Headphones"
   | "FolderOpen"
   | "User"
-  | "Settings";
+  | "Settings"
+  | "Newspaper";
 
 export interface DashboardNavItem {
   label: string;
   href: string;
   icon: DashboardNavIcon;
   badge?: number;
+  adminOnly?: boolean;
 }
 
 export interface DashboardUser {
@@ -27,6 +29,7 @@ export interface DashboardUser {
   nationalId: string;
   company?: string;
   role: "personal" | "business";
+  isAdmin?: boolean;
   avatar?: string;
   memberSince: string;
   verified: boolean;

@@ -35,7 +35,7 @@ export function IconBox({
     solid: "bg-brand-600 text-white shadow-lg shadow-brand-500/25",
     soft: "bg-brand-50 text-brand-600 ring-1 ring-brand-100",
     gradient: cn(
-      "text-white shadow-lg bg-gradient-to-br",
+      "text-white shadow-lg bg-linear-to-br",
       gradient ?? "from-brand-500 via-brand-400 to-brand-600 shadow-brand-500/30",
     ),
   };
@@ -71,7 +71,7 @@ export function FeatureCard({ icon, title, description, className }: FeatureCard
         className,
       )}
     >
-      <div className="absolute -left-10 -top-10 h-28 w-28 rounded-full bg-gradient-to-br from-brand-400/10 to-transparent transition-transform duration-700 group-hover:scale-150" />
+      <div className="absolute -left-10 -top-10 h-28 w-28 rounded-full bg-linear-to-br from-brand-400/10 to-transparent transition-transform duration-700 group-hover:scale-150" />
       <IconBox icon={icon} size="sm" className="relative mb-3" variant="gradient" />
       <h3 className="relative mb-1.5 font-display text-base font-bold text-slate-900">{title}</h3>
       <p className="relative text-sm leading-relaxed text-slate-600">{description}</p>
@@ -111,11 +111,11 @@ export function StepCard({ step, title, description, isLast }: StepCardProps) {
   return (
     <div className="group relative flex flex-col items-center text-center">
       {!isLast && (
-        <div className="absolute right-[calc(50%+2rem)] top-7 hidden h-px w-[calc(100%-4rem)] bg-gradient-to-l from-brand-300 via-brand-200 to-transparent md:block" />
+        <div className="absolute right-[calc(50%+2rem)] top-7 hidden h-px w-[calc(100%-4rem)] bg-linear-to-l from-brand-300 via-brand-200 to-transparent md:block" />
       )}
-      <div className="relative z-10 mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 via-brand-400 to-brand-600 font-display text-lg font-extrabold text-white shadow-lg shadow-brand-500/30 transition-transform duration-300 group-hover:scale-105 sm:h-14 sm:w-14 sm:text-xl">
+      <div className="relative z-10 mb-3 flex h-12 w-12 items-center justify-center rounded-xl bg-linear-to-br from-brand-500 via-brand-400 to-brand-600 font-display text-lg font-extrabold text-white shadow-lg shadow-brand-500/30 transition-transform duration-300 group-hover:scale-105 sm:h-14 sm:w-14 sm:text-xl">
         {step}
-        <div className="absolute inset-0 rounded-xl bg-gradient-to-t from-white/20 to-transparent" />
+        <div className="absolute inset-0 rounded-xl bg-linear-to-t from-white/20 to-transparent" />
       </div>
       <h3 className="mb-1 font-display text-base font-bold text-slate-900">{title}</h3>
       <p className="max-w-xs text-xs leading-relaxed text-slate-600 sm:text-sm">{description}</p>

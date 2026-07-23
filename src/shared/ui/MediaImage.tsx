@@ -84,6 +84,7 @@ export function ImageCard({
         src={src}
         alt={alt}
         overlay={overlay}
+        className="h-full w-full"
         imageClassName="group-hover:scale-110"
         sizes="(max-width: 768px) 100vw, 400px"
       />

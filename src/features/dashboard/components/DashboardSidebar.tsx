@@ -31,7 +31,7 @@ export function DashboardSidebar() {
       </div>
 
       <nav className="flex-1 space-y-1 overflow-y-auto">
-        {DASHBOARD_NAV.map((item) => {
+        {DASHBOARD_NAV.filter((item) => !item.adminOnly || DASHBOARD_USER.isAdmin).map((item) => {
           const active = isActive(item.href);
           return (
             <Link

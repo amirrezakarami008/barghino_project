@@ -221,3 +221,129 @@
     transform: translateX(100%);
   }
 }
+
+@keyframes energy-flow {
+  0% {
+    transform: translateX(30%);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  80% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateX(-30%);
+    opacity: 0;
+  }
+}
+
+@keyframes auth-orb {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0) scale(1);
+    opacity: 0.75;
+  }
+  50% {
+    transform: translate3d(4%, -6%, 0) scale(1.08);
+    opacity: 1;
+  }
+}
+
+@keyframes auth-circuit-dash {
+  to {
+    stroke-dashoffset: -240;
+  }
+}
+
+@keyframes auth-node-pulse {
+  0%,
+  100% {
+    opacity: 0.45;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.35);
+  }
+}
+
+@keyframes auth-rise {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes auth-step-in {
+  from {
+    opacity: 0;
+    transform: translateX(-16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@layer utilities {
+  .auth-energy-line {
+    background: linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(6, 182, 212, 0.15) 20%,
+      rgba(34, 211, 238, 0.85) 50%,
+      rgba(245, 158, 11, 0.35) 70%,
+      transparent 100%
+    );
+    animation: energy-flow 4.5s ease-in-out infinite;
+  }
+
+  .auth-energy-line-delay {
+    animation-delay: 1.6s;
+  }
+
+  .auth-orb {
+    animation: auth-orb 10s ease-in-out infinite;
+  }
+
+  .auth-orb-slow {
+    animation: auth-orb 16s ease-in-out infinite reverse;
+  }
+
+  .auth-circuit {
+    stroke-dasharray: 12 18;
+    animation: auth-circuit-dash 8s linear infinite;
+  }
+
+  .auth-circuit-delay {
+    animation-delay: 1.4s;
+  }
+
+  .auth-circuit-delay-2 {
+    animation-delay: 2.8s;
+  }
+
+  .auth-node {
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: auth-node-pulse 2.8s ease-in-out infinite;
+  }
+
+  .auth-rise {
+    animation: auth-rise 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .auth-rise-delay {
+    animation: auth-rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) 0.12s both;
+  }
+
+  .auth-step {
+    animation: auth-step-in 0.35s ease-out both;
+  }
+}

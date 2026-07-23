@@ -9,6 +9,7 @@ export const DASHBOARD_USER: DashboardUser = {
   nationalId: "۰۰۱۲۳۴۵۶۷۸",
   company: "فولاد آریا",
   role: "business",
+  isAdmin: true,
   avatar: IMAGES.testimonials[0],
   memberSince: "۱۴۰۳/۰۶/۱۵",
   verified: true,
@@ -25,6 +26,12 @@ export const DASHBOARD_NAV: DashboardNavItem[] = [
   { label: "اعلان‌ها", href: "/dashboard/notifications", icon: "Bell", badge: 5 },
   { label: "پشتیبانی", href: "/dashboard/support", icon: "Headphones" },
   { label: "اسناد", href: "/dashboard/documents", icon: "FolderOpen" },
+  {
+    label: "مدیریت مجله",
+    href: "/dashboard/blog",
+    icon: "Newspaper",
+    adminOnly: true,
+  },
   { label: "پروفایل", href: "/dashboard/profile", icon: "User" },
   { label: "تنظیمات", href: "/dashboard/settings", icon: "Settings" },
 ];
@@ -92,9 +99,9 @@ export const QUICK_ACTIONS = [
     description: "۲ فاکتور معوق",
   },
   {
-    label: "ثبت تیکت",
-    href: "/dashboard/support",
-    icon: "Headphones" as const,
-    description: "پشتیبانی فوری",
+    label: "مدیریت مجله",
+    href: "/dashboard/blog",
+    icon: "Newspaper" as const,
+    description: "انتشار مقاله جدید",
   },
 ];
