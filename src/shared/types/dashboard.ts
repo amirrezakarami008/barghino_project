@@ -66,7 +66,7 @@ export interface Contract {
   endDate: string;
   volume: string;
   rate: string;
-  status: "active" | "pending" | "expired" | "draft";
+  status: "active" | "pending" | "expired" | "draft" | "cancelled";
   savings: string;
 }
 

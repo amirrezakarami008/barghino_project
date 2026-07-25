@@ -1,7 +1,6 @@
 import type {
   BillAccount,
   ConsumptionPoint,
-  Contract,
   Document,
   Invoice,
   Notification,
@@ -9,6 +8,7 @@ import type {
   PowerPackage,
   SupportTicket,
 } from "@/shared/types/dashboard";
+import { SEED_CONTRACTS } from "@/features/contracts/constants";
 
 export const BILL_ACCOUNTS: BillAccount[] = [
   {
@@ -43,44 +43,7 @@ export const BILL_ACCOUNTS: BillAccount[] = [
   },
 ];
 
-export const CONTRACTS: Contract[] = [
-  {
-    id: "c1",
-    title: "قرارداد تامین برق ۱۲ ماهه",
-    billAccount: "کارخانه فولاد آریا",
-    type: "قرارداد دوجانبه",
-    startDate: "۱۴۰۴/۰۱/۰۱",
-    endDate: "۱۴۰۴/۱۲/۲۹",
-    volume: "۱۰۰,۰۰۰ kWh/ماه",
-    rate: "۴,۸۵۰ ریال/kWh",
-    status: "active",
-    savings: "۳۲٪",
-  },
-  {
-    id: "c2",
-    title: "قرارداد برق سبز ۶ ماهه",
-    billAccount: "دفتر مرکزی",
-    type: "برق تجدیدپذیر",
-    startDate: "۱۴۰۴/۰۷/۰۱",
-    endDate: "۱۴۰۴/۱۲/۲۹",
-    volume: "۵,۰۰۰ kWh/ماه",
-    rate: "۵,۱۰۰ ریال/kWh",
-    status: "active",
-    savings: "۲۸٪",
-  },
-  {
-    id: "c3",
-    title: "پیش‌نویس قرارداد تامین خاموشی",
-    billAccount: "انبار جنوب",
-    type: "برق آزاد + گواهی اوج",
-    startDate: "—",
-    endDate: "—",
-    volume: "۳,۰۰۰ kWh/ماه",
-    rate: "در انتظار تایید",
-    status: "draft",
-    savings: "—",
-  },
-];
+export const CONTRACTS = SEED_CONTRACTS;
 
 export const MONTHLY_CONSUMPTION: ConsumptionPoint[] = [
   { label: "فروردین", usage: 11200, cost: 54.2, peak: 890 },
@@ -239,8 +202,6 @@ export const SUPPORT_TICKETS: SupportTicket[] = [
 ];
 
 export const DOCUMENTS: Document[] = [
-  { id: "d1", title: "قرارداد تامین ۱۲ ماهه — فولاد آریا", type: "قرارداد", date: "۱۴۰۴/۰۱/۰۱", size: "۲.۴ MB" },
-  { id: "d2", title: "قرارداد برق سبز — دفتر مرکزی", type: "قرارداد", date: "۱۴۰۴/۰۷/۰۱", size: "۱.۸ MB" },
   { id: "d3", title: "فاکتور شهریور — INV-۱۴۰۴-۰۶-۰۰۱", type: "فاکتور", date: "۱۴۰۴/۰۷/۰۱", size: "۴۵۶ KB" },
   { id: "d4", title: "گواهی تامین برق", type: "گواهی", date: "۱۴۰۴/۰۱/۰۱", size: "۳۲۰ KB" },
   { id: "d5", title: "پروانه خرده‌فروشی برق ما", type: "مجوز", date: "۱۴۰۲/۰۴/۰۱", size: "۱.۲ MB" },

@@ -25,7 +25,7 @@ export const DASHBOARD_NAV: DashboardNavItem[] = [
   { label: "پرداخت‌ها", href: "/dashboard/payments", icon: "CreditCard" },
   { label: "اعلان‌ها", href: "/dashboard/notifications", icon: "Bell", badge: 5 },
   { label: "پشتیبانی", href: "/dashboard/support", icon: "Headphones" },
-  { label: "اسناد", href: "/dashboard/documents", icon: "FolderOpen" },
+  { label: "مدارک", href: "/dashboard/documents", icon: "FolderOpen" },
   {
     label: "مدیریت مجله",
     href: "/dashboard/blog",
@@ -87,6 +87,12 @@ export const QUICK_ACTIONS = [
     description: "انتخاب پکیج و عقد قرارداد",
   },
   {
+    label: "قراردادها",
+    href: "/dashboard/contracts",
+    icon: "FileCheck" as const,
+    description: "مشاهده، دانلود و بارگذاری",
+  },
+  {
     label: "افزودن شناسه قبض",
     href: "/dashboard/bills",
     icon: "FileText" as const,
@@ -97,11 +103,5 @@ export const QUICK_ACTIONS = [
     href: "/dashboard/invoices",
     icon: "CreditCard" as const,
     description: "۲ فاکتور معوق",
-  },
-  {
-    label: "مدیریت مجله",
-    href: "/dashboard/blog",
-    icon: "Newspaper" as const,
-    description: "انتشار مقاله جدید",
   },
 ];

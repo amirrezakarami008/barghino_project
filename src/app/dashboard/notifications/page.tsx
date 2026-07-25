@@ -2,8 +2,12 @@
 
 import { DashboardPage, Panel, StatusBadge } from "@/features/dashboard/components";
 import { NOTIFICATIONS } from "@/features/dashboard/constants";
+import { useContracts } from "@/features/contracts";
+import { getExpiryNotifications } from "@/features/contracts/lib/store";
+import { Button } from "@/shared/ui/Button";
 import { cn } from "@/shared/lib/utils";
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import type { Notification } from "@/shared/types/dashboard";
 
 const typeIcons: Record<string, string> = {
   billing: "💰",
@@ -12,9 +16,18 @@ const typeIcons: Record<string, string> = {
   info: "ℹ️",
 };
 
+type NotificationItem = Notification & { contractId?: string };
+
 export default function NotificationsPage() {
-  const [items, setItems] = useState(NOTIFICATIONS);
-  const unread = items.filter((n) => !n.read);
+  const { contracts } = useContracts();
+  const expiryItems = useMemo(() => getExpiryNotifications(contracts), [contracts]);
+
+  const [items, setItems] = useState<NotificationItem[]>(NOTIFICATIONS);
+  const merged = useMemo<NotificationItem[]>(
+    () => [...expiryItems, ...items],
+    [expiryItems, items],
+  );
+  const unread = merged.filter((n) => !n.read);
 
   const markAllRead = () => setItems((prev) => prev.map((n) => ({ ...n, read: true })));
 
@@ -34,7 +47,7 @@ export default function NotificationsPage() {
       )}
 
       <div className="space-y-3">
-        {items.map((n) => (
+        {merged.map((n) => (
           <Panel
             key={n.id}
             padding="sm"
@@ -49,7 +62,14 @@ export default function NotificationsPage() {
                   <StatusBadge status={n.type} />
                 </div>
                 <p className="mt-1 text-sm text-slate-600">{n.message}</p>
-                <p className="mt-2 text-xs text-slate-400">{n.date}</p>
+                <div className="mt-2 flex flex-wrap items-center gap-3">
+                  <p className="text-xs text-slate-400">{n.date}</p>
+                  {n.contractId ? (
+                    <Button href={`/dashboard/contracts/${n.contractId}`} variant="ghost" size="sm">
+                      مشاهده قرارداد
+                    </Button>
+                  ) : null}
+                </div>
               </div>
             </div>
           </Panel>

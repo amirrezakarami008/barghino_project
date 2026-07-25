@@ -4,13 +4,15 @@ import { Bell, Headphones } from "@/features/dashboard/lib/icons";
 import { DASHBOARD_USER, NOTIFICATIONS } from "@/features/dashboard/constants";
 import { Avatar } from "@/shared/ui/MediaImage";
 import Link from "next/link";
+import type { ReactNode } from "react";
 
 interface DashboardHeaderProps {
   title: string;
   subtitle?: string;
+  action?: ReactNode;
 }
 
-export function DashboardHeader({ title, subtitle }: DashboardHeaderProps) {
+export function DashboardHeader({ title, subtitle, action }: DashboardHeaderProps) {
   const unreadCount = NOTIFICATIONS.filter((n) => !n.read).length;
 
   return (
@@ -22,6 +24,7 @@ export function DashboardHeader({ title, subtitle }: DashboardHeaderProps) {
         </div>
 
         <div className="flex shrink-0 items-center gap-2 sm:gap-3">
+          {action}
           <Link
             href="/dashboard/support"
             className="hidden rounded-xl border border-slate-200 p-2.5 text-slate-600 transition-colors hover:border-brand-200 hover:bg-brand-50 hover:text-brand-600 sm:flex"

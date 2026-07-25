@@ -55,7 +55,11 @@ export default function DashboardOverviewPage() {
           <PanelHeader title="قراردادهای فعال" />
           <div className="space-y-4">
             {activeContracts.map((contract) => (
-              <div key={contract.id} className="rounded-xl border border-slate-100 bg-slate-50/50 p-4">
+              <Link
+                key={contract.id}
+                href={`/dashboard/contracts/${contract.id}`}
+                className="block rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition hover:border-brand-200 hover:bg-brand-50/40"
+              >
                 <div className="mb-2 flex items-start justify-between gap-2">
                   <p className="text-sm font-semibold text-slate-900">{contract.title}</p>
                   <StatusBadge status="active" />
@@ -65,7 +69,7 @@ export default function DashboardOverviewPage() {
                   <span className="text-slate-500">صرفه‌جویی: {contract.savings}</span>
                   <span className="font-medium text-emerald-600">تا {contract.endDate}</span>
                 </div>
-              </div>
+              </Link>
             ))}
             <Button href="/dashboard/contracts" variant="outline" size="sm" fullWidth>
               همه قراردادها
