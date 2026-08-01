@@ -3,7 +3,7 @@
 import { Button } from "@/shared/ui/Button";
 import { Container } from "@/shared/ui/Container";
 import { SITE_CONFIG, NAVIGATION } from "@/config";
-import { ChevronDown, Mail, Menu, Phone, X, Zap } from "@/shared/lib/icons";
+import { ChevronDown, Mail, Menu, Phone, UserRound, X, Zap } from "@/shared/lib/icons";
 import { cn } from "@/shared/lib/utils";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -28,34 +28,26 @@ export function Header() {
 
   return (
     <>
-      <div className="hidden border-b border-brand-100/50 bg-gradient-to-l from-brand-950 to-slate-900 lg:block">
+      <div className="hidden border-b border-brand-900/40 bg-brand-950 lg:block">
         <Container>
-          <div className="flex h-10 items-center justify-between text-sm text-slate-300">
-            <div className="flex items-center gap-6">
+          <div className="flex h-9 items-center justify-between text-xs text-brand-100/80 sm:text-sm">
+            <div className="flex items-center gap-5">
               <a
                 href={`tel:${SITE_CONFIG.phone}`}
-                className="flex items-center gap-2 transition-colors hover:text-brand-300"
+                className="flex items-center gap-2 transition-colors hover:text-white"
               >
                 <Phone className="h-3.5 w-3.5 text-brand-400" />
                 {SITE_CONFIG.phone}
               </a>
               <a
                 href={`mailto:${SITE_CONFIG.email}`}
-                className="flex items-center gap-2 transition-colors hover:text-brand-300"
+                className="flex items-center gap-2 transition-colors hover:text-white"
               >
                 <Mail className="h-3.5 w-3.5 text-brand-400" />
                 {SITE_CONFIG.email}
               </a>
             </div>
-            <div className="flex items-center gap-1 text-xs">
-              <span className="flex items-center gap-1.5 rounded-full bg-brand-500/10 px-3 py-1 text-brand-300">
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
-                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
-                </span>
-                پشتیبانی ۲۴/۷
-              </span>
-            </div>
+            <p className="text-brand-200/70">{SITE_CONFIG.tagline}</p>
           </div>
         </Container>
       </div>
@@ -133,11 +125,9 @@ export function Header() {
             </nav>
 
             <div className="hidden items-center gap-3 lg:flex">
-              <Button variant="ghost" size="sm" href={SITE_CONFIG.loginHref}>
-                ورود
-              </Button>
-              <Button size="sm" href={SITE_CONFIG.registerHref}>
-                ثبت‌نام رایگان
+              <Button size="sm" href={SITE_CONFIG.loginHref} className="rounded-full px-5">
+                <UserRound className="h-4 w-4" />
+                ورود / ثبت‌نام
               </Button>
             </div>
 

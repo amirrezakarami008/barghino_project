@@ -121,21 +121,18 @@ interface QuoteCardProps {
 
 export function QuoteCard({ content, name, role, rating, avatar }: QuoteCardProps) {
   return (
-    <div className="group relative flex h-full flex-col overflow-hidden rounded-xl border border-slate-200/60 bg-white p-4 shadow-sm transition-all duration-500 hover:-translate-y-1 hover:border-brand-200/80 hover:shadow-lg hover:shadow-brand-500/8 sm:p-5">
-      <div className="absolute left-4 top-4 font-display text-6xl leading-none text-brand-100 transition-colors group-hover:text-brand-200">
-        &ldquo;
-      </div>
-      <div className="relative mb-4 mt-6 flex items-center gap-3">
-        {avatar && <Avatar src={avatar} alt={name} />}
+    <div className="group relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-200/70 bg-white p-5 shadow-sm transition-all duration-400 hover:-translate-y-1 hover:border-brand-200 hover:shadow-lg hover:shadow-brand-500/8 sm:p-6">
+      <StarRating rating={rating} />
+      <blockquote className="relative my-4 flex-1 text-sm leading-7 text-slate-600">
+        {content}
+      </blockquote>
+      <div className="mt-auto flex items-center gap-3 border-t border-slate-100 pt-4">
+        {avatar && <Avatar src={avatar} alt={name} size="sm" />}
         <div>
-          <p className="font-display font-bold text-slate-900">{name}</p>
+          <p className="font-display text-sm font-bold text-slate-900">{name}</p>
           <p className="text-xs text-slate-500">{role}</p>
         </div>
       </div>
-      <StarRating rating={rating} />
-      <blockquote className="relative my-4 flex-1 text-sm leading-relaxed text-slate-600">
-        {content}
-      </blockquote>
     </div>
   );
 }

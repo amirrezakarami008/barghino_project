@@ -1,11 +1,9 @@
 import {
   AppDownloadSection,
   CompareSection,
-  CTASection,
   FAQBlogSection,
   HeroSection,
   PathsSection,
-  ServicesSection,
   StatsSection,
   StepsSection,
   TestimonialsSection,
@@ -20,12 +18,10 @@ export default function HomePage() {
       <PathsSection />
       <StepsSection />
       <WhyUsSection />
-      <ServicesSection />
       <StatsSection />
       <TestimonialsSection />
       <AppDownloadSection />
       <FAQBlogSection />
-      <CTASection />
     </>
   );
 }
