@@ -32,7 +32,7 @@ const contactFields: FormField[] = [
 export default function ContactPage() {
   return (
     <>
-      <PageBanner image={IMAGES.contact} alt="تماس با برق ما">
+      <PageBanner image={IMAGES.contact} alt="تماس با برقینو">
         <span className="mb-4 inline-block rounded-full bg-white/10 px-4 py-1.5 text-sm font-medium text-brand-200 backdrop-blur-sm">
           {CONTACT_PAGE.meta.badge}
         </span>

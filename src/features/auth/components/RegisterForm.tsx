@@ -4,41 +4,28 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState, type FormEvent } from "react";
 import { Button } from "@/shared/ui/Button";
-import {
-  ArrowLeft,
-  ArrowRight,
-  Building2,
-  Lock,
-  Smartphone,
-  Sparkles,
-  UserRound,
-} from "@/shared/lib/icons";
+import { ArrowLeft, ArrowRight, Lock, Smartphone, Sparkles, Sun, UserRound, Zap } from "@/shared/lib/icons";
 import { cn } from "@/shared/lib/utils";
-import { AUTH_COPY, AUTH_FIELDS } from "../constants";
+import { AUTH_COPY, AUTH_FIELDS, USER_PATHS } from "../constants";
 import {
-  isValidCompanyNationalId,
   isValidIranMobile,
   isValidNationalId,
   isValidPassword,
   onlyDigits,
 } from "../lib/validation";
-import type { AccountType, AuthFieldErrors } from "../types";
-import { AccountTypeToggle } from "./AccountTypeToggle";
+import type { AuthFieldErrors, UserPath } from "../types";
 import { AuthInput } from "./AuthInput";
 
-const STEPS = ["نوع حساب", "هویت", "امنیت"] as const;
+const STEPS = ["مسیر", "هویت", "امنیت"] as const;
 
 export function RegisterForm() {
   const router = useRouter();
   const [step, setStep] = useState(0);
-  const [accountType, setAccountType] = useState<AccountType>("individual");
+  const [userPath, setUserPath] = useState<UserPath>("sell");
   const [submitting, setSubmitting] = useState(false);
   const [acceptedTerms, setAcceptedTerms] = useState(false);
   const [fullName, setFullName] = useState("");
-  const [companyName, setCompanyName] = useState("");
-  const [agentName, setAgentName] = useState("");
   const [nationalId, setNationalId] = useState("");
-  const [companyNationalId, setCompanyNationalId] = useState("");
   const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -48,19 +35,9 @@ export function RegisterForm() {
     const nextErrors: AuthFieldErrors = {};
 
     if (currentStep === 1) {
-      if (accountType === "individual") {
-        if (!fullName.trim()) nextErrors.fullName = "نام و نام خانوادگی الزامی است.";
-        if (!nationalId.trim()) nextErrors.nationalId = "کد ملی الزامی است.";
-        else if (!isValidNationalId(nationalId)) nextErrors.nationalId = "کد ملی معتبر نیست.";
-      } else {
-        if (!companyName.trim()) nextErrors.companyName = "نام شرکت الزامی است.";
-        if (!agentName.trim()) nextErrors.agentName = "نام نماینده الزامی است.";
-        if (!companyNationalId.trim()) {
-          nextErrors.companyNationalId = "شناسه ملی الزامی است.";
-        } else if (!isValidCompanyNationalId(companyNationalId)) {
-          nextErrors.companyNationalId = "شناسه ملی باید بین ۸ تا ۱۲ رقم باشد.";
-        }
-      }
+      if (!fullName.trim()) nextErrors.fullName = "نام و نام خانوادگی الزامی است.";
+      if (!nationalId.trim()) nextErrors.nationalId = "کد ملی الزامی است.";
+      else if (!isValidNationalId(nationalId)) nextErrors.nationalId = "کد ملی معتبر نیست.";
     }
 
     if (currentStep === 2) {
@@ -108,7 +85,8 @@ export function RegisterForm() {
 
     setSubmitting(true);
     await new Promise((resolve) => setTimeout(resolve, 700));
-    router.push("/dashboard");
+    const dest = USER_PATHS.find((p) => p.value === userPath)?.href ?? "/dashboard";
+    router.push(dest);
   };
 
   return (
@@ -133,7 +111,7 @@ export function RegisterForm() {
               <div
                 className={cn(
                   "h-1 rounded-full transition-all duration-500",
-                  done || active ? "bg-brand-400 shadow-[0_0_16px_rgba(34,211,238,0.55)]" : "bg-white/10",
+                  done || active ? "bg-brand-400" : "bg-white/10",
                 )}
               />
               <span
@@ -158,14 +136,41 @@ export function RegisterForm() {
               </h3>
               <p className="mt-1 text-xs text-slate-500">{AUTH_COPY.register.chooseHint}</p>
             </div>
-            <AccountTypeToggle
-              value={accountType}
-              onChange={(next) => {
-                setAccountType(next);
-                setErrors({});
-              }}
-              variant="featured"
-            />
+            <div className="grid gap-3">
+              {USER_PATHS.map((path) => {
+                const selected = userPath === path.value;
+                const Icon = path.value === "sell" ? Zap : Sun;
+                return (
+                  <button
+                    key={path.value}
+                    type="button"
+                    onClick={() => setUserPath(path.value)}
+                    className={cn(
+                      "rounded-2xl border p-4 text-right transition-all",
+                      selected
+                        ? "border-brand-400/50 bg-brand-500/15 ring-1 ring-brand-400/30"
+                        : "border-white/10 bg-white/[0.03] hover:border-white/20",
+                    )}
+                  >
+                    <div className="flex items-start gap-3">
+                      <div
+                        className={cn(
+                          "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
+                          selected ? "bg-brand-500/20 text-brand-300" : "bg-white/5 text-slate-400",
+                        )}
+                      >
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="text-[11px] font-medium text-slate-500">{path.label}</p>
+                        <p className="font-display text-base font-bold text-white">{path.title}</p>
+                        <p className="mt-1 text-xs leading-6 text-slate-400">{path.description}</p>
+                      </div>
+                    </div>
+                  </button>
+                );
+              })}
+            </div>
           </div>
         )}
 
@@ -175,79 +180,32 @@ export function RegisterForm() {
               <h3 className="font-display text-lg font-bold text-white">
                 {AUTH_COPY.register.identityTitle}
               </h3>
-              <p className="mt-1 text-xs text-slate-500">
-                {accountType === "individual"
-                  ? AUTH_COPY.register.individualHint
-                  : AUTH_COPY.register.legalHint}
-              </p>
+              <p className="mt-1 text-xs text-slate-500">{AUTH_COPY.register.individualHint}</p>
             </div>
-
-            {accountType === "individual" ? (
-              <>
-                <AuthInput
-                  label={AUTH_FIELDS.fullName.label}
-                  name={AUTH_FIELDS.fullName.name}
-                  type="text"
-                  autoComplete="name"
-                  value={fullName}
-                  required
-                  error={errors.fullName}
-                  icon={<UserRound className="h-4 w-4" />}
-                  onChange={(event) => setFullName(event.target.value)}
-                />
-                <AuthInput
-                  label={AUTH_FIELDS.nationalId.label}
-                  name={AUTH_FIELDS.nationalId.name}
-                  type="text"
-                  inputMode="numeric"
-                  dir="ltr"
-                  maxLength={AUTH_FIELDS.nationalId.maxLength}
-                  value={nationalId}
-                  required
-                  error={errors.nationalId}
-                  icon={<UserRound className="h-4 w-4" />}
-                  onChange={(event) => setNationalId(onlyDigits(event.target.value).slice(0, 10))}
-                />
-              </>
-            ) : (
-              <>
-                <AuthInput
-                  label={AUTH_FIELDS.companyName.label}
-                  name={AUTH_FIELDS.companyName.name}
-                  type="text"
-                  value={companyName}
-                  required
-                  error={errors.companyName}
-                  icon={<Building2 className="h-4 w-4" />}
-                  onChange={(event) => setCompanyName(event.target.value)}
-                />
-                <AuthInput
-                  label={AUTH_FIELDS.companyNationalId.label}
-                  name={AUTH_FIELDS.companyNationalId.name}
-                  type="text"
-                  inputMode="numeric"
-                  dir="ltr"
-                  maxLength={AUTH_FIELDS.companyNationalId.maxLength}
-                  value={companyNationalId}
-                  required
-                  error={errors.companyNationalId}
-                  icon={<Building2 className="h-4 w-4" />}
-                  onChange={(event) =>
-                    setCompanyNationalId(onlyDigits(event.target.value).slice(0, 12))
-                  }
-                />
-                <AuthInput
-                  label={AUTH_FIELDS.agentName.label}
-                  name={AUTH_FIELDS.agentName.name}
-                  type="text"
-                  value={agentName}
-                  required
-                  error={errors.agentName}
-                  icon={<UserRound className="h-4 w-4" />}
-                  onChange={(event) => setAgentName(event.target.value)}
-                />
-              </>
-            )}
+            <AuthInput
+              label={AUTH_FIELDS.fullName.label}
+              name={AUTH_FIELDS.fullName.name}
+              type="text"
+              autoComplete="name"
+              value={fullName}
+              required
+              error={errors.fullName}
+              icon={<UserRound className="h-4 w-4" />}
+              onChange={(event) => setFullName(event.target.value)}
+            />
+            <AuthInput
+              label={AUTH_FIELDS.nationalId.label}
+              name={AUTH_FIELDS.nationalId.name}
+              type="text"
+              inputMode="numeric"
+              dir="ltr"
+              maxLength={AUTH_FIELDS.nationalId.maxLength}
+              value={nationalId}
+              required
+              error={errors.nationalId}
+              icon={<UserRound className="h-4 w-4" />}
+              onChange={(event) => setNationalId(onlyDigits(event.target.value).slice(0, 10))}
+            />
           </div>
         )}
 
@@ -261,11 +219,7 @@ export function RegisterForm() {
             </div>
 
             <AuthInput
-              label={
-                accountType === "legal"
-                  ? `${AUTH_FIELDS.phone.label} نماینده`
-                  : AUTH_FIELDS.phone.label
-              }
+              label={AUTH_FIELDS.phone.label}
               name={AUTH_FIELDS.phone.name}
               type="tel"
               inputMode="numeric"

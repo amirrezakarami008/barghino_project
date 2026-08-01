@@ -9,8 +9,8 @@ export function TestimonialsSection() {
       <Container>
         <SectionHeader
           badge="نظرات مشتریان"
-          title="تجربه و نظرات مشتریان برق ما"
-          description="آنچه مشتریان درباره برق ما می‌گویند."
+          title="تجربه و نظرات مشتریان برقینو"
+          description="آنچه مشتریان درباره برقینو می‌گویند."
           compact
         />
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4 sm:gap-5">

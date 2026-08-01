@@ -1,4 +1,4 @@
-import type { AccountType } from "./types";
+import type { AccountType, UserPath } from "./types";
 
 export const ACCOUNT_TYPES: {
   value: AccountType;
@@ -9,25 +9,41 @@ export const ACCOUNT_TYPES: {
   {
     value: "individual",
     label: "حقیقی",
-    title: "شخص حقیقی",
-    description: "ورود و ثبت‌نام با شماره موبایل و کد ملی",
+    title: "مشترک خانگی",
+    description: "ثبت‌نام با شماره موبایل و کد ملی",
+  },
+];
+
+export const USER_PATHS: {
+  value: UserPath;
+  label: string;
+  title: string;
+  description: string;
+  href: string;
+}[] = [
+  {
+    value: "sell",
+    label: "مسیر A",
+    title: "فروش برق نیروگاهم",
+    description: "نیروگاه خورشیدی دارم و می‌خواهم برق را به برقینو بفروشم",
+    href: "/dashboard/buy",
   },
   {
-    value: "legal",
-    label: "حقوقی",
-    title: "شخص حقوقی",
-    description: "ورود و ثبت‌نام شرکت با شناسه ملی",
+    value: "install",
+    label: "مسیر B",
+    title: "درخواست نصب نیروگاه",
+    description: "هنوز نیروگاه ندارم؛ می‌خواهم برقینو نصب کند",
+    href: "/dashboard/install",
   },
 ];
 
 export const AUTH_COPY = {
-  brandHint: "برق را هوشمند بخر؛ هزینه را هوشمند کم کن.",
+  brandHint: "برق خانگی‌ات را گران‌تر بفروش؛ یا برای نصب نیروگاه درخواست بده.",
   login: {
     eyebrow: "دسترسی به پنل",
     title: "ورود",
-    subtitle: "مسیر تامین برق از همین‌جا ادامه پیدا می‌کند.",
+    subtitle: "مسیر فروش برق خانگی از همین‌جا ادامه پیدا می‌کند.",
     individualHint: "شماره همراه خود را وارد کنید.",
-    legalHint: "شناسه ملی شرکت را وارد کنید.",
     submitPassword: "ورود به سامانه",
     submitOtpRequest: "ارسال کد یکبارمصرف",
     submitOtpVerify: "تأیید کد و ورود",
@@ -38,15 +54,14 @@ export const AUTH_COPY = {
     registerLink: "ثبت‌نام",
   },
   register: {
-    eyebrow: "عضویت در برق ما",
+    eyebrow: "عضویت در برقینو",
     title: "ثبت‌نام",
-    subtitle: "در چند قدم کوتاه حساب خود را بسازید.",
-    chooseTitle: "نوع حساب را انتخاب کنید",
-    chooseHint: "مسیر ثبت‌نام بر اساس نوع حساب تنظیم می‌شود.",
+    subtitle: "حساب خانگی بساز و مسیر فروش یا نصب را انتخاب کن.",
+    chooseTitle: "از کجا شروع می‌کنی؟",
+    chooseHint: "بعداً هم می‌توانی مسیر دیگر را از پنل انتخاب کنی.",
     identityTitle: "اطلاعات هویتی",
     securityTitle: "امنیت حساب",
     individualHint: "اطلاعات مطابق کارت ملی وارد شود.",
-    legalHint: "اطلاعات ثبتی شرکت و نماینده را وارد کنید.",
     next: "ادامه",
     back: "بازگشت",
     submit: "تکمیل ثبت‌نام",
@@ -70,26 +85,10 @@ export const AUTH_FIELDS = {
     placeholder: "۱۰ رقم",
     maxLength: 10,
   },
-  companyNationalId: {
-    name: "companyNationalId",
-    label: "شناسه ملی",
-    placeholder: "۸ تا ۱۲ رقم",
-    maxLength: 12,
-  },
   fullName: {
     name: "fullName",
     label: "نام و نام خانوادگی",
     placeholder: "مطابق کارت ملی",
-  },
-  companyName: {
-    name: "companyName",
-    label: "نام شرکت",
-    placeholder: "نام رسمی شرکت",
-  },
-  agentName: {
-    name: "agentName",
-    label: "نام نماینده",
-    placeholder: "نماینده مجاز شرکت",
   },
   password: {
     name: "password",

@@ -1,9 +1,9 @@
+/** آیکون‌های مجاز برای سایدبار داشبورد */
 export type DashboardNavIcon =
   | "LayoutDashboard"
-  | "FileText"
+  | "Sun"
   | "BarChart3"
   | "FileCheck"
-  | "ShoppingCart"
   | "Receipt"
   | "CreditCard"
   | "Bell"
@@ -11,7 +11,12 @@ export type DashboardNavIcon =
   | "FolderOpen"
   | "User"
   | "Settings"
-  | "Newspaper";
+  | "Newspaper"
+  | "FileText"
+  | "ClipboardList"
+  | "TrendingUp"
+  | "LineChart"
+  | "Sparkles";
 
 export interface DashboardNavItem {
   label: string;
@@ -46,15 +51,29 @@ export interface DashboardStat {
   color: "blue" | "green" | "amber" | "violet";
 }
 
-export interface BillAccount {
+/** نیروگاه خورشیدی خانگی کاربر */
+export interface SolarPlant {
   id: string;
   name: string;
-  billId: string;
-  type: "صنعتی" | "تجاری" | "اداری" | "مسکونی";
-  demand: string;
-  monthlyUsage: string;
-  status: "active" | "pending" | "inactive";
   address: string;
+  /** ظرفیت نصب‌شده kWp */
+  capacityKwp: number;
+  /** تولید ماه جاری kWh */
+  monthlyProductionKwh: number;
+  /** تاریخ راه‌اندازی */
+  startDate: string;
+  status: "active" | "pending" | "maintenance" | "inactive";
+  /** انشعاب برق مرتبط */
+  meterNumber: string;
+}
+
+/** اشتراک انشعاب خانگی برای فروش برق */
+export interface HomeSubscription {
+  id: string;
+  name: string;
+  meterNumber: string;
+  address: string;
+  status: "active" | "pending" | "inactive";
 }
 
 export interface Contract {
@@ -70,14 +89,17 @@ export interface Contract {
   savings: string;
 }
 
-export interface Invoice {
+/** صورت‌حساب درآمد فروش برق به برقینو */
+export interface SellInvoice {
   id: string;
   number: string;
-  billAccount: string;
+  plantName: string;
   period: string;
+  energyKwh: string;
+  ratePerKwh: string;
   amount: string;
   dueDate: string;
-  status: "paid" | "pending" | "overdue";
+  status: "paid" | "pending" | "processing";
   paidDate?: string;
 }
 
@@ -86,7 +108,7 @@ export interface Payment {
   title: string;
   amount: string;
   date: string;
-  method: "درگاه بانکی" | "اعتبار" | "اقساط";
+  method: "درگاه بانکی" | "واریز مستقیم" | "اعتبار";
   status: "success" | "pending" | "failed";
   reference: string;
 }
@@ -119,21 +141,37 @@ export interface Document {
   size: string;
 }
 
+/** نقاط تولید ماهانه برای نمودار */
+export interface ProductionPoint {
+  label: string;
+  production: number;
+  earnings: number;
+}
+
+/** مراحل درخواست نصب نیروگاه */
+export type InstallRequestStep =
+  | "submitted"
+  | "review"
+  | "visit"
+  | "proposal"
+  | "contract"
+  | "installation"
+  | "active";
+
+export interface InstallRequest {
+  id: string;
+  address: string;
+  submittedAt: string;
+  currentStep: InstallRequestStep;
+  note?: string;
+}
+
+/** نقاط مصرف — نگهداری برای سازگاری با ConsumptionChart */
 export interface ConsumptionPoint {
   label: string;
   usage: number;
   cost: number;
   peak?: number;
-}
-
-export interface PowerPackage {
-  id: string;
-  name: string;
-  description: string;
-  duration: string;
-  savings: string;
-  features: string[];
-  recommended?: boolean;
 }
 
 export interface QuickAction {

@@ -15,7 +15,7 @@ export const metadata: Metadata = {
 export default function AboutPage() {
   return (
     <>
-      <PageBanner image={IMAGES.about.office} alt="دفتر برق ما" priority>
+      <PageBanner image={IMAGES.about.office} alt="دفتر برقینو" priority>
         <span className="mb-4 inline-block rounded-full bg-white/10 px-4 py-1.5 text-sm font-medium text-brand-200 backdrop-blur-sm">
           {ABOUT_PAGE.meta.badge}
         </span>
@@ -31,7 +31,7 @@ export default function AboutPage() {
             <div className="overflow-hidden rounded-3xl shadow-xl ring-1 ring-slate-200/80">
               <MediaImage
                 src={IMAGES.about.team}
-                alt="تیم برق ما"
+                alt="تیم برقینو"
                 className="aspect-[4/3]"
                 overlay="gradient"
                 sizes="(max-width: 1024px) 100vw, 560px"
@@ -78,7 +78,7 @@ export default function AboutPage() {
 
       <Section>
         <Container size="narrow">
-          <SectionHeader badge="تاریخچه" title="مسیر رشد برق ما" align="center" />
+          <SectionHeader badge="تاریخچه" title="مسیر رشد برقینو" align="center" />
           <div className="space-y-8">
             {ABOUT_PAGE.timeline.map((item, index) => (
               <div key={item.year} className="flex gap-6">

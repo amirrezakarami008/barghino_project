@@ -46,12 +46,12 @@ export function BlogMagazine() {
 
   return (
     <>
-      <PageBanner image={IMAGES.stats} alt="مجله برق ما" priority>
+      <PageBanner image={IMAGES.stats} alt="مجله برقینو" priority>
         <span className="mb-4 inline-block rounded-full bg-white/10 px-4 py-1.5 text-sm font-medium text-brand-200 backdrop-blur-sm">
           مجله تخصصی انرژی
         </span>
         <h1 className="font-display text-3xl font-extrabold text-white sm:text-4xl lg:text-5xl">
-          مجله <span className="text-brand-200">برق ما</span>
+          مجله <span className="text-brand-200">برقینو</span>
         </h1>
         <p className="mt-4 max-w-2xl text-base leading-8 text-slate-200 sm:text-lg">
           تحلیل بازار برق، بهینه‌سازی مصرف و انرژی تجدیدپذیر — نوشته‌شده برای تصمیم‌گیرندگان

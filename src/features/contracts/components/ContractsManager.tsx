@@ -38,10 +38,10 @@ export function ContractsManager() {
   return (
     <DashboardPage
       title="قراردادها"
-      subtitle="مدیریت، مشاهده، دانلود و بارگذاری قراردادهای تامین برق"
+      subtitle="مدیریت قراردادهای فروش برق خانگی و نصب نیروگاه"
       action={
         <Button href="/dashboard/buy" size="sm" className="group">
-          قرارداد جدید
+          مسیر فروش برق
           <LinkArrow />
         </Button>
       }
@@ -110,13 +110,13 @@ export function ContractsManager() {
               onChange={(event) => setRoleOnly(event.target.checked)}
               className="rounded border-slate-300 text-brand-600 focus:ring-brand-500"
             />
-            فقط مرتبط با حساب {DASHBOARD_USER.role === "business" ? "حقوقی" : "حقیقی"}
+            فقط مرتبط با حساب حقیقی
           </label>
           <input
             type="search"
             value={query}
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="جستجو عنوان، شناسه قبض یا نوع…"
+            placeholder="جستجو عنوان، نیروگاه یا نوع…"
             className="w-full rounded-xl border border-slate-200 bg-white px-4 py-2.5 text-sm text-slate-800 outline-none ring-brand-400 placeholder:text-slate-400 focus:ring-2 sm:w-72"
           />
         </div>
@@ -125,10 +125,10 @@ export function ContractsManager() {
       {filtered.length === 0 ? (
         <EmptyState
           title="قراردادی یافت نشد"
-          description="با تغییر فیلتر یا جستجو دوباره امتحان کنید، یا قرارداد جدید بسازید."
+          description="با تغییر فیلتر یا جستجو دوباره امتحان کنید، یا مسیر فروش را شروع کنید."
           action={
             <Button href="/dashboard/buy" className="group">
-              شروع خرید برق
+              شروع فروش برق
               <LinkArrow />
             </Button>
           }

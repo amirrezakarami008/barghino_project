@@ -11,7 +11,7 @@ function withDefaults(post: BlogPost): BlogPost {
     status: "published",
     featured: false,
     source: "custom",
-    author: post.author ?? "برق ما",
+    author: post.author ?? "برقینو",
     ...post,
     href: post.href || `/blog/${post.slug}`,
   };

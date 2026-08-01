@@ -1,16 +1,20 @@
 import {
   BarChart3,
   Bell,
+  ClipboardList,
   CreditCard,
   FileCheck,
   FileText,
   FolderOpen,
   Headphones,
   LayoutDashboard,
+  LineChart,
   Newspaper,
   Receipt,
   Settings,
-  ShoppingCart,
+  Sparkles,
+  Sun,
+  TrendingUp,
   User,
   type LucideIcon,
 } from "lucide-react";
@@ -18,10 +22,9 @@ import type { DashboardNavIcon } from "@/shared/types/dashboard";
 
 const DASHBOARD_ICON_MAP: Record<DashboardNavIcon, LucideIcon> = {
   LayoutDashboard,
-  FileText,
+  Sun,
   BarChart3,
   FileCheck,
-  ShoppingCart,
   Receipt,
   CreditCard,
   Bell,
@@ -30,6 +33,11 @@ const DASHBOARD_ICON_MAP: Record<DashboardNavIcon, LucideIcon> = {
   User,
   Settings,
   Newspaper,
+  FileText,
+  ClipboardList,
+  TrendingUp,
+  LineChart,
+  Sparkles,
 };
 
 export function getDashboardIcon(name: DashboardNavIcon): LucideIcon {
@@ -39,14 +47,17 @@ export function getDashboardIcon(name: DashboardNavIcon): LucideIcon {
 export {
   BarChart3,
   Bell,
+  ClipboardList,
   CreditCard,
   FileCheck,
   FileText,
   FolderOpen,
   Headphones,
   LayoutDashboard,
+  LineChart,
   Receipt,
   Settings,
-  ShoppingCart,
+  Sun,
+  TrendingUp,
   User,
 };

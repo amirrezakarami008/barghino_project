@@ -5,18 +5,18 @@ export const FOOTER_LINKS: FooterLinkGroup[] = [
     title: "دسترسی سریع",
     links: [
       { label: "صفحه اصلی", href: "/" },
+      { label: "فروش برق خانگی", href: "/register" },
+      { label: "نصب نیروگاه خورشیدی", href: "/solar-home" },
       { label: "سوالات متداول", href: "/faq" },
-      { label: "تماس با ما", href: "/contact" },
-      { label: "درباره ما", href: "/about" },
     ],
   },
   {
-    title: "خدمات",
+    title: "بیشتر بدانید",
     links: [
-      { label: "تامین برق مصرفی", href: "/services/power-supply" },
-      { label: "تامین برق خاموشی", href: "/services/uninterrupted-power" },
-      { label: "مشاوره انرژی", href: "/services/energy-consulting" },
-      { label: "نیروگاه تجدیدپذیر", href: "/services/renewable" },
+      { label: "درباره برقینو", href: "/about" },
+      { label: "تماس با ما", href: "/contact" },
+      { label: "پشتیبانی", href: "/support" },
+      { label: "مجله", href: "/blog" },
     ],
   },
   {
@@ -29,12 +29,8 @@ export const FOOTER_LINKS: FooterLinkGroup[] = [
 ];
 
 export const TRUSTED_CLIENTS = [
-  "پتروشیمی",
-  "فولاد",
-  "سیمان",
-  "داروسازی",
-  "خودروسازی",
-  "غذایی",
-  "نساجی",
-  "فناوری",
+  "خانه‌های ویلایی",
+  "آپارتمان‌ها",
+  "مجتمع‌های مسکونی",
+  "باغ‌ویلاها",
 ];

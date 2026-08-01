@@ -9,9 +9,9 @@ export function BlogSection() {
     <Section id="blog" background="muted" compact>
       <Container>
         <SectionHeader
-          badge="مجله برق ما"
+          badge="مجله برقینو"
           title="آخرین روندها و راهکارهای بازار برق"
-          description="مقالات تخصصی درباره مدیریت انرژی، بهینه‌سازی مصرف و انرژی تجدیدپذیر."
+          description="راهنمای فروش برق خانگی، بورس سبز و نصب نیروگاه خورشیدی."
           compact
         />
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">

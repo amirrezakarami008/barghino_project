@@ -23,8 +23,7 @@ export function Footer() {
               <span className="font-display text-2xl font-extrabold text-white">{SITE_CONFIG.name}</span>
             </Link>
             <p className="mb-8 max-w-sm text-sm leading-relaxed text-slate-400">
-              {SITE_CONFIG.name}، سامانه آنلاین خرید برق در ایران با تنظیم قراردادهای دوجانبه و
-              ارائه راهکارهای هوشمند، تامین برق را شفاف، منعطف و قابل‌اعتماد کرده است.
+              {SITE_CONFIG.tagline}. {SITE_CONFIG.description}
             </p>
             <div className="space-y-3 text-sm">
               <a

@@ -2,26 +2,24 @@ import type { StatItem } from "@/shared/types";
 
 export const STATS: StatItem[] = [
   {
-    id: "supplied",
-    value: "۳",
-    suffix: "میلیارد+",
-    label: "کیلووات‌ساعت برق تامین‌شده",
+    id: "price",
+    value: "≈۳×",
+    label: "قیمت بهتر نسبت به خرید پایه دولتی (نمونه)",
   },
   {
-    id: "time",
-    value: "۳",
-    label: "دقیقه از ثبت‌نام تا تامین برق",
+    id: "payout",
+    value: "۲",
+    suffix: " ماه",
+    label: "حداکثر زمان پرداخت تضمینی",
   },
   {
-    id: "industrial",
-    value: "۲۵",
-    suffix: "+٪",
-    label: "تامین برق واحدهای صنعتی بالای ۱ مگاوات",
+    id: "paths",
+    value: "۲",
+    label: "مسیر: فروش برق یا درخواست نصب",
   },
   {
-    id: "green",
-    value: "۳۲",
-    suffix: "+٪",
-    label: "مدیریت برق سبز کشور",
+    id: "focus",
+    value: "۱۰۰٪",
+    label: "تمرکز روی مشترک خانگی",
   },
 ];

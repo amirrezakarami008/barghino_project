@@ -34,7 +34,7 @@ export function BlogEditorForm() {
   const [slugTouched, setSlugTouched] = useState(false);
   const [excerpt, setExcerpt] = useState("");
   const [category, setCategory] = useState<string>(BLOG_CATEGORY_OPTIONS[0]);
-  const [author, setAuthor] = useState("تیم تحریریه برق ما");
+  const [author, setAuthor] = useState("تیم تحریریه برقینو");
   const [cover, setCover] = useState(BLOG_COVER_PRESETS[0].src);
   const [featured, setFeatured] = useState(false);
   const [sections, setSections] = useState<DraftSection[]>([createSection()]);
@@ -137,7 +137,7 @@ export function BlogEditorForm() {
       href: `/blog/${slug.trim()}`,
       category,
       image: cover,
-      author: author.trim() || "برق ما",
+      author: author.trim() || "برقینو",
       readTime,
       content,
       status,

@@ -11,12 +11,12 @@ const profileFields: FormField[] = [
   { name: "phone", label: "شماره موبایل", type: "tel", required: true },
   { name: "email", label: "ایمیل", type: "email" },
   { name: "nationalId", label: "کد ملی", type: "text" },
-  { name: "company", label: "نام شرکت", type: "text" },
+  { name: "address", label: "آدرس محل سکونت", type: "textarea" },
 ];
 
 export default function ProfilePage() {
   return (
-    <DashboardPage title="پروفایل" subtitle="اطلاعات حساب کاربری و هویتی">
+    <DashboardPage title="پروفایل" subtitle="اطلاعات حساب خانگی شما">
       <div className="grid gap-6 lg:grid-cols-3">
         <Panel className="lg:col-span-1">
           <div className="flex flex-col items-center text-center">
@@ -24,7 +24,7 @@ export default function ProfilePage() {
               <Avatar src={DASHBOARD_USER.avatar} alt={DASHBOARD_USER.name} size="lg" />
             )}
             <h2 className="mt-4 text-xl font-bold text-slate-900">{DASHBOARD_USER.name}</h2>
-            <p className="text-sm text-slate-500">{DASHBOARD_USER.company}</p>
+            <p className="text-sm text-slate-500">مشترک خانگی</p>
             {DASHBOARD_USER.verified && (
               <span className="mt-2 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-700">
                 ✓ حساب تأیید‌شده
@@ -34,7 +34,7 @@ export default function ProfilePage() {
           </div>
           <div className="mt-6 space-y-3 border-t border-slate-100 pt-6">
             {[
-              { label: "نوع حساب", value: DASHBOARD_USER.role === "business" ? "حقوقی / سازمانی" : "حقیقی" },
+              { label: "نوع حساب", value: "حقیقی / خانگی" },
               { label: "موبایل", value: DASHBOARD_USER.phone },
               { label: "ایمیل", value: DASHBOARD_USER.email },
             ].map((item) => (

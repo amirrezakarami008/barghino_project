@@ -39,6 +39,8 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Gauge,
   Lightbulb,
   Sun,
+  Phone,
+  Clock,
 };
 
 export function getIcon(name: string): LucideIcon {
@@ -63,6 +65,7 @@ export {
   Smartphone,
   Sparkles,
   Star,
+  Sun,
   TrendingDown,
   UserRound,
   X,

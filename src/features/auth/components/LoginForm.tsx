@@ -4,12 +4,11 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type FormEvent } from "react";
 import { Button } from "@/shared/ui/Button";
-import { Building2, Lock, Smartphone, Sparkles } from "@/shared/lib/icons";
+import { Lock, Smartphone, Sparkles } from "@/shared/lib/icons";
 import { cn } from "@/shared/lib/utils";
 import { AUTH_COPY, AUTH_FIELDS } from "../constants";
-import { onlyDigits, validateLoginIdentity, isValidPassword } from "../lib/validation";
-import type { AccountType, AuthFieldErrors, LoginMethod } from "../types";
-import { AccountTypeToggle } from "./AccountTypeToggle";
+import { onlyDigits, isValidIranMobile, isValidPassword } from "../lib/validation";
+import type { AuthFieldErrors, LoginMethod } from "../types";
 import { AuthInput } from "./AuthInput";
 import { OtpInput } from "./OtpInput";
 
@@ -17,13 +16,11 @@ const OTP_RESEND_SECONDS = 120;
 
 export function LoginForm() {
   const router = useRouter();
-  const [accountType, setAccountType] = useState<AccountType>("individual");
   const [method, setMethod] = useState<LoginMethod>("password");
   const [otpSent, setOtpSent] = useState(false);
   const [resendIn, setResendIn] = useState(0);
   const [submitting, setSubmitting] = useState(false);
   const [phone, setPhone] = useState("");
-  const [companyNationalId, setCompanyNationalId] = useState("");
   const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
   const [errors, setErrors] = useState<AuthFieldErrors>({});
@@ -34,20 +31,12 @@ export function LoginForm() {
     return () => window.clearTimeout(timer);
   }, [resendIn]);
 
-  const resetAuthState = (nextType: AccountType) => {
-    setAccountType(nextType);
-    setErrors({});
-    setOtp("");
-    setOtpSent(false);
-  };
-
-  const identityError = validateLoginIdentity(accountType, phone, companyNationalId);
-
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const nextErrors: AuthFieldErrors = {};
 
-    if (identityError) nextErrors.identity = identityError;
+    if (!phone.trim()) nextErrors.identity = "شماره موبایل الزامی است.";
+    else if (!isValidIranMobile(phone)) nextErrors.identity = "شماره موبایل معتبر نیست.";
 
     if (method === "password") {
       if (!password) nextErrors.password = "رمز عبور الزامی است.";
@@ -87,49 +76,24 @@ export function LoginForm() {
         <p className="mt-1.5 text-sm text-slate-400">{AUTH_COPY.login.subtitle}</p>
       </div>
 
-      <AccountTypeToggle value={accountType} onChange={resetAuthState} className="mb-5" />
-
-      <p className="mb-4 text-xs text-slate-500">
-        {accountType === "individual"
-          ? AUTH_COPY.login.individualHint
-          : AUTH_COPY.login.legalHint}
-      </p>
+      <p className="mb-4 text-xs text-slate-500">{AUTH_COPY.login.individualHint}</p>
 
       <form onSubmit={handleSubmit} className="space-y-4" noValidate>
-        {accountType === "individual" ? (
-          <AuthInput
-            label={AUTH_FIELDS.phone.label}
-            name={AUTH_FIELDS.phone.name}
-            type="tel"
-            inputMode="numeric"
-            dir="ltr"
-            autoComplete="tel"
-            maxLength={AUTH_FIELDS.phone.maxLength}
-            value={phone}
-            required
-            disabled={otpSent}
-            error={errors.identity}
-            icon={<Smartphone className="h-4 w-4" />}
-            onChange={(event) => setPhone(onlyDigits(event.target.value).slice(0, 11))}
-          />
-        ) : (
-          <AuthInput
-            label={AUTH_FIELDS.companyNationalId.label}
-            name={AUTH_FIELDS.companyNationalId.name}
-            type="text"
-            inputMode="numeric"
-            dir="ltr"
-            maxLength={AUTH_FIELDS.companyNationalId.maxLength}
-            value={companyNationalId}
-            required
-            disabled={otpSent}
-            error={errors.identity}
-            icon={<Building2 className="h-4 w-4" />}
-            onChange={(event) =>
-              setCompanyNationalId(onlyDigits(event.target.value).slice(0, 12))
-            }
-          />
-        )}
+        <AuthInput
+          label={AUTH_FIELDS.phone.label}
+          name={AUTH_FIELDS.phone.name}
+          type="tel"
+          inputMode="numeric"
+          dir="ltr"
+          autoComplete="tel"
+          maxLength={AUTH_FIELDS.phone.maxLength}
+          value={phone}
+          required
+          disabled={otpSent}
+          error={errors.identity}
+          icon={<Smartphone className="h-4 w-4" />}
+          onChange={(event) => setPhone(onlyDigits(event.target.value).slice(0, 11))}
+        />
 
         <div className="grid grid-cols-2 gap-2 rounded-2xl border border-white/10 bg-black/20 p-1">
           {(["password", "otp"] as const).map((item) => (

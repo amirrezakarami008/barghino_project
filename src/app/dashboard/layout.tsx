@@ -4,7 +4,7 @@ import { DashboardSidebar } from "@/features/dashboard/components/DashboardSideb
 export const metadata: Metadata = {
   title: {
     default: "پنل کاربری",
-    template: "%s | پنل برق ما",
+    template: "%s | پنل برقینو",
   },
   robots: { index: false, follow: false },
 };

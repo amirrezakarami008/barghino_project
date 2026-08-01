@@ -1,4 +1,5 @@
 import type { Metadata, Viewport } from "next";
+import { SITE_CONFIG } from "@/config";
 import "./globals.css";
 
 export const viewport: Viewport = {
@@ -9,11 +10,10 @@ export const viewport: Viewport = {
 
 export const metadata: Metadata = {
   title: {
-    default: "برق ما | سامانه آنلاین خرید برق در ایران",
-    template: "%s | برق ما",
+    default: `${SITE_CONFIG.name} | ${SITE_CONFIG.tagline}`,
+    template: `%s | ${SITE_CONFIG.name}`,
   },
-  description:
-    "تامین برق با تعرفه اقتصادی و کاهش هزینه تا ۶۰ درصد، سریع، ساده و متناسب با نیاز شما",
+  description: SITE_CONFIG.description,
 };
 
 export default function RootLayout({

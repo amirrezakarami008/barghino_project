@@ -75,7 +75,7 @@ export function BlogArticleView({ seedPost, slug }: BlogArticleViewProps) {
           <div className="mt-12 rounded-2xl border border-brand-200 bg-brand-50 p-5 text-center sm:p-8">
             <h3 className="mb-2 text-lg font-bold text-slate-900">نیاز به مشاوره دارید؟</h3>
             <p className="mb-6 text-sm text-slate-600">
-              کارشناسان برق ما آماده پاسخگویی به سوالات شما هستند.
+              کارشناسان برقینو آماده پاسخگویی به سوالات شما هستند.
             </p>
             <Button href="/contact" className="group">
               تماس با ما

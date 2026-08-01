@@ -60,7 +60,7 @@ export function AdminBlogManager() {
   return (
     <DashboardPage
       title="مدیریت مجله"
-      subtitle="انتشار، پیش‌نویس و مدیریت مقالات تخصصی برق ما"
+      subtitle="انتشار، پیش‌نویس و مدیریت مقالات تخصصی برقینو"
     >
       <div className="mb-6 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {[

@@ -1,8 +1,10 @@
 import {
   AppDownloadSection,
+  CompareSection,
   CTASection,
   FAQBlogSection,
   HeroSection,
+  PathsSection,
   ServicesSection,
   StatsSection,
   StepsSection,
@@ -14,12 +16,14 @@ export default function HomePage() {
   return (
     <>
       <HeroSection />
+      <CompareSection />
+      <PathsSection />
+      <StepsSection />
       <WhyUsSection />
       <ServicesSection />
-      <StepsSection />
       <StatsSection />
-      <AppDownloadSection />
       <TestimonialsSection />
+      <AppDownloadSection />
       <FAQBlogSection />
       <CTASection />
     </>

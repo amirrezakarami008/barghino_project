@@ -15,7 +15,7 @@ export function FAQBlogSection() {
             <SectionHeader
               badge="سوالات متداول"
               title="پاسخ سوالات شما"
-              description="رایج‌ترین سوالات درباره خدمات و فرایند خرید برق."
+              description="رایج‌ترین سوالات درباره فروش برق خانگی و نصب نیروگاه."
               align="start"
               compact
             />
@@ -24,9 +24,9 @@ export function FAQBlogSection() {
 
           <div>
             <SectionHeader
-              badge="مجله برق ما"
+              badge="مجله برقینو"
               title="آخرین مقالات"
-              description="روندها و راهکارهای بازار برق."
+              description="راهنمای فروش برق خانگی، بورس سبز و نصب نیروگاه."
               align="start"
               compact
             />

@@ -1,4 +1,6 @@
 export { HeroSection } from "./HeroSection";
+export { CompareSection } from "./CompareSection";
+export { PathsSection } from "./PathsSection";
 export { WhyUsSection } from "./WhyUsSection";
 export { ServicesSection } from "./ServicesSection";
 export { StepsSection } from "./StepsSection";

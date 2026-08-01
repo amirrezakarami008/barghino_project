@@ -3,26 +3,14 @@
 import { DashboardPage, Panel, PanelHeader, StatusBadge } from "@/features/dashboard/components";
 import { Button } from "@/shared/ui/Button";
 import { Form } from "@/shared/ui/Form";
-import { BILL_ACCOUNTS } from "@/features/dashboard/constants";
+import { HOME_SUBSCRIPTIONS } from "@/features/dashboard/constants";
 import type { FormField } from "@/shared/types";
 import { useState } from "react";
 
-const addBillFields: FormField[] = [
-  { name: "name", label: "نام واحد", type: "text", placeholder: "مثال: کارخانه تولیدی", required: true },
-  { name: "billId", label: "شناسه قبض", type: "text", placeholder: "شناسه ۱۳ رقمی", required: true },
-  {
-    name: "type",
-    label: "نوع مصرف",
-    type: "select",
-    required: true,
-    options: [
-      { label: "صنعتی", value: "industrial" },
-      { label: "تجاری", value: "commercial" },
-      { label: "اداری", value: "office" },
-      { label: "مسکونی", value: "residential" },
-    ],
-  },
-  { name: "address", label: "آدرس", type: "textarea", placeholder: "آدرس کامل واحد" },
+const addSubscriptionFields: FormField[] = [
+  { name: "name", label: "نام انشعاب", type: "text", placeholder: "مثال: خانه اصلی — تهران", required: true },
+  { name: "meterNumber", label: "شماره انشعاب (کنتور)", type: "text", placeholder: "شماره ۸ رقمی روی قبض برق", required: true },
+  { name: "address", label: "آدرس ملک", type: "textarea", placeholder: "آدرس کامل محل نصب نیروگاه" },
 ];
 
 export default function BillsPage() {
@@ -30,61 +18,50 @@ export default function BillsPage() {
 
   return (
     <DashboardPage
-      title="شناسه‌های قبض"
-      subtitle="مدیریت واحدهای مصرفی و شناسه‌های قبض برق"
+      title="انشعاب‌های خانگی"
+      subtitle="انشعاب‌هایی که نیروگاه خورشیدی دارند یا قرار است داشته باشند"
     >
       <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-sm text-slate-500">
-          {BILL_ACCOUNTS.length} شناسه قبض ثبت‌شده — برای خرید برق حداقل یک شناسه فعال لازم است.
+          {HOME_SUBSCRIPTIONS.length} انشعاب ثبت‌شده
         </p>
         <Button onClick={() => setShowForm(!showForm)}>
-          {showForm ? "بستن فرم" : "+ افزودن شناسه قبض"}
+          {showForm ? "بستن فرم" : "+ افزودن انشعاب جدید"}
         </Button>
       </div>
 
       {showForm && (
         <Panel className="mb-6">
-          <PanelHeader title="ثبت شناسه قبض جدید" description="اطلاعات را مطابق قبض برق وارد کنید" />
+          <PanelHeader title="ثبت انشعاب جدید" description="اطلاعات را مطابق قبض برق وارد کنید" />
           <div className="max-w-lg">
-            <Form fields={addBillFields} submitLabel="ثبت شناسه" />
+            <Form fields={addSubscriptionFields} submitLabel="ثبت انشعاب" />
           </div>
         </Panel>
       )}
 
       <div className="grid gap-4">
-        {BILL_ACCOUNTS.map((bill) => (
-          <Panel key={bill.id} className="transition-shadow hover:shadow-md">
+        {HOME_SUBSCRIPTIONS.map((sub) => (
+          <Panel key={sub.id} className="transition-shadow hover:shadow-md">
             <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
               <div className="flex-1">
                 <div className="mb-2 flex flex-wrap items-center gap-2">
-                  <h3 className="font-bold text-slate-900">{bill.name}</h3>
-                  <StatusBadge status={bill.status} />
-                  <span className="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs text-slate-600">
-                    {bill.type}
-                  </span>
+                  <h3 className="font-bold text-slate-900">{sub.name}</h3>
+                  <StatusBadge status={sub.status} />
                 </div>
-                <p className="text-sm text-slate-500">{bill.address}</p>
-                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <p className="text-sm text-slate-500">{sub.address}</p>
+                <div className="mt-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
                   <div className="rounded-xl bg-slate-50 p-3">
-                    <p className="text-xs text-slate-500">شناسه قبض</p>
-                    <p className="mt-1 font-mono text-sm font-semibold text-slate-900">{bill.billId}</p>
-                  </div>
-                  <div className="rounded-xl bg-slate-50 p-3">
-                    <p className="text-xs text-slate-500">دیماند</p>
-                    <p className="mt-1 text-sm font-semibold text-slate-900">{bill.demand}</p>
-                  </div>
-                  <div className="rounded-xl bg-slate-50 p-3">
-                    <p className="text-xs text-slate-500">مصرف ماهانه</p>
-                    <p className="mt-1 text-sm font-semibold text-slate-900">{bill.monthlyUsage}</p>
+                    <p className="text-xs text-slate-500">شماره انشعاب</p>
+                    <p className="mt-1 font-mono text-sm font-semibold text-slate-900">{sub.meterNumber}</p>
                   </div>
                 </div>
               </div>
               <div className="flex flex-wrap gap-2 lg:flex-col">
-                <Button href="/dashboard/consumption" variant="outline" size="sm">
-                  مشاهده مصرف
+                <Button href="/dashboard/plant" variant="outline" size="sm">
+                  نیروگاه این انشعاب
                 </Button>
-                <Button href="/dashboard/buy" variant="outline" size="sm">
-                  خرید برق
+                <Button href="/dashboard/install" variant="outline" size="sm">
+                  درخواست نصب
                 </Button>
               </div>
             </div>

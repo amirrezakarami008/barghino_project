@@ -10,7 +10,7 @@ export function FAQSection() {
         <SectionHeader
           badge="سوالات متداول"
           title="دسترسی سریع به پاسخ پرسش‌های شما"
-          description="پاسخ به رایج‌ترین سوالات درباره خدمات و فرایند خرید برق از برق ما."
+          description="پاسخ به رایج‌ترین سوالات درباره فروش برق خانگی و نصب نیروگاه."
           compact
         />
         <Accordion items={FAQ_ITEMS} />

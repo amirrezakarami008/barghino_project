@@ -17,7 +17,9 @@ type StatusVariant =
   | "failed"
   | "warning"
   | "info"
-  | "billing";
+  | "billing"
+  | "maintenance"
+  | "processing";
 
 const variantStyles: Record<StatusVariant, string> = {
   active: "bg-emerald-50 text-emerald-700 ring-emerald-600/20",
@@ -37,6 +39,8 @@ const variantStyles: Record<StatusVariant, string> = {
   warning: "bg-amber-50 text-amber-700 ring-amber-600/20",
   info: "bg-blue-50 text-blue-700 ring-blue-600/20",
   billing: "bg-brand-50 text-brand-700 ring-brand-600/20",
+  maintenance: "bg-amber-50 text-amber-700 ring-amber-600/20",
+  processing: "bg-blue-50 text-blue-700 ring-blue-600/20",
 };
 
 const statusLabels: Record<StatusVariant, string> = {
@@ -57,6 +61,8 @@ const statusLabels: Record<StatusVariant, string> = {
   warning: "هشدار",
   info: "اطلاع",
   billing: "مالی",
+  maintenance: "در حال سرویس",
+  processing: "در پردازش",
 };
 
 interface StatusBadgeProps {

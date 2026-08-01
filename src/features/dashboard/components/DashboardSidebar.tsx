@@ -3,6 +3,7 @@
 import { Avatar } from "@/shared/ui/MediaImage";
 import { DASHBOARD_NAV, DASHBOARD_USER } from "@/features/dashboard/constants";
 import { getDashboardIcon } from "@/features/dashboard/lib/icons";
+import { SITE_CONFIG } from "@/config";
 import { cn } from "@/shared/lib/utils";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -23,10 +24,8 @@ export function DashboardSidebar() {
           <Zap className="h-5 w-5 text-white" />
         </div>
         <div>
-          <p className="font-display font-bold text-white">
-            پنل {DASHBOARD_USER.company ? "سازمانی" : "کاربری"}
-          </p>
-          <p className="text-xs text-slate-500">برق ما</p>
+          <p className="font-display font-bold text-white">پنل کاربری</p>
+          <p className="text-xs text-slate-500">{SITE_CONFIG.name}</p>
         </div>
       </div>
 

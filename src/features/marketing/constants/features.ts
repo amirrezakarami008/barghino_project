@@ -2,27 +2,27 @@ import type { FeatureItem } from "@/shared/types";
 
 export const FEATURES: FeatureItem[] = [
   {
-    id: "cost-reduction",
-    title: "کاهش هزینه‌های انرژی",
-    description: "کاهش چشمگیر هزینه‌های برق تا ۶۰ درصد با قراردادهای دوجانبه",
+    id: "green-price",
+    title: "قیمت بورس سبز",
+    description: "فروش برق خانگی با نرخی بالاتر از مسیر پایه دولتی",
     icon: "TrendingDown",
   },
   {
-    id: "reliable-supply",
-    title: "تامین برق پایدار",
-    description: "پایان خاموشی‌ها با مدیریت هوشمند تامین انرژی و برق سبز",
+    id: "fast-pay",
+    title: "پرداخت تضمینی",
+    description: "تسویه حداکثر تا ۲ ماه، نه انتظار چندماهه",
     icon: "Zap",
   },
   {
-    id: "expert-support",
-    title: "پشتیبانی تخصصی",
-    description: "مشاوره فنی و حقوقی در تمام مراحل خرید و مدیریت برق",
-    icon: "Headphones",
+    id: "install",
+    title: "مسیر نصب",
+    description: "اگر نیروگاه نداری، درخواست احداث بده",
+    icon: "Sun",
   },
   {
-    id: "smart-dashboard",
-    title: "پنل مدیریت پیشرفته",
-    description: "داشبورد تحلیلی برای مدیریت دقیق مصرف، هزینه و پیش‌بینی",
-    icon: "LayoutDashboard",
+    id: "home",
+    title: "مخصوص خانگی",
+    description: "تمرکز روی مشترک خانگی، نه مدل صنعتی پیچیده",
+    icon: "ShieldCheck",
   },
 ];

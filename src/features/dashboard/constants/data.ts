@@ -1,178 +1,159 @@
 import type {
-  BillAccount,
-  ConsumptionPoint,
   Document,
-  Invoice,
+  HomeSubscription,
+  InstallRequest,
   Notification,
   Payment,
-  PowerPackage,
+  ProductionPoint,
+  SellInvoice,
+  SolarPlant,
   SupportTicket,
 } from "@/shared/types/dashboard";
 import { SEED_CONTRACTS } from "@/features/contracts/constants";
 
-export const BILL_ACCOUNTS: BillAccount[] = [
-  {
-    id: "b1",
-    name: "کارخانه فولاد آریا — خط تولید ۱",
-    billId: "۱۲۳۴۵۶۷۸۹۰۱۲",
-    type: "صنعتی",
-    demand: "۲.۵ MW",
-    monthlyUsage: "۸,۲۰۰ kWh",
-    status: "active",
-    address: "اصفهان، شهرک صنعتی مورچه‌خورت",
-  },
-  {
-    id: "b2",
-    name: "دفتر مرکزی — ساختمان اداری",
-    billId: "۹۸۷۶۵۴۳۲۱۰۹۸",
-    type: "اداری",
-    demand: "۱۵۰ kW",
-    monthlyUsage: "۴,۲۵۰ kWh",
-    status: "active",
-    address: "تهران، خیابان ولیعصر",
-  },
-  {
-    id: "b3",
-    name: "انبار جنوب — واحد توزیع",
-    billId: "۵۵۵۵۶۶۶۶۷۷۷۸",
-    type: "تجاری",
-    demand: "۸۰ kW",
-    monthlyUsage: "—",
-    status: "pending",
-    address: "شیراز، بلوار زند",
-  },
-];
-
 export const CONTRACTS = SEED_CONTRACTS;
 
-export const MONTHLY_CONSUMPTION: ConsumptionPoint[] = [
-  { label: "فروردین", usage: 11200, cost: 54.2, peak: 890 },
-  { label: "اردیبهشت", usage: 10800, cost: 52.1, peak: 850 },
-  { label: "خرداد", usage: 13100, cost: 58.4, peak: 920 },
-  { label: "تیر", usage: 14200, cost: 62.8, peak: 980 },
-  { label: "مرداد", usage: 13800, cost: 61.2, peak: 960 },
-  { label: "شهریور", usage: 12450, cost: 29.1, peak: 820 },
-];
-
-export const DAILY_CONSUMPTION: ConsumptionPoint[] = [
-  { label: "شنبه", usage: 420, cost: 2.1, peak: 65 },
-  { label: "یکشنبه", usage: 445, cost: 2.2, peak: 68 },
-  { label: "دوشنبه", usage: 410, cost: 2.0, peak: 62 },
-  { label: "سه‌شنبه", usage: 460, cost: 2.3, peak: 72 },
-  { label: "چهارشنبه", usage: 435, cost: 2.1, peak: 66 },
-  { label: "پنجشنبه", usage: 390, cost: 1.9, peak: 58 },
-  { label: "جمعه", usage: 280, cost: 1.4, peak: 42 },
-];
-
-export const INVOICES: Invoice[] = [
+/** نیروگاه‌های خورشیدی ثبت‌شده */
+export const SOLAR_PLANTS: SolarPlant[] = [
   {
-    id: "inv1",
-    number: "INV-۱۴۰۴-۰۶-۰۰۱",
-    billAccount: "کارخانه فولاد آریا",
+    id: "sp1",
+    name: "نیروگاه پشت‌بام خانه اصلی",
+    address: "تهران، شهرک غرب، خیابان ایران‌زمین",
+    capacityKwp: 6,
+    monthlyProductionKwh: 720,
+    startDate: "۱۴۰۴/۰۱/۱۵",
+    status: "active",
+    meterNumber: "۱۴۵۲۳۶۷۸",
+  },
+  {
+    id: "sp2",
+    name: "نیروگاه ویلا — کرج",
+    address: "کرج، محله مهرشهر",
+    capacityKwp: 4,
+    monthlyProductionKwh: 480,
+    startDate: "۱۴۰۴/۰۴/۰۱",
+    status: "active",
+    meterNumber: "۹۸۷۶۵۴۳۲",
+  },
+];
+
+/** انشعاب‌های خانگی ثبت‌شده */
+export const HOME_SUBSCRIPTIONS: HomeSubscription[] = [
+  {
+    id: "hs1",
+    name: "خانه اصلی — تهران",
+    meterNumber: "۱۴۵۲۳۶۷۸",
+    address: "تهران، شهرک غرب",
+    status: "active",
+  },
+  {
+    id: "hs2",
+    name: "ویلا — کرج",
+    meterNumber: "۹۸۷۶۵۴۳۲",
+    address: "کرج، مهرشهر",
+    status: "active",
+  },
+];
+
+/** نقاط تولید ماهانه برای نمودار */
+export const MONTHLY_PRODUCTION: ProductionPoint[] = [
+  { label: "فروردین", production: 690, earnings: 10_350_000 },
+  { label: "اردیبهشت", production: 740, earnings: 11_100_000 },
+  { label: "خرداد", production: 810, earnings: 12_150_000 },
+  { label: "تیر", production: 870, earnings: 13_050_000 },
+  { label: "مرداد", production: 850, earnings: 12_750_000 },
+  { label: "شهریور", production: 720, earnings: 10_800_000 },
+];
+
+/** صورت‌حساب‌های درآمد فروش برق */
+export const SELL_INVOICES: SellInvoice[] = [
+  {
+    id: "si1",
+    number: "SEL-۱۴۰۴-۰۶-۰۰۱",
+    plantName: "نیروگاه پشت‌بام خانه اصلی",
     period: "شهریور ۱۴۰۴",
-    amount: "۱۸,۴۵۰,۰۰۰",
-    dueDate: "۱۴۰۴/۰۷/۱۵",
+    energyKwh: "۷۲۰",
+    ratePerKwh: "۱۵٬۰۰۰",
+    amount: "۱۰٬۸۰۰٬۰۰۰",
+    dueDate: "۱۴۰۴/۰۸/۰۱",
     status: "pending",
   },
   {
-    id: "inv2",
-    number: "INV-۱۴۰۴-۰۶-۰۰۲",
-    billAccount: "دفتر مرکزی",
+    id: "si2",
+    number: "SEL-۱۴۰۴-۰۶-۰۰۲",
+    plantName: "نیروگاه ویلا — کرج",
     period: "شهریور ۱۴۰۴",
-    amount: "۱۰,۶۵۰,۰۰۰",
-    dueDate: "۱۴۰۴/۰۷/۱۵",
+    energyKwh: "۴۸۰",
+    ratePerKwh: "۱۵٬۰۰۰",
+    amount: "۷٬۲۰۰٬۰۰۰",
+    dueDate: "۱۴۰۴/۰۸/۰۱",
     status: "pending",
   },
   {
-    id: "inv3",
-    number: "INV-۱۴۰۴-۰۵-۰۰۱",
-    billAccount: "کارخانه فولاد آریا",
+    id: "si3",
+    number: "SEL-۱۴۰۴-۰۵-۰۰۱",
+    plantName: "نیروگاه پشت‌بام خانه اصلی",
     period: "مرداد ۱۴۰۴",
-    amount: "۱۹,۲۰۰,۰۰۰",
-    dueDate: "۱۴۰۴/۰۶/۱۵",
+    energyKwh: "۸۵۰",
+    ratePerKwh: "۱۵٬۰۰۰",
+    amount: "۱۲٬۷۵۰٬۰۰۰",
+    dueDate: "۱۴۰۴/۰۷/۰۱",
     status: "paid",
-    paidDate: "۱۴۰۴/۰۶/۱۰",
-  },
-  {
-    id: "inv4",
-    number: "INV-۱۴۰۴-۰۵-۰۰۲",
-    billAccount: "دفتر مرکزی",
-    period: "مرداد ۱۴۰۴",
-    amount: "۱۱,۸۰۰,۰۰۰",
-    dueDate: "۱۴۰۴/۰۶/۱۵",
-    status: "paid",
-    paidDate: "۱۴۰۴/۰۶/۱۲",
+    paidDate: "۱۴۰۴/۰۶/۲۸",
   },
 ];
 
 export const PAYMENTS: Payment[] = [
   {
     id: "p1",
-    title: "پرداخت فاکتور مرداد — فولاد آریا",
-    amount: "۱۹,۲۰۰,۰۰۰",
-    date: "۱۴۰۴/۰۶/۱۰",
-    method: "درگاه بانکی",
+    title: "پرداخت فروش مرداد — پشت‌بام خانه اصلی",
+    amount: "۱۲٬۷۵۰٬۰۰۰",
+    date: "۱۴۰۴/۰۶/۲۸",
+    method: "واریز مستقیم",
     status: "success",
-    reference: "BT-۸۴۷۲۹۱",
+    reference: "BRQ-۸۴۷۲۹۱",
   },
   {
     id: "p2",
-    title: "پرداخت فاکتور مرداد — دفتر مرکزی",
-    amount: "۱۱,۸۰۰,۰۰۰",
-    date: "۱۴۰۴/۰۶/۱۲",
-    method: "اعتبار",
+    title: "پرداخت فروش تیر — ویلا کرج",
+    amount: "۸٬۸۵۰٬۰۰۰",
+    date: "۱۴۰۴/۰۶/۰۲",
+    method: "واریز مستقیم",
     status: "success",
-    reference: "BT-۸۴۷۳۵۶",
-  },
-  {
-    id: "p3",
-    title: "پیش‌پرداخت قرارداد جدید",
-    amount: "۵,۰۰۰,۰۰۰",
-    date: "۱۴۰۴/۰۵/۲۰",
-    method: "اقساط",
-    status: "pending",
-    reference: "BT-۸۴۶۱۰۲",
+    reference: "BRQ-۸۴۷۳۵۶",
   },
 ];
 
 export const NOTIFICATIONS: Notification[] = [
   {
     id: "n1",
-    title: "فاکتور شهریور آماده پرداخت",
-    message: "فاکتور واحد فولاد آریا به مبلغ ۱۸,۴۵۰,۰۰۰ تومان صادر شد.",
+    title: "صورت‌حساب شهریور آماده است",
+    message: "درآمد شهریور نیروگاه پشت‌بام: ۱۰٬۸۰۰٬۰۰۰ تومان — حداکثر تا ۱ آبان پرداخت می‌شود.",
     date: "۱۴۰۴/۰۷/۰۱",
     read: false,
     type: "billing",
   },
   {
     id: "n2",
-    title: "هشدار اوج بار",
-    message: "مصرف ساعت ۱۴ تا ۱۶ امروز ۱۵٪ بالاتر از میانگین است.",
-    date: "۱۴۰۴/۰۶/۲۸",
-    read: false,
-    type: "warning",
-  },
-  {
-    id: "n3",
-    title: "قرارداد با موفقیت تمدید شد",
-    message: "قرارداد ۱۲ ماهه فولاد آریا تا ۱۴۰۴/۱۲/۲۹ تمدید شد.",
-    date: "۱۴۰۴/۰۶/۲۵",
+    title: "تولید بالاتر از هدف",
+    message: "تولید تیر نیروگاه خانه اصلی ۱۲٪ بیشتر از هدف بود.",
+    date: "۱۴۰۴/۰۵/۰۲",
     read: false,
     type: "success",
   },
   {
-    id: "n4",
-    title: "گزارش ماهانه مصرف",
-    message: "گزارش تحلیلی مصرف شهریور در بخش مصرف و تحلیل آماده است.",
-    date: "۱۴۰۴/۰۶/۲۰",
+    id: "n3",
+    title: "قرارداد فروش برق فعال شد",
+    message: "قرارداد فروش برق نیروگاه ویلا کرج از امروز فعال است.",
+    date: "۱۴۰۴/۰۴/۰۱",
     read: true,
-    type: "info",
+    type: "success",
   },
   {
-    id: "n5",
-    title: "پاسخ تیکت پشتیبانی",
-    message: "تیکت #۱۲۴۵ توسط کارشناس پاسخ داده شد.",
-    date: "۱۴۰۴/۰۶/۱۸",
+    id: "n4",
+    title: "تکمیل مدارک لازم",
+    message: "برای قرارداد دوم، کپی سند مالکیت ملک را در بخش مدارک بارگذاری کنید.",
+    date: "۱۴۰۴/۰۳/۲۵",
     read: true,
     type: "info",
   },
@@ -181,8 +162,8 @@ export const NOTIFICATIONS: Notification[] = [
 export const SUPPORT_TICKETS: SupportTicket[] = [
   {
     id: "t1",
-    subject: "سوال درباره تعرفه قرارداد جدید",
-    category: "مشاوره خرید",
+    subject: "سوال درباره نرخ بورس سبز ماه بعد",
+    category: "فروش برق",
     status: "in_progress",
     priority: "medium",
     createdAt: "۱۴۰۴/۰۶/۲۵",
@@ -191,46 +172,39 @@ export const SUPPORT_TICKETS: SupportTicket[] = [
   },
   {
     id: "t2",
-    subject: "مشکل در نمایش مصرف روزانه",
-    category: "پشتیبانی فنی",
+    subject: "پیگیری وضعیت نصب نیروگاه ویلا",
+    category: "نصب نیروگاه",
     status: "resolved",
     priority: "low",
-    createdAt: "۱۴۰۴/۰۶/۱۰",
-    lastUpdate: "۱۴۰۴/۰۶/۱۲",
+    createdAt: "۱۴۰۴/۰۳/۱۰",
+    lastUpdate: "۱۴۰۴/۰۳/۲۲",
     messages: 5,
   },
 ];
 
 export const DOCUMENTS: Document[] = [
-  { id: "d3", title: "فاکتور شهریور — INV-۱۴۰۴-۰۶-۰۰۱", type: "فاکتور", date: "۱۴۰۴/۰۷/۰۱", size: "۴۵۶ KB" },
-  { id: "d4", title: "گواهی تامین برق", type: "گواهی", date: "۱۴۰۴/۰۱/۰۱", size: "۳۲۰ KB" },
-  { id: "d5", title: "پروانه خرده‌فروشی برق ما", type: "مجوز", date: "۱۴۰۲/۰۴/۰۱", size: "۱.۲ MB" },
+  {
+    id: "d1",
+    title: "قرارداد فروش برق — نیروگاه پشت‌بام",
+    type: "قرارداد",
+    date: "۱۴۰۴/۰۱/۱۵",
+    size: "۱.۸ MB",
+  },
+  {
+    id: "d2",
+    title: "صورت‌حساب مرداد ۱۴۰۴",
+    type: "فاکتور",
+    date: "۱۴۰۴/۰۶/۰۱",
+    size: "۳۲۰ KB",
+  },
+  {
+    id: "d3",
+    title: "گواهی اتصال به شبکه",
+    type: "گواهی",
+    date: "۱۴۰۴/۰۱/۱۰",
+    size: "۴۸۰ KB",
+  },
 ];
 
-export const POWER_PACKAGES: PowerPackage[] = [
-  {
-    id: "pkg1",
-    name: "پایه",
-    description: "مناسب مصرف‌کنندگان با دیماند زیر ۵۰۰ kW",
-    duration: "۳ ماه",
-    savings: "تا ۲۵٪",
-    features: ["قرارداد دوجانبه", "پشتیبانی تلفنی", "گزارش ماهانه"],
-  },
-  {
-    id: "pkg2",
-    name: "حرفه‌ای",
-    description: "برای واحدهای صنعتی و تجاری متوسط",
-    duration: "۶ ماه",
-    savings: "تا ۳۵٪",
-    features: ["قرارداد دوجانبه", "مشاوره انرژی", "داشبورد تحلیلی", "خرید اعتباری"],
-    recommended: true,
-  },
-  {
-    id: "pkg3",
-    name: "سازمانی",
-    description: "راهکار جامع برای صنایع بزرگ",
-    duration: "۱۲ ماه",
-    savings: "تا ۶۰٪",
-    features: ["قرارداد اختصاصی", "مدیر حساب", "برق سبز", "گواهی اوج", "SLA اختصاصی"],
-  },
-];
+/** درخواست نصب نیروگاه در جریان */
+export const INSTALL_REQUESTS: InstallRequest[] = [];

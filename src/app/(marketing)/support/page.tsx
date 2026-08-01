@@ -17,7 +17,7 @@ export const metadata: Metadata = {
 const ticketFields: FormField[] = [
   { name: "name", label: "نام", type: "text", required: true },
   { name: "phone", label: "شماره تماس", type: "tel", required: true },
-  { name: "billId", label: "شناسه قبض (اختیاری)", type: "text" },
+  { name: "meterNumber", label: "شماره انشعاب (اختیاری)", type: "text" },
   { name: "message", label: "شرح مشکل", type: "textarea", required: true },
 ];
 
