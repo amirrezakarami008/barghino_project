@@ -2,6 +2,19 @@ export type ContractStatus = "active" | "pending" | "expired" | "draft" | "cance
 
 export type ContractFileKind = "system" | "signed" | "attachment" | "amendment";
 
+export type ContractPlanId = "basic" | "standard" | "premium";
+
+export interface ContractPlan {
+  id: ContractPlanId;
+  name: string;
+  tagline: string;
+  volume: string;
+  rate: string;
+  savings: string;
+  features: string[];
+  recommended?: boolean;
+}
+
 export interface ContractFile {
   id: string;
   name: string;
@@ -27,6 +40,21 @@ export interface ContractVersion {
   fileId?: string;
 }
 
+/** اطلاعات هویتی و امضای طرف قرارداد */
+export interface ContractPartyInfo {
+  fullName: string;
+  nationalId: string;
+  birthCertificateNumber: string;
+  phone: string;
+  address: string;
+  /** کلید IndexedDB تصویر کارت ملی */
+  nationalIdPhotoStorageKey?: string;
+  /** امضای دیجیتال به صورت data URL */
+  signatureDataUrl?: string;
+  signedAt?: string;
+  contractNumber?: string;
+}
+
 export interface Contract {
   id: string;
   title: string;
@@ -44,6 +72,11 @@ export interface Contract {
   files: ContractFile[];
   versions: ContractVersion[];
   notes?: string;
+  /** پلن انتخاب‌شده هنگام امضا */
+  planId?: ContractPlanId;
+  planName?: string;
+  /** پس از تکمیل ویزارد امضا پر می‌شود */
+  party?: ContractPartyInfo;
 }
 
 export type ContractStatusFilter = "all" | ContractStatus;
@@ -58,4 +91,26 @@ export interface ContractDocumentView {
   fileId: string;
   mimeType: string;
   kind: ContractFileKind;
+}
+
+export type ContractSigningStep =
+  | "intro"
+  | "plan"
+  | "identity"
+  | "id-photo"
+  | "review"
+  | "signature"
+  | "done";
+
+export interface ContractSigningDraft {
+  planId: ContractPlanId | null;
+  fullName: string;
+  nationalId: string;
+  birthCertificateNumber: string;
+  phone: string;
+  address: string;
+  nationalIdPhoto: File | null;
+  nationalIdPhotoPreview: string | null;
+  signatureDataUrl: string | null;
+  acceptedTerms: boolean;
 }

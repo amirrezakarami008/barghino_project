@@ -35,17 +35,47 @@ export function ContractsManager() {
     [contracts, status, query, roleOnly],
   );
 
+  const awaitingSign = useMemo(
+    () => contracts.filter((c) => c.status === "draft" || c.status === "pending"),
+    [contracts],
+  );
+
   return (
     <DashboardPage
       title="قراردادها"
       subtitle="مدیریت قراردادهای فروش برق خانگی و نصب نیروگاه"
       action={
-        <Button href="/dashboard/buy" size="sm" className="group">
-          مسیر فروش برق
-          <LinkArrow />
-        </Button>
+        awaitingSign[0] ? (
+          <Button href={`/dashboard/contracts/${awaitingSign[0].id}/sign`} size="sm" className="group">
+            تکمیل و امضای قرارداد
+            <LinkArrow />
+          </Button>
+        ) : (
+          <Button href="/dashboard/buy" size="sm" className="group">
+            مسیر فروش برق
+            <LinkArrow />
+          </Button>
+        )
       }
     >
+      {awaitingSign.length > 0 && (
+        <Panel className="mb-6 border-brand-200 bg-gradient-to-l from-brand-50 to-emerald-50/70">
+          <div className="flex flex-col gap-3 p-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-bold text-brand-900">
+                {awaitingSign.length.toLocaleString("fa-IR")} قرارداد منتظر تکمیل هویت و امضا
+              </p>
+              <p className="mt-1 text-xs leading-6 text-brand-800/80">
+                کد ملی، انتخاب پلن، عکس کارت ملی و امضای دستی لازم است؛ سپس PDF رسمی برقینو صادر می‌شود.
+              </p>
+            </div>
+            <Button href={`/dashboard/contracts/${awaitingSign[0]!.id}/sign`} size="sm">
+              شروع فرآیند امضا
+            </Button>
+          </div>
+        </Panel>
+      )}
+
       {expiryAlerts.length > 0 && (
         <div className="mb-6 space-y-2">
           {expiryAlerts.map((alert) => (

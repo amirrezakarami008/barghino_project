@@ -10,6 +10,7 @@ export type DashboardNavIcon =
   | "Headphones"
   | "FolderOpen"
   | "User"
+  | "UserPlus"
   | "Settings"
   | "Newspaper"
   | "FileText"
@@ -103,14 +104,47 @@ export interface SellInvoice {
   paidDate?: string;
 }
 
+export type PaymentMethod = "درگاه بانکی" | "واریز مستقیم" | "اعتبار";
+export type PaymentStatus = "success" | "pending" | "failed" | "processing";
+
 export interface Payment {
   id: string;
   title: string;
   amount: string;
   date: string;
-  method: "درگاه بانکی" | "واریز مستقیم" | "اعتبار";
-  status: "success" | "pending" | "failed";
+  method: PaymentMethod;
+  status: PaymentStatus;
   reference: string;
+  /** لینک به صورت‌حساب فروش */
+  invoiceId?: string;
+  invoiceNumber?: string;
+  plantName?: string;
+  period?: string;
+  energyKwh?: string;
+  ratePerKwh?: string;
+  bankName?: string;
+  bankLast4?: string;
+  description?: string;
+}
+
+export interface PaymentMethodCard {
+  id: string;
+  title: string;
+  subtitle: string;
+  kind: "bank" | "credit" | "installment";
+  active: boolean;
+  meta?: string;
+}
+
+export interface UpcomingPayout {
+  id: string;
+  invoiceId: string;
+  title: string;
+  amount: string;
+  dueDate: string;
+  plantName: string;
+  period: string;
+  progressPercent: number;
 }
 
 export interface Notification {
@@ -141,11 +175,17 @@ export interface Document {
   size: string;
 }
 
-/** نقاط تولید ماهانه برای نمودار */
+/** نقاط تولید برای نمودار */
 export interface ProductionPoint {
   label: string;
+  /** برچسب کوتاه محور (اختیاری) */
+  shortLabel?: string;
   production: number;
   earnings: number;
+  /** میانگین تولید پشت‌بام‌های اطراف (kWh) */
+  neighborProduction?: number;
+  /** میانگین تولید پشت‌بام‌های کل کشور (kWh) */
+  nationalProduction?: number;
 }
 
 /** مراحل درخواست نصب نیروگاه */
@@ -158,12 +198,36 @@ export type InstallRequestStep =
   | "installation"
   | "active";
 
+export interface InstallStepEvent {
+  step: InstallRequestStep;
+  at: string;
+  note?: string;
+}
+
+/** طرح پیشنهادی پس از بازدید */
+export interface InstallProposal {
+  capacityKwp: number;
+  panelCount: number;
+  estimatedCostToman: number;
+  estimatedMonthlyKwh: number;
+  estimatedMonthlyIncomeToman: number;
+  visitSummary: string;
+}
+
 export interface InstallRequest {
   id: string;
   address: string;
   submittedAt: string;
   currentStep: InstallRequestStep;
   note?: string;
+  phone?: string;
+  areaM2?: number;
+  history: InstallStepEvent[];
+  scheduledVisitAt?: string;
+  proposal?: InstallProposal;
+  contractSignedAt?: string;
+  /** نیروگاه ایجادشده پس از راه‌اندازی */
+  plantId?: string;
 }
 
 /** نقاط مصرف — نگهداری برای سازگاری با ConsumptionChart */

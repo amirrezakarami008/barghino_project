@@ -13,9 +13,7 @@ function avg(nums: number[]) {
 /** پیش‌بینی ساده بر اساس میانگین ماه‌های اخیر + ضریب فصلی */
 export function getIncomeForecast() {
   const productions = MONTHLY_PRODUCTION.map((p) => p.production);
-  const earnings = MONTHLY_PRODUCTION.map((p) => p.earnings);
   const avgProd = avg(productions);
-  const avgEarn = avg(earnings);
 
   // ضریب تقریبی فصل پاییز نسبت به میانگین تابستان
   const nextWeekProd = Math.round(avgProd / 4 * 0.92);
@@ -133,11 +131,11 @@ export function getGreenExchangeSnapshot() {
       },
       {
         q: "چرا نرخ عوض می‌شود؟",
-        a: "عرضه و تقاضا، فصل، وضعیت شبکه و خریداران بزرگ روی نرخ اثر می‌گذارند.",
+        a: "برخلاف نرخ دولتی که اول سال تعیین و تا آخر سال ثابت می‌ماند، نرخ برقینو فصلی است: در فصل گرم بالاتر، و در فصل سرد با کف تضمینی بالاتر از نرخ دولتی.",
       },
       {
         q: "روی درآمد من چه اثری دارد؟",
-        a: "برقینو برق شما را نزدیک نرخ بورس سبز می‌خرد؛ پس رشد نرخ یعنی درآمد بیشتر برای تولید یکسان.",
+        a: `در ماه‌های پربازده با نرخ بالاتر می‌خریم؛ در ماه‌های کم‌بازده هم تضمین خرید با ${SITE_CONFIG.valueProps.coldSeasonPremiumPercent}٪ بیشتر از نرخ دولتی برقرار است.`,
       },
     ],
   };

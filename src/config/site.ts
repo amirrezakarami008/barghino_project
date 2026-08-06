@@ -4,13 +4,15 @@ export const SITE_CONFIG = {
   name: "برقینو",
   tagline: "پلتفرم فروش برق خانگی و نیروگاه خورشیدی",
   description:
-    "برق تولید خانگی‌ات را به قیمت بورس سبز بفروش؛ پرداخت تضمینی حداکثر ۲ ماه. نیروگاه نداری؟ برات نصب می‌کنیم.",
+    "برق تولید خانگی‌ات را فصلی بفروش: در فصل گرم قیمت بالاتر، در فصل سرد تضمین خرید با ۱۰٪ بیشتر از دولت؛ پرداخت حداکثر ۲ ماه. نیروگاه نداری؟ برات نصب می‌کنیم.",
   valueProps: {
     governmentPrice: "۵٬۰۰۰",
     barghinoPrice: "۱۵٬۰۰۰",
     priceUnit: "تومان/kWh",
     governmentPayoutMonths: "۶",
     barghinoPayoutMonths: "۲",
+    /** تضمین خرید فصل سرد نسبت به نرخ دولتی */
+    coldSeasonPremiumPercent: "۱۰",
   },
   cta: {
     sellPower: "فروش برق نیروگاهم",

@@ -35,8 +35,9 @@ export function HeroSection() {
             </h1>
 
             <p className="mt-5 max-w-lg text-sm leading-8 text-white/85 sm:text-base lg:text-lg lg:leading-8">
-              برق تولیدی خانگی‌ات را به قیمت بورس سبز بفروش و درآمد بیشتری داشته باش. پرداخت
-              تضمینی حداکثر {valueProps.barghinoPayoutMonths} ماه، شفاف و بدون دردسر.
+              برق تولیدی خانگی‌ات را به قیمت بورس سبز بفروش؛ در فصل گرم گران‌تر می‌خریم و در فصل
+              سرد هم کف قیمت تضمینی داریم. پرداخت تضمینی حداکثر{" "}
+              {valueProps.barghinoPayoutMonths} ماه، شفاف و بدون دردسر.
             </p>
 
             <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">

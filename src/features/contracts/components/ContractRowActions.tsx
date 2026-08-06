@@ -10,7 +10,6 @@ import {
   Eye,
   PenLine,
   RefreshCw,
-  ShoppingCart,
 } from "lucide-react";
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -118,15 +117,11 @@ export function ContractRowActions({ contract }: ContractRowActionsProps) {
         <Download className="h-4 w-4" />
       </IconAction>
 
-      {contract.status === "draft" ? (
-        <IconAction label="تکمیل قرارداد" href="/dashboard/buy" tone="success">
-          <ShoppingCart className="h-4 w-4" />
-        </IconAction>
-      ) : contract.status === "pending" ? (
+      {contract.status === "draft" || contract.status === "pending" ? (
         <IconAction
-          label="بارگذاری نسخه امضا"
-          href={`/dashboard/contracts/${contract.id}`}
-          tone="amber"
+          label="تکمیل و امضای قرارداد"
+          href={`/dashboard/contracts/${contract.id}/sign`}
+          tone="success"
         >
           <PenLine className="h-4 w-4" />
         </IconAction>

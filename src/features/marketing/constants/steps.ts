@@ -17,6 +17,6 @@ export const REGISTRATION_STEPS: StepItem[] = [
     id: "earn",
     step: 3,
     title: "فروش و دریافت درآمد",
-    description: "با نرخ بورس سبز بفروش؛ پرداخت تضمینی حداکثر ۲ ماه",
+    description: "فصل گرم قیمت بالاتر، فصل سرد کف تضمینی؛ پرداخت حداکثر ۲ ماه",
   },
 ];

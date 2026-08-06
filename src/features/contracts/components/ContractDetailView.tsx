@@ -91,6 +91,7 @@ export function ContractDetailView({ contractId }: ContractDetailViewProps) {
             { label: "شناسه", value: contract.id },
             { label: "واحد مصرفی", value: contract.billAccount },
             { label: "نوع", value: contract.type },
+            { label: "پلن", value: contract.planName ?? "—" },
             { label: "شروع", value: contract.startDate },
             { label: "پایان", value: contract.endDate },
             { label: "حجم ماهانه", value: contract.volume },
@@ -106,6 +107,42 @@ export function ContractDetailView({ contractId }: ContractDetailViewProps) {
         </div>
         {contract.notes && (
           <p className="mt-4 text-sm text-slate-600">{contract.notes}</p>
+        )}
+
+        {contract.party && (
+          <div className="mt-5 rounded-2xl border border-emerald-100 bg-emerald-50/50 p-4">
+            <p className="text-xs font-bold text-emerald-800">اطلاعات امضاکننده</p>
+            <div className="mt-3 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {[
+                { label: "نام", value: contract.party.fullName },
+                { label: "کد ملی", value: contract.party.nationalId },
+                { label: "شماره شناسنامه", value: contract.party.birthCertificateNumber },
+                { label: "موبایل", value: contract.party.phone },
+                { label: "شماره قرارداد", value: contract.party.contractNumber ?? "—" },
+                { label: "تاریخ امضا", value: contract.party.signedAt ?? "—" },
+              ].map((field) => (
+                <div key={field.label} className="rounded-xl bg-white/80 p-3 ring-1 ring-emerald-100">
+                  <p className="text-[11px] text-slate-500">{field.label}</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-900">{field.value}</p>
+                </div>
+              ))}
+              <div className="sm:col-span-2 lg:col-span-3 rounded-xl bg-white/80 p-3 ring-1 ring-emerald-100">
+                <p className="text-[11px] text-slate-500">نشانی</p>
+                <p className="mt-1 text-sm font-semibold text-slate-900">{contract.party.address}</p>
+              </div>
+            </div>
+            {contract.party.signatureDataUrl && (
+              <div className="mt-3 rounded-xl bg-white p-3 ring-1 ring-emerald-100">
+                <p className="mb-2 text-[11px] text-slate-500">امضای ثبت‌شده</p>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={contract.party.signatureDataUrl}
+                  alt="امضا"
+                  className="h-16 object-contain"
+                />
+              </div>
+            )}
+          </div>
         )}
 
         <div className="mt-5 flex flex-wrap gap-2">
@@ -129,12 +166,12 @@ export function ContractDetailView({ contractId }: ContractDetailViewProps) {
               {contract.renewalRequested ? "تمدید ثبت شد" : "درخواست تمدید"}
             </Button>
           )}
-          {contract.status === "draft" && (
-            <Button href="/dashboard/buy" size="sm" className="group">
-              تکمیل قرارداد
+          {contract.status === "draft" || contract.status === "pending" ? (
+            <Button href={`/dashboard/contracts/${contract.id}/sign`} size="sm" className="group">
+              تکمیل و امضای قرارداد
               <LinkArrow />
             </Button>
-          )}
+          ) : null}
         </div>
       </Panel>
 

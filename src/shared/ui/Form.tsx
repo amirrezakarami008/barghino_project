@@ -13,6 +13,10 @@ interface FormProps {
   redirectTo?: string;
   successTitle?: string;
   successMessage?: string;
+  /** مقادیر اولیه فیلدها (مثلاً متن آماده‌شده توسط دستیار) */
+  defaultValues?: Record<string, string>;
+  /** با تغییر این کلید، فرم با defaultValues جدید remount می‌شود */
+  formKey?: string;
 }
 
 export function Form({
@@ -22,6 +26,8 @@ export function Form({
   redirectTo,
   successTitle = "پیام شما ثبت شد",
   successMessage = "به زودی با شما تماس خواهیم گرفت.",
+  defaultValues,
+  formKey,
 }: FormProps) {
   const [submitted, setSubmitted] = useState(false);
   const router = useRouter();
@@ -51,9 +57,13 @@ export function Form({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-5">
+    <form key={formKey} onSubmit={handleSubmit} className="space-y-5">
       {fields.map((field) => (
-        <FormFieldInput key={field.name} field={field} />
+        <FormFieldInput
+          key={field.name}
+          field={field}
+          defaultValue={defaultValues?.[field.name]}
+        />
       ))}
       <Button type="submit" fullWidth>
         {submitLabel}
@@ -62,7 +72,13 @@ export function Form({
   );
 }
 
-function FormFieldInput({ field }: { field: FormField }) {
+function FormFieldInput({
+  field,
+  defaultValue,
+}: {
+  field: FormField;
+  defaultValue?: string;
+}) {
   const baseInputClass =
     "w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-900 transition-colors placeholder:text-slate-400 focus:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-500/20";
 
@@ -80,6 +96,7 @@ function FormFieldInput({ field }: { field: FormField }) {
           placeholder={field.placeholder}
           required={field.required}
           rows={4}
+          defaultValue={defaultValue}
           className={cn(baseInputClass, "resize-none")}
         />
       ) : field.type === "select" ? (
@@ -87,6 +104,7 @@ function FormFieldInput({ field }: { field: FormField }) {
           id={field.name}
           name={field.name}
           required={field.required}
+          defaultValue={defaultValue ?? ""}
           className={baseInputClass}
         >
           <option value="">انتخاب کنید</option>
@@ -103,6 +121,7 @@ function FormFieldInput({ field }: { field: FormField }) {
           type={field.type}
           placeholder={field.placeholder}
           required={field.required}
+          defaultValue={defaultValue}
           className={baseInputClass}
         />
       )}

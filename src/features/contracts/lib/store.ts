@@ -257,3 +257,128 @@ export function getExpiryNotifications(contracts: Contract[] = getAllContracts()
       contractId: c.id,
     }));
 }
+
+export interface CompleteSigningInput {
+  fullName: string;
+  nationalId: string;
+  birthCertificateNumber: string;
+  phone: string;
+  address: string;
+  nationalIdPhoto: File;
+  signatureDataUrl: string;
+  pdfBlob: Blob;
+  contractNumber: string;
+  signedAt: string;
+  planId: Contract["planId"];
+  planName: string;
+  volume: string;
+  rate: string;
+  savings: string;
+}
+
+/**
+ * تکمیل ویزارد امضا: ذخیره کارت ملی + PDF امضاشده + فعال‌سازی قرارداد
+ */
+export async function completeContractSigning(
+  contractId: string,
+  input: CompleteSigningInput,
+): Promise<Contract> {
+  const contract = getContractById(contractId);
+  if (!contract) throw new Error("قرارداد یافت نشد.");
+  if (contract.status !== "draft" && contract.status !== "pending") {
+    throw new Error("این قرارداد قابل امضا نیست.");
+  }
+
+  const fileId = createId("file");
+  const photoId = createId("idphoto");
+  const pdfStorageKey = `${contractId}:${fileId}`;
+  const photoStorageKey = `${contractId}:${photoId}`;
+
+  await saveFileBlob(pdfStorageKey, input.pdfBlob);
+  await saveFileBlob(photoStorageKey, input.nationalIdPhoto);
+
+  const nextVersion =
+    Math.max(0, ...contract.files.map((f) => f.version), ...contract.versions.map((v) => v.version)) +
+    1;
+
+  const pdfName = `قرارداد-امضاشده-${contractId}.pdf`;
+  const signedFile: ContractFile = {
+    id: fileId,
+    name: pdfName,
+    kind: "signed",
+    mimeType: "application/pdf",
+    size: formatFileSize(input.pdfBlob.size),
+    sizeBytes: input.pdfBlob.size,
+    uploadedAt: input.signedAt,
+    uploadedBy: "user",
+    version: nextVersion,
+    storageKey: pdfStorageKey,
+  };
+
+  const photoFile: ContractFile = {
+    id: photoId,
+    name: input.nationalIdPhoto.name || "کارت-ملی.jpg",
+    kind: "attachment",
+    mimeType: input.nationalIdPhoto.type || "image/jpeg",
+    size: formatFileSize(input.nationalIdPhoto.size),
+    sizeBytes: input.nationalIdPhoto.size,
+    uploadedAt: input.signedAt,
+    uploadedBy: "user",
+    version: nextVersion,
+    storageKey: photoStorageKey,
+  };
+
+  const filledStart =
+    contract.startDate === "—" ? input.signedAt : contract.startDate;
+  const filledEnd =
+    contract.endDate === "—"
+      ? (() => {
+          const d = new Date();
+          d.setFullYear(d.getFullYear() + 1);
+          return formatPersianDate(d);
+        })()
+      : contract.endDate;
+
+  const next: Contract = {
+    ...contract,
+    status: "active",
+    startDate: filledStart,
+    endDate: filledEnd,
+    volume: input.volume,
+    rate: input.rate,
+    savings: input.savings,
+    planId: input.planId,
+    planName: input.planName,
+    notes: `امضای الکترونیکی ثبت شد · پلن ${input.planName} · شماره ${input.contractNumber}`,
+    party: {
+      fullName: input.fullName.trim(),
+      nationalId: input.nationalId,
+      birthCertificateNumber: input.birthCertificateNumber,
+      phone: input.phone,
+      address: input.address.trim(),
+      nationalIdPhotoStorageKey: photoStorageKey,
+      signatureDataUrl: input.signatureDataUrl,
+      signedAt: input.signedAt,
+      contractNumber: input.contractNumber,
+    },
+    files: [...contract.files, photoFile, signedFile],
+    versions: [
+      ...contract.versions,
+      {
+        id: createId("ver"),
+        version: nextVersion,
+        label: "امضای الکترونیکی و فعال‌سازی",
+        date: input.signedAt,
+        note: `طرف دوم: ${input.fullName} · کد ملی ${input.nationalId}`,
+        fileId,
+      },
+    ],
+  };
+
+  return persistContract(next);
+}
+
+export function canSignContract(contract: Contract | undefined): boolean {
+  if (!contract) return false;
+  return contract.status === "draft" || contract.status === "pending";
+}

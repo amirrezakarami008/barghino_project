@@ -16,6 +16,7 @@ import {
   Sun,
   TrendingUp,
   User,
+  UserPlus,
   type LucideIcon,
 } from "lucide-react";
 import type { DashboardNavIcon } from "@/shared/types/dashboard";
@@ -31,6 +32,7 @@ const DASHBOARD_ICON_MAP: Record<DashboardNavIcon, LucideIcon> = {
   Headphones,
   FolderOpen,
   User,
+  UserPlus,
   Settings,
   Newspaper,
   FileText,
@@ -57,7 +59,9 @@ export {
   LineChart,
   Receipt,
   Settings,
+  Sparkles,
   Sun,
   TrendingUp,
   User,
+  UserPlus,
 };

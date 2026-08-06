@@ -39,11 +39,12 @@ export default function DashboardOverviewPage() {
   const activeContracts = CONTRACTS.filter((c) => c.status === "active");
   const primaryHealth = getAllPlantHealth()[0];
   const alerts = getMaintenanceAlerts();
+  const firstName = DASHBOARD_USER.name.split(" ")[0];
 
   return (
     <DashboardPage
-      title={`سلام، ${DASHBOARD_USER.name.split(" ")[0]} 👋`}
-      subtitle="خلاصه وضعیت نیروگاه و درآمد فروش برق شما"
+      title={`سلام، ${firstName} ☀️`}
+      subtitle="به پنل مدیریت نیروگاه خانگی‌ات خوش آمدی"
     >
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         {DASHBOARD_STATS.map((stat) => (
@@ -51,7 +52,7 @@ export default function DashboardOverviewPage() {
         ))}
       </div>
 
-      <div className="mt-8">
+      <div className="mt-6">
         <GovernmentComparePanel />
       </div>
 
@@ -60,12 +61,12 @@ export default function DashboardOverviewPage() {
       </div>
 
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
-        {primaryHealth && <HealthScorePanel health={primaryHealth} compact />}
+        {primaryHealth ? <HealthScorePanel health={primaryHealth} compact /> : null}
         <MaintenanceAlertsPanel alerts={alerts} limit={3} />
       </div>
 
       <div className="mt-8">
-        <PanelHeader title="دسترسی سریع" description="کارهای پرتکرار را از اینجا انجام دهید" />
+        <PanelHeader title="دسترسی سریع" description="میانبر کارهای پرتکرار" />
         <QuickActions actions={QUICK_ACTIONS} />
       </div>
 
@@ -85,13 +86,13 @@ export default function DashboardOverviewPage() {
 
         <Panel>
           <PanelHeader title="قراردادهای فعال" />
-          <div className="space-y-4">
+          <div className="space-y-3">
             {activeContracts.length > 0 ? (
               activeContracts.map((contract) => (
                 <Link
                   key={contract.id}
                   href={`/dashboard/contracts/${contract.id}`}
-                  className="block rounded-xl border border-slate-100 bg-slate-50/50 p-4 transition hover:border-brand-200 hover:bg-brand-50/40"
+                  className="block rounded-xl border border-slate-100 bg-slate-50/60 p-4 transition hover:border-brand-200 hover:bg-brand-50/40"
                 >
                   <div className="mb-2 flex items-start justify-between gap-2">
                     <p className="text-sm font-semibold text-slate-900">{contract.title}</p>
@@ -117,7 +118,7 @@ export default function DashboardOverviewPage() {
       <div className="mt-6 grid gap-6 lg:grid-cols-2">
         <Panel>
           <PanelHeader
-            title="صورت‌حساب‌های در انتظار پرداخت"
+            title="صورت‌حساب‌های در انتظار"
             action={<StatusBadge status="pending" label={`${pendingInvoices.length} صورت‌حساب`} />}
           />
           {pendingInvoices.length > 0 ? (
@@ -152,7 +153,10 @@ export default function DashboardOverviewPage() {
           <PanelHeader
             title="اعلان‌های اخیر"
             action={
-              <Link href="/dashboard/notifications" className="text-sm font-medium text-brand-600 hover:text-brand-700">
+              <Link
+                href="/dashboard/notifications"
+                className="text-sm font-medium text-brand-600 hover:text-brand-700"
+              >
                 مشاهده همه
               </Link>
             }
@@ -163,7 +167,7 @@ export default function DashboardOverviewPage() {
                 key={n.id}
                 className="flex gap-3 rounded-xl border border-slate-100 p-3 transition-colors hover:bg-slate-50"
               >
-                <div className="mt-1 h-2 w-2 shrink-0 rounded-full bg-brand-500" />
+                <div className="mt-1.5 h-2 w-2 shrink-0 rounded-full bg-brand-500" />
                 <div>
                   <p className="text-sm font-medium text-slate-900">{n.title}</p>
                   <p className="mt-0.5 line-clamp-2 text-xs text-slate-500">{n.message}</p>
@@ -196,9 +200,15 @@ export default function DashboardOverviewPage() {
             </>
           }
           rows={SOLAR_PLANTS.map((plant) => [
-            <span key="name" className="font-medium text-slate-900">{plant.name}</span>,
-            <span key="cap" className="text-slate-600">{plant.capacityKwp} kWp</span>,
-            <span key="prod" className="font-medium text-emerald-600">{plant.monthlyProductionKwh} kWh</span>,
+            <span key="name" className="font-medium text-slate-900">
+              {plant.name}
+            </span>,
+            <span key="cap" className="text-slate-600">
+              {plant.capacityKwp} kWp
+            </span>,
+            <span key="prod" className="font-medium text-emerald-600">
+              {plant.monthlyProductionKwh} kWh
+            </span>,
             <StatusBadge key="status" status={plant.status} />,
           ])}
         />

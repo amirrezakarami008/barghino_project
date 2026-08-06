@@ -1,0 +1,80 @@
+/**
+ * استایل‌های اختصاصی دستیار چت برقینو — تم لایت هم‌راستا با سایت
+ */
+
+.chatbot-shell {
+  isolation: isolate;
+  --foreground: oklch(0.22 0.02 160);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.22 0.02 160);
+  --primary: oklch(0.55 0.14 160);
+  --primary-foreground: oklch(0.99 0 0);
+  --muted: oklch(0.96 0.01 160);
+  --muted-foreground: oklch(0.48 0.02 160);
+  --border: oklch(0.9 0.01 160);
+  --ring: oklch(0.65 0.14 160);
+  --shadow-panel: 0 24px 60px -28px rgb(15 23 42 / 0.14);
+  color: var(--foreground);
+}
+
+.chatbot-grid {
+  background-image:
+    linear-gradient(rgb(15 23 42 / 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(15 23 42 / 0.035) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse at center, black 20%, transparent 75%);
+}
+
+.chatbot-orb {
+  background:
+    radial-gradient(circle at center, rgb(16 185 129 / 0.14), transparent 58%),
+    radial-gradient(circle at 30% 30%, rgb(52 211 153 / 0.1), transparent 42%);
+  filter: blur(8px);
+  animation: chatbot-orb-breathe 7s ease-in-out infinite;
+}
+
+.chatbot-composer-sheen {
+  background: linear-gradient(
+    120deg,
+    transparent 20%,
+    rgb(16 185 129 / 0.05) 45%,
+    transparent 70%
+  );
+  background-size: 200% 100%;
+  animation: chatbot-sheen 8s linear infinite;
+}
+
+@keyframes chatbot-orb-breathe {
+  0%,
+  100% {
+    transform: translate(-50%, -50%) scale(0.92);
+    opacity: 0.45;
+  }
+  50% {
+    transform: translate(-50%, -50%) scale(1.05);
+    opacity: 0.75;
+  }
+}
+
+@keyframes chatbot-sheen {
+  0% {
+    background-position: 120% 0;
+  }
+  100% {
+    background-position: -120% 0;
+  }
+}
+
+.scrollbar-brand {
+  scrollbar-color: color-mix(in oklch, var(--muted-foreground) 40%, transparent) transparent;
+  scrollbar-width: thin;
+}
+
+.scrollbar-brand::-webkit-scrollbar {
+  width: 8px;
+}
+
+.scrollbar-brand::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  background: color-mix(in oklch, var(--muted-foreground) 28%, transparent);
+}

@@ -1,4 +1,5 @@
-import type { Contract, ContractFileKind, ContractStatus } from "./types";
+import type { Contract, ContractFileKind, ContractPlan, ContractStatus } from "./types";
+import { SITE_CONFIG } from "@/config";
 
 export const CONTRACTS_STORAGE_KEY = "barghma:contracts-v1";
 export const CONTRACTS_EVENT = "barghma:contracts-updated";
@@ -6,6 +7,47 @@ export const CONTRACT_FILES_DB = "barghma-contract-files";
 export const CONTRACT_FILES_STORE = "blobs";
 
 export const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
+
+/** سه پلن فروش برق برای انتخاب در ویزارد امضا */
+export const CONTRACT_PLANS: ContractPlan[] = [
+  {
+    id: "basic",
+    name: "پایه",
+    tagline: "مناسب تولید متوسط خانگی",
+    volume: "۴۸۰ kWh/ماه",
+    rate: `${SITE_CONFIG.valueProps.barghinoPrice} تومان/kWh`,
+    savings: "≈۳× دولت",
+    features: ["خرید تضمینی فصلی", "پرداخت حداکثر ۲ ماهه", "پشتیبانی استاندارد"],
+  },
+  {
+    id: "standard",
+    name: "استاندارد",
+    tagline: "پیشنهاد برقینو برای اکثر خانه‌ها",
+    volume: "۷۲۰ kWh/ماه",
+    rate: `${SITE_CONFIG.valueProps.barghinoPrice} تومان/kWh`,
+    savings: "≈۳× دولت",
+    features: ["خرید تضمینی فصلی", "اولویت تسویه", "گزارش تولید ماهانه", "پشتیبانی اولویت‌دار"],
+    recommended: true,
+  },
+  {
+    id: "premium",
+    name: "ویژه",
+    tagline: "حداکثر ظرفیت و نرخ فصل گرم",
+    volume: "۱٬۲۰۰ kWh/ماه",
+    rate: "۱۶٬۵۰۰ تومان/kWh",
+    savings: "≈۳٫۳× دولت",
+    features: [
+      "نرخ بالاتر فصل گرم",
+      "تضمین فصل سرد +۱۰٪ دولت",
+      "تسویه سریع‌تر",
+      "پشتیبان اختصاصی",
+    ],
+  },
+];
+
+export function getContractPlanById(id: string | null | undefined) {
+  return CONTRACT_PLANS.find((p) => p.id === id) ?? null;
+}
 
 export const ACCEPTED_UPLOAD_TYPES = [
   "application/pdf",
@@ -135,7 +177,7 @@ export const SEED_CONTRACTS: Contract[] = [
     status: "draft",
     savings: "—",
     roleScope: "personal",
-    notes: "پس از معرفی نیروگاه تکمیل می‌شود",
+    notes: "برای فعال‌سازی باید هویت، کارت ملی و امضا را در سامانه تکمیل کنید",
     files: [],
     versions: [
       {
@@ -143,7 +185,7 @@ export const SEED_CONTRACTS: Contract[] = [
         version: 1,
         label: "پیش‌نویس",
         date: "۱۴۰۴/۰۶/۲۰",
-        note: "ایجاد پیش‌نویس توسط کاربر",
+        note: "ایجاد پیش‌نویس — در انتظار امضای الکترونیکی",
       },
     ],
   },
@@ -186,7 +228,7 @@ export const SEED_CONTRACTS: Contract[] = [
     status: "pending",
     savings: "≈۳× دولت",
     roleScope: "personal",
-    notes: "پس از امضا، نسخه امضاشده را بارگذاری کنید",
+    notes: "پس از تکمیل مشخصات هویتی، کارت ملی و امضا در سامانه فعال می‌شود",
     files: [
       seedFile("c5-f1", "پیش‌نویس-فروش-آماده-امضا.pdf", "system", "۱.۱ MB", 1_100_000, "۱۴۰۴/۰۷/۲۰", 1),
     ],
@@ -196,7 +238,7 @@ export const SEED_CONTRACTS: Contract[] = [
         version: 1,
         label: "پیش‌نویس امضا",
         date: "۱۴۰۴/۰۷/۲۰",
-        note: "ارسال برای امضای طرفین",
+        note: "آماده تکمیل هویت و امضای الکترونیکی در سامانه",
         fileId: "c5-f1",
       },
     ],

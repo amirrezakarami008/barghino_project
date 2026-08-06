@@ -9,7 +9,7 @@ const PATHS = [
     icon: Zap,
     title: "نیروگاه خورشیدی دارم",
     description:
-      "برق تولیدی‌ات را با نرخ بورس سبز به برقینو بفروش؛ پرداخت تضمینی حداکثر ۲ ماه.",
+      "برق تولیدی‌ات را با منطق فصلی به برقینو بفروش؛ فصل گرم قیمت بالاتر، فصل سرد کف تضمینی، پرداخت حداکثر ۲ ماه.",
     cta: SITE_CONFIG.cta.sellPower,
     href: SITE_CONFIG.cta.sellPowerHref,
     theme: {

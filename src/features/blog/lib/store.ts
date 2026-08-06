@@ -43,7 +43,7 @@ export function getSeedPosts(): BlogPost[] {
       ...post,
       source: "seed",
       status: "published",
-      featured: post.id === "1" || post.id === "3",
+      featured: Boolean(post.featured),
     }),
   );
 }

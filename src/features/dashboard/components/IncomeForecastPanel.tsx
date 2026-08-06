@@ -1,6 +1,7 @@
 import { Panel, PanelHeader } from "./Panel";
 import { Button, LinkArrow } from "@/shared/ui/Button";
 import { formatMillionToman, getIncomeForecast } from "@/features/dashboard/lib/insights";
+import { CloudSun } from "lucide-react";
 
 export function IncomeForecastPanel() {
   const forecast = getIncomeForecast();
@@ -11,10 +12,10 @@ export function IncomeForecastPanel() {
         title="پیش‌بینی درآمد"
         description={`اطمینان تقریبی ${forecast.confidence.toLocaleString("fa-IR")}٪ · بر اساس سابقه تولید و نرخ بورس سبز`}
         action={
-          <Button href="/dashboard/reports" variant="ghost" size="sm" className="group">
-            گزارش ماهانه
-            <LinkArrow />
-          </Button>
+          <div className="flex items-center gap-2 rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-medium text-amber-700">
+            <CloudSun className="h-4 w-4" />
+            پیش‌بینی آب‌وهوا لحاظ شده
+          </div>
         }
       />
 
@@ -52,14 +53,12 @@ export function IncomeForecastPanel() {
         </p>
       </div>
 
-      <ul className="mt-4 space-y-1.5 text-xs text-slate-500">
-        {forecast.assumptions.map((item) => (
-          <li key={item} className="flex gap-2">
-            <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-slate-300" />
-            {item}
-          </li>
-        ))}
-      </ul>
+      <div className="mt-4 flex justify-end">
+        <Button href="/dashboard/reports" variant="ghost" size="sm" className="group">
+          گزارش ماهانه
+          <LinkArrow />
+        </Button>
+      </div>
     </Panel>
   );
 }

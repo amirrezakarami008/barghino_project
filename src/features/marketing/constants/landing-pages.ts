@@ -58,7 +58,8 @@ export const SOLAR_HOME_PAGE: LandingPageContent = {
         "هدف فقط نصب پنل نیست؛ ساخت مسیر درآمد پایدار از فروش برق خانگی است. بعد از راه‌اندازی، همان مزیت‌های فروش به برقینو در اختیارتان است.",
       ],
       list: [
-        `خرید با نرخ بورس سبز (نمونه حدود ${valueProps.barghinoPrice} ${valueProps.priceUnit})`,
+        `خرید با نرخ بورس سبز در فصل گرم (نمونه حدود ${valueProps.barghinoPrice} ${valueProps.priceUnit})`,
+        `تضمین خرید فصل سرد با ${valueProps.coldSeasonPremiumPercent}٪ بیشتر از نرخ دولتی`,
         `پرداخت تضمینی حداکثر ${valueProps.barghinoPayoutMonths} ماه`,
         "مسیر یکپارچه از نصب تا فروش",
         "پشتیبانی در مدارک و مراحل اجرایی",
@@ -75,7 +76,7 @@ export const SOLAR_HOME_PAGE: LandingPageContent = {
       id: "f2",
       question: "بعد از نصب، برق را به چه کسی می‌فروشم؟",
       answer:
-        "می‌توانید به دولت بفروشید یا به برقینو. مسیر پیشنهادی ما فروش به برقینو با نرخ بورس سبز و پرداخت سریع‌تر است.",
+        `می‌توانید به دولت بفروشید یا به برقینو. مسیر پیشنهادی ما فروش به برقینو است: در فصل گرم نرخ بالاتر، در فصل سرد تضمین خرید با ${valueProps.coldSeasonPremiumPercent}٪ بیشتر از نرخ دولتی، و پرداخت سریع‌تر.`,
     },
   ],
 };

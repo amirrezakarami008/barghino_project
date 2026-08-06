@@ -15,7 +15,7 @@ export function BlogSection() {
           compact
         />
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
-          {BLOG_POSTS.map((post) => (
+          {[...BLOG_POSTS].reverse().slice(0, 4).map((post) => (
             <BlogCard key={post.id} {...post} />
           ))}
         </div>

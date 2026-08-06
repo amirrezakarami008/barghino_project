@@ -10,6 +10,24 @@ const ROWS = [
     barghinoBadge: "قیمت بالاتر",
   },
   {
+    label: "نحوه قیمت‌گذاری",
+    government: "اول سال تعیین می‌شود و تا آخر سال ثابت است",
+    barghino: "متناسب با فصل و شرایط بازار تنظیم می‌شود",
+    barghinoBadge: "منعطف",
+  },
+  {
+    label: "فصل‌های گرم (تولید بیشتر)",
+    government: "همان نرخ ثابت سالانه",
+    barghino: "خرید با قیمت بالاتر از مسیر دولتی",
+    barghinoBadge: "بازده بیشتر",
+  },
+  {
+    label: "فصل‌های سرد (تولید کمتر)",
+    government: "همان نرخ ثابت سالانه",
+    barghino: `تضمین خرید با ${SITE_CONFIG.valueProps.coldSeasonPremiumPercent}٪ بیشتر از نرخ دولتی`,
+    barghinoBadge: "کف تضمینی",
+  },
+  {
     label: "زمان پرداخت",
     government: `تا ${SITE_CONFIG.valueProps.governmentPayoutMonths} ماه`,
     barghino: `حداکثر ${SITE_CONFIG.valueProps.barghinoPayoutMonths} ماه`,
@@ -44,7 +62,8 @@ export function CompareSection() {
             فروش به دولت یا فروش به {SITE_CONFIG.name}؟
           </h2>
           <p className="mt-3 text-base leading-relaxed text-slate-600">
-            همان برقی که تولید می‌کنی — با قیمت بالاتر و پرداخت سریع‌تر.
+            نرخ دولتی اول سال قفل می‌شود؛ برقینو در فصل گرم گران‌تر می‌خرد و در فصل سرد هم
+            کف قیمت تضمینی دارد.
           </p>
         </div>
 

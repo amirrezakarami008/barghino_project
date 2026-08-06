@@ -7,14 +7,17 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint .",
-    "add-to-git" : "git add . && read -p 'commit message:' message && git commit -m \"message\" && git push",
+    "add-to-git": "git add . && read -p 'commit message:' message && git commit -m \"message\" && git push",
     "check-push": " pnpm lint && pnpm build && git add . && read -p 'commit message:' message && git commit -m \"$message\" && git push",
-    "check-errors": "pnpm lint && pnpm build" 
+    "check-errors": "pnpm lint && pnpm build"
   },
   "dependencies": {
+    "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
+    "framer-motion": "^12.43.0",
     "lucide-react": "^0.511.0",
     "next": "^16.2.11",
+    "pdfmake": "^0.3.11",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "tailwind-merge": "^3.3.0"

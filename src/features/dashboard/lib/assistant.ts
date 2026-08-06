@@ -179,12 +179,7 @@ export function getMaintenanceAlerts(): MaintenanceAlert[] {
   return alerts;
 }
 
-export interface AssistantMessage {
-  role: "user" | "assistant";
-  content: string;
-}
-
-/** پاسخ‌های rule-based بر اساس کلمات کلیدی */
+/** پاسخ‌های rule-based بر اساس کلمات کلیدی — استفاده در دستیار چت */
 export function answerAssistantQuestion(question: string): string {
   const q = question.trim().toLowerCase();
   const forecast = getIncomeForecast();
@@ -232,15 +227,19 @@ export function answerAssistantQuestion(question: string): string {
     );
   }
 
-  if (/دولت|مقایسه|سود بیشتر|چرا برقینو/.test(q)) {
+  if (/دولت|مقایسه|سود بیشتر|چرا برقینو|فصل/.test(q)) {
     const latest = MONTHLY_PRODUCTION[MONTHLY_PRODUCTION.length - 1];
     const govIncome = latest.production * gov;
     const barghinoIncome = latest.production * rate;
+    const coldPremium = SITE_CONFIG.valueProps.coldSeasonPremiumPercent;
     return (
       `برای تولید ${latest.production.toLocaleString("fa-IR")} kWh در ${latest.label}:\n` +
-      `• فروش به دولت: حدود ${formatMillionToman(govIncome)} تومان\n` +
+      `• فروش به دولت: حدود ${formatMillionToman(govIncome)} تومان (نرخ اول سال ثابت تا آخر سال)\n` +
       `• فروش به برقینو: حدود ${formatMillionToman(barghinoIncome)} تومان\n` +
-      `• سود بیشتر: حدود ${formatMillionToman(barghinoIncome - govIncome)} تومان`
+      `• سود بیشتر نمونه: حدود ${formatMillionToman(barghinoIncome - govIncome)} تومان\n\n` +
+      `مزیت فصلی برقینو:\n` +
+      `• فصل گرم (تولید بیشتر): خرید با قیمت بالاتر از مسیر دولتی\n` +
+      `• فصل سرد (تولید کمتر): تضمین خرید با ${coldPremium}٪ بیشتر از نرخ دولتی`
     );
   }
 
@@ -290,11 +289,3 @@ export function answerAssistantQuestion(question: string): string {
     "• نیاز به شستشو دارم؟"
   );
 }
-
-export const ASSISTANT_SUGGESTIONS = [
-  "سلامت نیروگاهم چطوره؟",
-  "درآمد ماه آینده چقدر است؟",
-  "اگر به دولت می‌فروختم؟",
-  "نرخ بورس سبز چقدر است؟",
-  "نیاز به شستشو دارم؟",
-];

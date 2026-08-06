@@ -13,7 +13,12 @@ export const FAQ_ITEMS: FAQItem[] = [
   {
     id: "vs-gov",
     question: "مزیت فروش به برقینو نسبت به فروش به دولت چیست؟",
-    answer: `فروش به دولت معمولاً با قیمت پایین‌تر (نمونه حدود ${valueProps.governmentPrice} ${valueProps.priceUnit}) و انتظار پرداخت تا حدود ${valueProps.governmentPayoutMonths} ماه همراه است. برقینو برق را با نرخ بورس سبز (نمونه حدود ${valueProps.barghinoPrice} ${valueProps.priceUnit}) می‌خرد و پرداخت را حداکثر تا ${valueProps.barghinoPayoutMonths} ماه با تضمین انجام می‌دهد.`,
+    answer: `قیمت خرید دولت معمولاً اول سال تعیین می‌شود و تا پایان سال ثابت می‌ماند؛ در نمونه‌ها حدود ${valueProps.governmentPrice} ${valueProps.priceUnit} است و پرداخت ممکن است تا حدود ${valueProps.governmentPayoutMonths} ماه طول بکشد. برقینو در فصل‌های گرم — که تولید هم بیشتر است — با نرخ بالاتر (نمونه‌های مبتنی بر بورس سبز حدود ${valueProps.barghinoPrice} ${valueProps.priceUnit}) می‌خرد، در فصل‌های سرد هم تضمین خرید با ${valueProps.coldSeasonPremiumPercent}٪ بیشتر از نرخ دولتی دارد، و پرداخت را حداکثر تا ${valueProps.barghinoPayoutMonths} ماه با تضمین انجام می‌دهد.`,
+  },
+  {
+    id: "seasonal-price",
+    question: "قیمت خرید برقینو در طول سال چطور تغییر می‌کند؟",
+    answer: `برخلاف مسیر دولتی که نرخ را اول سال قفل می‌کند، برقینو قیمت را فصلی تنظیم می‌کند: در فصل‌های گرم با تولید بالاتر، خرید با قیمت بیشتر انجام می‌شود؛ در فصل‌های سرد که تولید کمتر است، تضمین خرید با ${valueProps.coldSeasonPremiumPercent}٪ بالاتر از نرخ دولتی برقرار است تا کف درآمد حفظ شود.`,
   },
   {
     id: "who",

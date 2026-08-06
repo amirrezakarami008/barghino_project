@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "../features/chatbot/styles/chatbot.css";
 
 @font-face {
   font-family: "Vazirmatn";

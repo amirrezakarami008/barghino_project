@@ -3,15 +3,22 @@ import type { FeatureItem } from "@/shared/types";
 export const FEATURES: FeatureItem[] = [
   {
     id: "green-price",
-    title: "قیمت بالاتر",
-    description: "خرید برق خانگی با نرخ بورس سبز، بالاتر از مسیر پایه دولتی",
+    title: "قیمت بالاتر در فصل گرم",
+    description:
+      "وقتی تولید بیشتر است، با نرخ بورس سبز — بالاتر از تعرفه ثابت دولتی — می‌خریم",
     icon: "TrendingDown",
   },
   {
-    id: "fast-pay",
-    title: "پرداخت سریع و تضمینی",
-    description: "تسویه حداکثر تا ۲ ماه، نه انتظار چندماهه",
+    id: "cold-floor",
+    title: "کف تضمینی در فصل سرد",
+    description: "حتی با تولید کمتر، تضمین خرید با ۱۰٪ بیشتر از نرخ دولتی",
     icon: "ShieldCheck",
+  },
+  {
+    id: "fast-pay",
+    title: "پرداخت سریع",
+    description: "تسویه حداکثر تا ۲ ماه، نه انتظار چندماهه مسیر دولتی",
+    icon: "Zap",
   },
   {
     id: "install",
