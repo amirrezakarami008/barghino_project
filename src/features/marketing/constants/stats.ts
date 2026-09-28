@@ -4,13 +4,13 @@ export const STATS: StatItem[] = [
   {
     id: "price",
     value: "≈۳×",
-    label: "قیمت بهتر نسبت به خرید پایه دولتی (نمونه)",
+    label: "قیمت بهتر نسبت به خرید پایه (نمونه)",
   },
   {
     id: "payout",
     value: "۲",
     suffix: " ماه",
-    label: "حداکثر زمان پرداخت تضمینی",
+    label: "حداکثر زمان قرارداد رسمی",
   },
   {
     id: "paths",

@@ -19,7 +19,7 @@ export const INSTALL_STEPS = [
   {
     id: "review" as const,
     label: "بررسی اولیه",
-    description: "کارشناسان برقینو درخواست را بررسی می‌کنند.",
+    description: "با ارسال عکس یا ویدیو از پشت‌بام، کارشناسان (یا AI در آینده) بررسی می‌کنند.",
   },
   {
     id: "visit" as const,

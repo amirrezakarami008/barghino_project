@@ -5,6 +5,13 @@ import { Button, LinkArrow } from "@/shared/ui/Button";
 import { Container } from "@/shared/ui/Container";
 import { SITE_CONFIG } from "@/config";
 import { parsePersianNumber } from "@/shared/lib/numbers";
+import { EquipmentPriceList } from "@/features/equipment/components/EquipmentPriceList";
+import { useActiveEquipment } from "@/features/equipment/hooks/useEquipment";
+import {
+  estimateEquipmentCost,
+  formatEquipmentMoney,
+} from "@/features/equipment/lib/pricing";
+import { EQUIPMENT_CATEGORY_LABELS } from "@/features/equipment/constants";
 
 const CITIES = [
   { id: "tehran", label: "تهران", yieldKwhPerKwp: 1550 },
@@ -23,18 +30,11 @@ const ROOF_TYPES = [
   { id: "mixed", label: "ترکیبی / محدود", factor: 0.85 },
 ] as const;
 
-/** هزینه تقریبی نصب به ازای هر کیلووات (تومان) — نمونه */
-const COST_PER_KWP = 45_000_000;
 /** متر مربع تقریبی به ازای هر کیلووات */
 const M2_PER_KWP = 9;
 
-function formatMoney(n: number) {
-  if (n >= 1_000_000_000) return `${(n / 1_000_000_000).toFixed(1)} میلیارد`;
-  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(0)} میلیون`;
-  return n.toLocaleString("fa-IR");
-}
-
 export function InstallCalculator() {
+  const { items: equipment } = useActiveEquipment();
   const [cityId, setCityId] = useState<(typeof CITIES)[number]["id"]>("tehran");
   const [roofM2, setRoofM2] = useState(80);
   const [roofType, setRoofType] = useState<(typeof ROOF_TYPES)[number]["id"]>("flat");
@@ -50,7 +50,8 @@ export function InstallCalculator() {
     const govRate = parsePersianNumber(SITE_CONFIG.valueProps.governmentPrice);
     const annualIncome = annualKwh * rate;
     const annualGov = annualKwh * govRate;
-    const installCost = capacityKwp * COST_PER_KWP;
+    const costEstimate = estimateEquipmentCost(capacityKwp, equipment);
+    const installCost = costEstimate.totalToman;
     const paybackYears = annualIncome > 0 ? installCost / annualIncome : 0;
     const extraVsGov = annualIncome - annualGov;
 
@@ -63,21 +64,23 @@ export function InstallCalculator() {
       extraVsGov,
       monthlyIncome: Math.round(annualIncome / 12),
       billHint: monthlyBill,
+      costEstimate,
     };
-  }, [cityId, roofM2, roofType, monthlyBill]);
+  }, [cityId, roofM2, roofType, monthlyBill, equipment]);
 
   return (
     <section id="calculator" className="bg-slate-50 py-12 sm:py-16">
       <Container>
         <div className="mx-auto mb-8 max-w-2xl text-center">
           <span className="mb-3 inline-flex rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-semibold text-brand-700">
-            ماشین حساب نصب
+            ماشین حساب تجهیزات
           </span>
           <h2 className="font-display text-2xl font-extrabold text-slate-900 sm:text-3xl">
             اگر نیروگاه نصب کنی، چقدر درآمد داری؟
           </h2>
           <p className="mt-3 text-sm leading-7 text-slate-600 sm:text-base">
-            با چند عدد ساده، ظرفیت پیشنهادی، هزینه تقریبی و درآمد فروش به برقینو را ببین.
+            با چند عدد ساده، ظرفیت پیشنهادی، هزینه تقریبی بر اساس تجهیزات تعریف‌شده و
+            درآمد فروش به برقینو را ببین.
           </p>
         </div>
 
@@ -156,6 +159,11 @@ export function InstallCalculator() {
                 </p>
               </div>
             </div>
+
+            <EquipmentPriceList
+              capacityKwp={result.capacityKwp}
+              costLines={result.costEstimate.lines}
+            />
           </div>
 
           <div className="rounded-[1.5rem] border border-brand-200 bg-gradient-to-br from-brand-50 via-white to-amber-50 p-5 shadow-lg shadow-brand-500/10 sm:p-6">
@@ -163,10 +171,22 @@ export function InstallCalculator() {
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
               {[
                 { label: "ظرفیت پیشنهادی", value: `${result.capacityKwp} kWp` },
-                { label: "تولید سالانه تقریبی", value: `${result.annualKwh.toLocaleString("fa-IR")} kWh` },
-                { label: "هزینه تقریبی نصب", value: `${formatMoney(result.installCost)} تومان` },
-                { label: "درآمد سالانه (بورس سبز)", value: `${formatMoney(result.annualIncome)} تومان` },
-                { label: "درآمد ماهانه تقریبی", value: `${formatMoney(result.monthlyIncome)} تومان` },
+                {
+                  label: "تولید سالانه تقریبی",
+                  value: `${result.annualKwh.toLocaleString("fa-IR")} kWh`,
+                },
+                {
+                  label: "هزینه تقریبی تجهیزات و نصب",
+                  value: `${formatEquipmentMoney(result.installCost)} تومان`,
+                },
+                {
+                  label: "درآمد سالانه",
+                  value: `${formatEquipmentMoney(result.annualIncome)} تومان`,
+                },
+                {
+                  label: "درآمد ماهانه تقریبی",
+                  value: `${formatEquipmentMoney(result.monthlyIncome)} تومان`,
+                },
                 {
                   label: "بازگشت سرمایه تقریبی",
                   value: `${result.paybackYears.toFixed(1)} سال`,
@@ -179,23 +199,77 @@ export function InstallCalculator() {
               ))}
             </div>
 
+            {result.costEstimate.lines.length > 0 && (
+              <div className="mt-4 overflow-hidden rounded-xl border border-slate-200/80 bg-white/80">
+                <div className="flex items-center justify-between border-b border-slate-100 px-4 py-3">
+                  <p className="text-xs font-semibold text-slate-700">
+                    تجهیزات استفاده‌شده در این برآورد
+                  </p>
+                  <span className="text-[11px] text-slate-400">
+                    {result.costEstimate.lines.length.toLocaleString("fa-IR")} قلم
+                  </span>
+                </div>
+                <ul className="divide-y divide-slate-100">
+                  {result.costEstimate.lines.map((line) => {
+                    const unit = line.item.unitLabel ?? "واحد";
+                    return (
+                      <li
+                        key={line.item.id}
+                        className="flex items-center justify-between gap-3 px-4 py-3"
+                      >
+                        <div className="min-w-0">
+                          <p className="truncate text-xs font-semibold text-slate-800">
+                            {line.item.name}
+                          </p>
+                          <p className="mt-0.5 text-[10px] text-slate-400">
+                            {EQUIPMENT_CATEGORY_LABELS[line.item.category]} ·{" "}
+                            {line.item.unitPriceToman.toLocaleString("fa-IR")} تومان / {unit}
+                          </p>
+                        </div>
+                        <div className="shrink-0 text-end">
+                          <p className="rounded-lg bg-brand-50 px-2 py-1 text-xs font-bold tabular-nums text-brand-700 ring-1 ring-brand-100">
+                            {line.quantity.toLocaleString("fa-IR")} {unit}
+                          </p>
+                          <p className="mt-1 text-[10px] font-semibold tabular-nums text-slate-600">
+                            {formatEquipmentMoney(line.lineTotalToman)} تومان
+                          </p>
+                        </div>
+                      </li>
+                    );
+                  })}
+                  <li className="flex items-center justify-between bg-brand-50/60 px-4 py-3">
+                    <span className="text-xs font-bold text-brand-800">جمع تجهیزات</span>
+                    <span className="text-xs font-extrabold text-brand-800">
+                      {formatEquipmentMoney(result.installCost)} تومان
+                    </span>
+                  </li>
+                </ul>
+              </div>
+            )}
+
             <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50/90 px-4 py-3">
-              <p className="text-xs text-emerald-700">سود بیشتر نسبت به فروش دولتی در سال</p>
+              <p className="text-xs text-emerald-700">سود بیشتر نسبت به فروش پایه در سال</p>
               <p className="mt-1 font-display text-xl font-extrabold text-emerald-700">
-                +{formatMoney(result.extraVsGov)} تومان
+                +{formatEquipmentMoney(result.extraVsGov)} تومان
               </p>
             </div>
 
             <p className="mt-4 text-[11px] leading-5 text-slate-500">
-              اعداد نمونه و تقریبی‌اند؛ ظرفیت نهایی پس از بازدید کارشناس مشخص می‌شود.
+              اعداد نمونه و تقریبی‌اند؛ هزینه بر اساس تجهیزات فعال کاتالوگ محاسبه
+              می‌شود و ظرفیت نهایی پس از بازدید کارشناس مشخص می‌گردد.
             </p>
 
             <div className="mt-5 flex flex-col gap-2 sm:flex-row">
-              <Button href="/register" size="lg" className="group flex-1">
+              <Button href="/register" size="sm" className="group flex-1 whitespace-nowrap">
                 درخواست نصب نیروگاه
                 <LinkArrow />
               </Button>
-              <Button href="/dashboard/install" variant="outline" size="lg" className="flex-1">
+              <Button
+                href="/dashboard/install"
+                variant="outline"
+                size="sm"
+                className="flex-1 whitespace-nowrap"
+              >
                 پیگیری در پنل
               </Button>
             </div>

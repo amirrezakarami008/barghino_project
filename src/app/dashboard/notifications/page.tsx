@@ -4,6 +4,7 @@ import { DashboardPage, Panel, StatusBadge } from "@/features/dashboard/componen
 import { NOTIFICATIONS } from "@/features/dashboard/constants";
 import { useContracts } from "@/features/contracts";
 import { getExpiryNotifications } from "@/features/contracts/lib/store";
+import { getEquipmentAlertNotifications } from "@/features/dashboard/lib/assistant";
 import { Button } from "@/shared/ui/Button";
 import { cn } from "@/shared/lib/utils";
 import { useMemo, useState } from "react";
@@ -16,16 +17,24 @@ const typeIcons: Record<string, string> = {
   info: "ℹ️",
 };
 
-type NotificationItem = Notification & { contractId?: string };
+type NotificationItem = Notification & { contractId?: string; href?: string };
 
 export default function NotificationsPage() {
   const { contracts } = useContracts();
   const expiryItems = useMemo(() => getExpiryNotifications(contracts), [contracts]);
+  const equipmentItems = useMemo(
+    () =>
+      getEquipmentAlertNotifications().map((n) => ({
+        ...n,
+        type: n.type as Notification["type"],
+      })),
+    [],
+  );
 
   const [items, setItems] = useState<NotificationItem[]>(NOTIFICATIONS);
   const merged = useMemo<NotificationItem[]>(
-    () => [...expiryItems, ...items],
-    [expiryItems, items],
+    () => [...equipmentItems, ...expiryItems, ...items],
+    [equipmentItems, expiryItems, items],
   );
   const unread = merged.filter((n) => !n.read);
 
@@ -35,6 +44,11 @@ export default function NotificationsPage() {
     <DashboardPage
       title="اعلان‌ها"
       subtitle={unread.length > 0 ? `${unread.length} اعلان خوانده‌نشده` : "همه اعلان‌ها خوانده شده"}
+      action={
+        <Button href="/dashboard/alarms" variant="outline" size="sm">
+          آلارم تجهیزات
+        </Button>
+      }
     >
       {unread.length > 0 && (
         <button
@@ -67,6 +81,11 @@ export default function NotificationsPage() {
                   {n.contractId ? (
                     <Button href={`/dashboard/contracts/${n.contractId}`} variant="ghost" size="sm">
                       مشاهده قرارداد
+                    </Button>
+                  ) : null}
+                  {n.href && !n.contractId ? (
+                    <Button href={n.href} variant="ghost" size="sm">
+                      پیگیری آلارم
                     </Button>
                   ) : null}
                 </div>

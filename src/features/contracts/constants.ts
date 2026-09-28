@@ -1,5 +1,6 @@
-import type { Contract, ContractFileKind, ContractPlan, ContractStatus } from "./types";
-import { SITE_CONFIG } from "@/config";
+import type { Contract, ContractFileKind, ContractStatus } from "./types";
+import { getPlanById, getActivePlans } from "@/features/plans/lib/store";
+import { SEED_PLANS } from "@/features/plans/constants";
 
 export const CONTRACTS_STORAGE_KEY = "barghma:contracts-v1";
 export const CONTRACTS_EVENT = "barghma:contracts-updated";
@@ -8,45 +9,16 @@ export const CONTRACT_FILES_STORE = "blobs";
 
 export const MAX_UPLOAD_BYTES = 5 * 1024 * 1024;
 
-/** سه پلن فروش برق برای انتخاب در ویزارد امضا */
-export const CONTRACT_PLANS: ContractPlan[] = [
-  {
-    id: "basic",
-    name: "پایه",
-    tagline: "مناسب تولید متوسط خانگی",
-    volume: "۴۸۰ kWh/ماه",
-    rate: `${SITE_CONFIG.valueProps.barghinoPrice} تومان/kWh`,
-    savings: "≈۳× دولت",
-    features: ["خرید تضمینی فصلی", "پرداخت حداکثر ۲ ماهه", "پشتیبانی استاندارد"],
-  },
-  {
-    id: "standard",
-    name: "استاندارد",
-    tagline: "پیشنهاد برقینو برای اکثر خانه‌ها",
-    volume: "۷۲۰ kWh/ماه",
-    rate: `${SITE_CONFIG.valueProps.barghinoPrice} تومان/kWh`,
-    savings: "≈۳× دولت",
-    features: ["خرید تضمینی فصلی", "اولویت تسویه", "گزارش تولید ماهانه", "پشتیبانی اولویت‌دار"],
-    recommended: true,
-  },
-  {
-    id: "premium",
-    name: "ویژه",
-    tagline: "حداکثر ظرفیت و نرخ فصل گرم",
-    volume: "۱٬۲۰۰ kWh/ماه",
-    rate: "۱۶٬۵۰۰ تومان/kWh",
-    savings: "≈۳٫۳× دولت",
-    features: [
-      "نرخ بالاتر فصل گرم",
-      "تضمین فصل سرد +۱۰٪ دولت",
-      "تسویه سریع‌تر",
-      "پشتیبان اختصاصی",
-    ],
-  },
-];
+/** سازگاری — منبع اصلی پلن‌ها در features/plans است */
+export const CONTRACT_PLANS = SEED_PLANS;
+export const SEED_CONTRACT_PLANS = SEED_PLANS;
 
 export function getContractPlanById(id: string | null | undefined) {
-  return CONTRACT_PLANS.find((p) => p.id === id) ?? null;
+  return getPlanById(id);
+}
+
+export function getSelectableContractPlans() {
+  return getActivePlans();
 }
 
 export const ACCEPTED_UPLOAD_TYPES = [
@@ -119,7 +91,7 @@ export const SEED_CONTRACTS: Contract[] = [
     volume: "۷۲۰ kWh/ماه",
     rate: "۱۵٬۰۰۰ تومان/kWh",
     status: "active",
-    savings: "≈۳× دولت",
+    savings: "≈۳× پایه",
     roleScope: "personal",
     expiresSoon: false,
     notes: "فروش به نرخ بورس سبز — پرداخت حداکثر ۲ ماه",
@@ -147,7 +119,7 @@ export const SEED_CONTRACTS: Contract[] = [
     volume: "۴۸۰ kWh/ماه",
     rate: "۱۵٬۰۰۰ تومان/kWh",
     status: "active",
-    savings: "≈۳× دولت",
+    savings: "≈۳× پایه",
     roleScope: "personal",
     expiresSoon: false,
     notes: "نیروگاه دوم پس از نصب فعال شد",
@@ -226,7 +198,7 @@ export const SEED_CONTRACTS: Contract[] = [
     volume: "۷۲۰ kWh/ماه",
     rate: "۱۵٬۰۰۰ تومان/kWh",
     status: "pending",
-    savings: "≈۳× دولت",
+    savings: "≈۳× پایه",
     roleScope: "personal",
     notes: "پس از تکمیل مشخصات هویتی، کارت ملی و امضا در سامانه فعال می‌شود",
     files: [

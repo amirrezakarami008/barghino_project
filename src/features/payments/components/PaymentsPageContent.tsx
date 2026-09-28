@@ -136,10 +136,16 @@ export function PaymentsPageContent() {
       title="پرداخت‌ها"
       subtitle="واریز درآمد فروش برق، فاکتور رسمی و پیگیری تسویه"
       action={
-        <Button href="/dashboard/invoices" variant="outline" size="sm" className="gap-1.5">
-          <FileText className="h-4 w-4" />
-          صورت‌حساب‌ها
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <Button href="/dashboard/wallet" variant="outline" size="sm" className="gap-1.5">
+            <Wallet className="h-4 w-4" />
+            کیف پول
+          </Button>
+          <Button href="/dashboard/invoices" variant="outline" size="sm" className="gap-1.5">
+            <FileText className="h-4 w-4" />
+            صورت‌حساب‌ها
+          </Button>
+        </div>
       }
     >
       {/* Hero */}
@@ -150,7 +156,7 @@ export function PaymentsPageContent() {
           <div>
             <div className="inline-flex items-center gap-2 rounded-full bg-white/10 px-3 py-1 text-xs font-bold ring-1 ring-white/20">
               <Sparkles className="h-3.5 w-3.5" />
-              تسویه تضمینی حداکثر {SITE_CONFIG.valueProps.barghinoPayoutMonths} ماه
+              تسویه با قرارداد رسمی حداکثر {SITE_CONFIG.valueProps.barghinoPayoutMonths} ماه
             </div>
             <h2 className="mt-4 font-display text-2xl font-black leading-snug sm:text-3xl">
               مرکز مالی فروش برق شما

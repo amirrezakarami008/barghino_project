@@ -17,7 +17,12 @@ export type DashboardNavIcon =
   | "ClipboardList"
   | "TrendingUp"
   | "LineChart"
-  | "Sparkles";
+  | "Sparkles"
+  | "Package"
+  | "ScanSearch"
+  | "Layers"
+  | "Wallet"
+  | "BellRing";
 
 export interface DashboardNavItem {
   label: string;
@@ -147,6 +152,37 @@ export interface UpcomingPayout {
   progressPercent: number;
 }
 
+/** حساب کیف پول کاربر */
+export interface WalletAccount {
+  balanceToman: number;
+  pendingToman: number;
+  currency: "IRT";
+  lastUpdatedAt: string;
+}
+
+export type WalletTxDirection = "in" | "out";
+export type WalletTxKind =
+  | "sale_credit"
+  | "deposit"
+  | "withdraw"
+  | "refund"
+  | "adjustment";
+
+export interface WalletTransaction {
+  id: string;
+  title: string;
+  amountToman: number;
+  date: string;
+  direction: WalletTxDirection;
+  kind: WalletTxKind;
+  status: PaymentStatus;
+  reference: string;
+  note?: string;
+  invoiceId?: string;
+  paymentId?: string;
+  bankLast4?: string;
+}
+
 export interface Notification {
   id: string;
   title: string;
@@ -198,6 +234,9 @@ export type InstallRequestStep =
   | "installation"
   | "active";
 
+/** وضعیت بررسی اولیه مبتنی بر عکس/ویدیو */
+export type InstallMediaReviewStatus = "none" | "pending" | "approved" | "rejected";
+
 export interface InstallStepEvent {
   step: InstallRequestStep;
   at: string;
@@ -214,6 +253,17 @@ export interface InstallProposal {
   visitSummary: string;
 }
 
+/** فایل ارسالی برای بررسی اولیه (عکس یا ویدیو پشت‌بام) */
+export interface InstallMediaAttachment {
+  id: string;
+  kind: "image" | "video";
+  fileName: string;
+  mimeType: string;
+  sizeBytes: number;
+  storageKey: string;
+  uploadedAt: string;
+}
+
 export interface InstallRequest {
   id: string;
   address: string;
@@ -228,6 +278,13 @@ export interface InstallRequest {
   contractSignedAt?: string;
   /** نیروگاه ایجادشده پس از راه‌اندازی */
   plantId?: string;
+  /** مدارک تصویری/ویدیویی بررسی اولیه */
+  media?: InstallMediaAttachment[];
+  mediaReviewStatus?: InstallMediaReviewStatus;
+  mediaReviewNote?: string;
+  mediaReviewedAt?: string;
+  /** منبع تأیید — فعلاً ادمین؛ در آینده AI */
+  mediaReviewedBy?: "admin" | "ai";
 }
 
 /** نقاط مصرف — نگهداری برای سازگاری با ConsumptionChart */

@@ -36,7 +36,7 @@ export function HeroSection() {
 
             <p className="mt-5 max-w-lg text-sm leading-8 text-white/85 sm:text-base lg:text-lg lg:leading-8">
               برق تولیدی خانگی‌ات را به قیمت بورس سبز بفروش؛ در فصل گرم گران‌تر می‌خریم و در فصل
-              سرد هم کف قیمت تضمینی داریم. پرداخت تضمینی حداکثر{" "}
+              سرد هم کف قیمت در قرارداد رسمی داریم. تسویه با قرارداد رسمی حداکثر{" "}
               {valueProps.barghinoPayoutMonths} ماه، شفاف و بدون دردسر.
             </p>
 
@@ -69,7 +69,7 @@ export function HeroSection() {
       <div className="relative z-20 -mt-16 px-4 sm:-mt-20 sm:px-6 lg:-mt-24">
         <Container>
           <div className="mx-auto grid max-w-3xl grid-cols-1 items-stretch overflow-hidden rounded-2xl bg-white shadow-[0_20px_50px_-12px_rgba(15,23,42,0.22)] ring-1 ring-slate-200/70 sm:grid-cols-[1fr_auto_1fr]">
-            {/* دولت — سمت راست در RTL */}
+            {/* پایه — سمت راست در RTL */}
             <div className="flex flex-col items-center justify-center px-6 py-6 text-center sm:px-8 sm:py-7">
               <Building2 className="mb-2.5 h-8 w-8 text-slate-500" strokeWidth={1.5} />
               <p className="font-display text-lg font-extrabold tabular-nums text-slate-700 sm:text-xl">
@@ -105,7 +105,7 @@ export function HeroSection() {
               <p className="mt-2 text-sm font-semibold text-slate-700">
                 حداکثر {valueProps.barghinoPayoutMonths} ماه
               </p>
-              <p className="mt-0.5 text-xs font-medium text-brand-600">پرداخت تضمینی</p>
+              <p className="mt-0.5 text-xs font-medium text-brand-600">قرارداد رسمی</p>
             </div>
           </div>
         </Container>

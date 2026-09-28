@@ -325,8 +325,8 @@ export const NOTIFICATIONS: Notification[] = [
   },
   {
     id: "n2",
-    title: "تولید بالاتر از هدف",
-    message: "تولید تیر نیروگاه خانه اصلی ۱۲٪ بیشتر از هدف بود.",
+    title: "تولید بیشتر از پیشبینی",
+    message: "تولید تیر نیروگاه خانه اصلی ۱۲٪ بیشتر پیشبینی.",
     date: "۱۴۰۴/۰۵/۰۲",
     read: false,
     type: "success",

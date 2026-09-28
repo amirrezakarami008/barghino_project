@@ -59,8 +59,8 @@ export const SOLAR_HOME_PAGE: LandingPageContent = {
       ],
       list: [
         `خرید با نرخ بورس سبز در فصل گرم (نمونه حدود ${valueProps.barghinoPrice} ${valueProps.priceUnit})`,
-        `تضمین خرید فصل سرد با ${valueProps.coldSeasonPremiumPercent}٪ بیشتر از نرخ دولتی`,
-        `پرداخت تضمینی حداکثر ${valueProps.barghinoPayoutMonths} ماه`,
+        `خرید فصل سرد با قرارداد رسمی و ${valueProps.coldSeasonPremiumPercent}٪ بیشتر از نرخ پایه`,
+        `تسویه با قرارداد رسمی حداکثر ${valueProps.barghinoPayoutMonths} ماه`,
         "مسیر یکپارچه از نصب تا فروش",
         "پشتیبانی در مدارک و مراحل اجرایی",
       ],
@@ -76,7 +76,7 @@ export const SOLAR_HOME_PAGE: LandingPageContent = {
       id: "f2",
       question: "بعد از نصب، برق را به چه کسی می‌فروشم؟",
       answer:
-        `می‌توانید به دولت بفروشید یا به برقینو. مسیر پیشنهادی ما فروش به برقینو است: در فصل گرم نرخ بالاتر، در فصل سرد تضمین خرید با ${valueProps.coldSeasonPremiumPercent}٪ بیشتر از نرخ دولتی، و پرداخت سریع‌تر.`,
+        `می‌توانید با نرخ پایه بفروشید یا به برقینو. مسیر پیشنهادی ما فروش به برقینو است: در فصل گرم نرخ بالاتر، در فصل سرد خرید با قرارداد رسمی و ${valueProps.coldSeasonPremiumPercent}٪ بیشتر از نرخ پایه، و پرداخت سریع‌تر.`,
     },
   ],
 };

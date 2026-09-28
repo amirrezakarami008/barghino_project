@@ -30,7 +30,7 @@ const SELL_STEPS = [
 
 const RATE_COMPARISON = [
   {
-    label: "نرخ دولتی",
+    label: "نرخ پایه",
     rate: "۵٬۰۰۰",
     payment: "تا ۶ ماه",
     highlight: false,
@@ -68,11 +68,11 @@ export default function SellPowerPage() {
             {item.highlight && (
               <>
                 <span className="mt-3 inline-block rounded-full bg-brand-600 px-3 py-1 text-xs font-bold text-white">
-                  ۳× نرخ دولتی (نمونه فصل گرم)
+                  ۳× نرخ پایه (نمونه فصل گرم)
                 </span>
                 <p className="mt-3 text-xs leading-5 text-slate-600">
-                  فصل گرم: خرید با قیمت بالاتر · فصل سرد: تضمین خرید با ۱۰٪ بیشتر از نرخ دولتی.
-                  نرخ دولتی اول سال تعیین و تا آخر سال ثابت می‌ماند.
+                  فصل گرم: خرید با قیمت بالاتر · فصل سرد: خرید با قرارداد رسمی و ۱۰٪ بیشتر از نرخ پایه.
+                  نرخ پایه اول سال تعیین و تا آخر سال ثابت می‌ماند.
                 </p>
               </>
             )}

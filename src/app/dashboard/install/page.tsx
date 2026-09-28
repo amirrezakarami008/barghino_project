@@ -1,6 +1,12 @@
 "use client";
 
-import { DashboardPage, Panel, PanelHeader, StatusBadge } from "@/features/dashboard/components";
+import {
+  DashboardPage,
+  InstallMediaReviewCard,
+  Panel,
+  PanelHeader,
+  StatusBadge,
+} from "@/features/dashboard/components";
 import { Button } from "@/shared/ui/Button";
 import {
   INSTALL_STEPS,
@@ -22,7 +28,6 @@ import {
   Hammer,
   MapPin,
   Rocket,
-  Search,
   Sun,
 } from "lucide-react";
 import { useState } from "react";
@@ -33,14 +38,21 @@ const STEP_BADGE: Record<
   InstallRequestStep,
   { status: "pending" | "in_progress" | "active" | "success" | "processing"; label: string }
 > = {
-  submitted: { status: "pending", label: "ثبت‌شده" },
-  review: { status: "in_progress", label: "در حال بررسی" },
+  submitted: { status: "pending", label: "نیاز به مدرک" },
+  review: { status: "processing", label: "بررسی اولیه" },
   visit: { status: "processing", label: "هماهنگی بازدید" },
   proposal: { status: "processing", label: "طرح آماده" },
   contract: { status: "pending", label: "آماده امضا" },
   installation: { status: "in_progress", label: "در حال نصب" },
   active: { status: "active", label: "راه‌اندازی‌شده" },
 };
+
+function needsMediaGate(request: InstallRequest) {
+  return (
+    request.currentStep === "submitted" ||
+    (request.currentStep === "review" && request.mediaReviewStatus !== "approved")
+  );
+}
 
 function StepActionCard({
   request,
@@ -53,6 +65,10 @@ function StepActionCard({
 }) {
   const step = request.currentStep;
 
+  if (needsMediaGate(request)) {
+    return <InstallMediaReviewCard request={request} />;
+  }
+
   if (step === "active") {
     return (
       <Panel className="border-emerald-200 bg-gradient-to-br from-emerald-50 to-white">
@@ -63,8 +79,7 @@ function StepActionCard({
           <div className="flex-1">
             <h3 className="font-display text-lg font-bold text-slate-900">نیروگاه راه‌اندازی شد</h3>
             <p className="mt-1 text-sm leading-6 text-slate-600">
-              شبیه‌سازی نصب کامل شد. نیروگاه به فهرست نیروگاه‌های شما اضافه شده و می‌توانید مسیر فروش
-              برق را شروع کنید.
+              نصب کامل شد. نیروگاه به فهرست شما اضافه شده و می‌توانید مسیر فروش برق را شروع کنید.
             </p>
             {request.proposal && (
               <p className="mt-3 text-sm text-slate-700">
@@ -89,21 +104,9 @@ function StepActionCard({
   }
 
   const configs: Record<
-    Exclude<InstallRequestStep, "active">,
-    { icon: typeof Search; title: string; body: string; cta: string }
+    Exclude<InstallRequestStep, "active" | "submitted" | "review">,
+    { icon: typeof MapPin; title: string; body: string; cta: string }
   > = {
-    submitted: {
-      icon: Search,
-      title: "آماده بررسی اولیه",
-      body: "درخواست ثبت شده است. در حالت شبیه‌سازی می‌توانید بررسی کارشناسان را جلو ببرید.",
-      cta: "شروع بررسی اولیه",
-    },
-    review: {
-      icon: MapPin,
-      title: "بررسی تأیید شد",
-      body: "اطلاعات ملک تأیید شد. مرحله بعد هماهنگی بازدید کارشناس از پشت‌بام است.",
-      cta: "زمان‌بندی بازدید",
-    },
     visit: {
       icon: Sun,
       title: "بازدید برنامه‌ریزی شد",
@@ -132,7 +135,8 @@ function StepActionCard({
     },
   };
 
-  const cfg = configs[step];
+  const cfg = configs[step as keyof typeof configs];
+  if (!cfg) return null;
   const Icon = cfg.icon;
 
   return (
@@ -144,12 +148,17 @@ function StepActionCard({
         <div className="flex-1">
           <div className="flex flex-wrap items-center gap-2">
             <h3 className="font-display text-lg font-bold text-slate-900">{cfg.title}</h3>
-            <StatusBadge
-              status={STEP_BADGE[step].status}
-              label={STEP_BADGE[step].label}
-            />
+            <StatusBadge status={STEP_BADGE[step].status} label={STEP_BADGE[step].label} />
           </div>
           <p className="mt-2 text-sm leading-6 text-slate-600">{cfg.body}</p>
+
+          {request.mediaReviewStatus === "approved" && request.mediaReviewedBy && (
+            <p className="mt-2 text-xs text-emerald-700">
+              بررسی اولیه تأیید شده
+              {request.mediaReviewedBy === "ai" ? " (شبیه‌سازی AI)" : " توسط ادمین"}
+              {request.mediaReviewedAt ? ` · ${request.mediaReviewedAt}` : ""}
+            </p>
+          )}
 
           {step === "proposal" && request.proposal && (
             <div className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -192,7 +201,7 @@ function StepActionCard({
             <ul className="mt-4 space-y-2 text-sm text-slate-600">
               <li>• نصب نیروگاه {request.proposal.capacityKwp.toLocaleString("fa-IR")} کیلوواتی</li>
               <li>• آماده‌سازی مسیر فروش برق به برقینو پس از بهره‌برداری</li>
-              <li>• پرداخت تضمینی حداکثر ۲ ماه پس از شروع فروش</li>
+              <li>• تسویه با قرارداد رسمی حداکثر ۲ ماه پس از شروع فروش</li>
             </ul>
           )}
 
@@ -201,9 +210,8 @@ function StepActionCard({
               {busy ? "در حال شبیه‌سازی…" : cfg.cta}
             </Button>
             <p className="mt-2 text-xs text-slate-400">
-              مرحله بعد: {getInstallStepLabel(
-                INSTALL_STEPS[getInstallStepIndex(step) + 1]?.id ?? "active",
-              )}
+              مرحله بعد:{" "}
+              {getInstallStepLabel(INSTALL_STEPS[getInstallStepIndex(step) + 1]?.id ?? "active")}
             </p>
           </div>
         </div>
@@ -216,6 +224,7 @@ export default function InstallPage() {
   const { latest } = useInstallRequests();
   const [view, setView] = useState<View>("idle");
   const [busy, setBusy] = useState(false);
+  const [advanceError, setAdvanceError] = useState<string | null>(null);
   const [formData, setFormData] = useState({ address: "", area: "", phone: "", note: "" });
 
   function handleSubmit(e: React.FormEvent) {
@@ -231,25 +240,41 @@ export default function InstallPage() {
 
   async function handleAdvance() {
     if (!latest || busy) return;
+    setAdvanceError(null);
     setBusy(true);
-    await new Promise((r) => setTimeout(r, 650));
-    advanceInstallSimulation(latest.id);
-    setBusy(false);
+    try {
+      await new Promise((r) => setTimeout(r, 650));
+      advanceInstallSimulation(latest.id);
+    } catch (err) {
+      setAdvanceError(err instanceof Error ? err.message : "ادامه مرحله ممکن نشد.");
+    } finally {
+      setBusy(false);
+    }
   }
 
   async function handleFastForward() {
     if (!latest || busy || latest.currentStep === "active") return;
+    if (needsMediaGate(latest)) {
+      setAdvanceError("ابتدا عکس/ویدیو را ارسال کنید و بررسی اولیه را تأیید کنید.");
+      return;
+    }
+    setAdvanceError(null);
     setBusy(true);
     let guard = 0;
     let current = latest;
-    while (current.currentStep !== "active" && guard < 10) {
-      await new Promise((r) => setTimeout(r, 280));
-      const next = advanceInstallSimulation(current.id);
-      if (!next || next.currentStep === current.currentStep) break;
-      current = next;
-      guard += 1;
+    try {
+      while (current.currentStep !== "active" && guard < 10) {
+        await new Promise((r) => setTimeout(r, 280));
+        const next = advanceInstallSimulation(current.id);
+        if (!next || next.currentStep === current.currentStep) break;
+        current = next;
+        guard += 1;
+      }
+    } catch (err) {
+      setAdvanceError(err instanceof Error ? err.message : "شبیه‌سازی سریع متوقف شد.");
+    } finally {
+      setBusy(false);
     }
-    setBusy(false);
   }
 
   const badge = latest ? STEP_BADGE[latest.currentStep] : null;
@@ -257,17 +282,17 @@ export default function InstallPage() {
   return (
     <DashboardPage
       title="درخواست نصب نیروگاه"
-      subtitle="شبیه‌سازی کامل مسیر از ثبت درخواست تا راه‌اندازی و فروش"
+      subtitle="از ارسال عکس/ویدیو و بررسی اولیه تا راه‌اندازی و فروش"
     >
       <div className="mb-8 grid gap-4 sm:grid-cols-3">
         {[
           {
-            title: "۷ مرحله واقعی",
-            desc: "از بررسی و بازدید تا قرارداد، نصب و تحویل را مرحله‌به‌مرحله جلو ببرید",
+            title: "بررسی با عکس و ویدیو",
+            desc: "برای بررسی اولیه، از پشت‌بام عکس یا ویدیو بفرستید تا ادمین (یا AI) تأیید کند",
           },
           {
-            title: "طرح و قرارداد شبیه‌سازی‌شده",
-            desc: "بعد از بازدید، ظرفیت و درآمد تقریبی می‌بینید و قرارداد را امضا می‌کنید",
+            title: "طرح و قرارداد",
+            desc: "بعد از تأیید و بازدید، ظرفیت و درآمد تقریبی می‌بینید و قرارداد را امضا می‌کنید",
           },
           {
             title: "ورود به فروش",
@@ -284,6 +309,12 @@ export default function InstallPage() {
       {latest && view === "idle" && (
         <div className="space-y-6">
           <StepActionCard request={latest} busy={busy} onAdvance={handleAdvance} />
+
+          {advanceError && (
+            <p className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              {advanceError}
+            </p>
+          )}
 
           <Panel>
             <PanelHeader
@@ -353,7 +384,7 @@ export default function InstallPage() {
             </div>
 
             <div className="mt-6 flex flex-wrap gap-3">
-              {latest.currentStep !== "active" && (
+              {latest.currentStep !== "active" && !needsMediaGate(latest) && (
                 <>
                   <Button disabled={busy} onClick={handleAdvance}>
                     {busy ? "…" : "مرحله بعد"}
@@ -375,7 +406,7 @@ export default function InstallPage() {
         <Panel className="max-w-2xl">
           <PanelHeader
             title="مراحل نصب"
-            description="از درخواست تا راه‌اندازی — شبیه‌سازی کامل در همین صفحه"
+            description="از ارسال مدرک تصویری تا راه‌اندازی — در همین صفحه"
           />
           <div className="mb-8 space-y-4">
             {INSTALL_STEPS.map((s, i) => (
@@ -458,6 +489,10 @@ export default function InstallPage() {
               />
             </div>
 
+            <p className="rounded-xl border border-brand-100 bg-brand-50/60 px-4 py-3 text-xs leading-5 text-brand-800">
+              پس از ثبت درخواست، باید عکس یا ویدیو از پشت‌بام بفرستید تا بررسی اولیه انجام شود.
+            </p>
+
             <div className="flex gap-3">
               <Button type="submit" size="lg">
                 ثبت درخواست نصب
@@ -478,7 +513,8 @@ export default function InstallPage() {
             </div>
             <h3 className="text-xl font-bold text-slate-900">درخواست ثبت شد</h3>
             <p className="max-w-sm text-sm text-slate-500">
-              حالا می‌توانید کل مسیر را از بررسی تا راه‌اندازی در همین صفحه شبیه‌سازی کنید.
+              مرحله بعد: ارسال عکس یا ویدیو از پشت‌بام برای بررسی اولیه. ادامه مسیر فقط پس از تأیید
+              ادمین ممکن است.
             </p>
             <div className="mt-2 flex gap-3">
               <Button
@@ -487,7 +523,7 @@ export default function InstallPage() {
                   setFormData({ address: "", area: "", phone: "", note: "" });
                 }}
               >
-                شروع شبیه‌سازی مراحل
+                ارسال عکس / ویدیو
               </Button>
               <Button href="/dashboard/support" variant="outline">
                 پشتیبانی

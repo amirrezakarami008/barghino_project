@@ -12,7 +12,7 @@ export function WhyUsSection() {
             چرا برقینو؟
           </h2>
           <p className="mt-3 text-base leading-relaxed text-slate-600">
-            دلایل ساده برای انتخاب برقینو به‌جای فروش مستقیم به دولت.
+            دلایل ساده برای انتخاب برقینو به‌جای فروش مستقیم پایه.
           </p>
         </div>
 

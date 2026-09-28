@@ -12,7 +12,7 @@ function toMillionNumber(n: number) {
   });
 }
 
-/** مقایسه درآمد واقعی تولید با نرخ دولتی vs برقینو */
+/** مقایسه درآمد واقعی تولید با نرخ پایه vs برقینو */
 export function GovernmentComparePanel({
   productionKwh,
   periodLabel = "۶ ماه اخیر",
@@ -52,7 +52,7 @@ export function GovernmentComparePanel({
               مقایسه مسیر فروش
             </div>
             <h2 className="font-display text-lg font-extrabold leading-snug tracking-tight text-slate-900 sm:text-xl">
-              اگر به دولت می‌فروختی چقدر از دست می‌دادی؟
+              اگر با نرخ پایه می‌فروختی چقدر از دست می‌دادی؟
             </h2>
             <p className="mt-1.5 text-sm text-slate-500">
               بر اساس تولید {periodLabel}
@@ -77,7 +77,7 @@ export function GovernmentComparePanel({
                 <Building2 className="h-4 w-4" />
               </div>
               <div>
-                <p className="text-xs font-semibold text-slate-500">فروش به دولت</p>
+                <p className="text-xs font-semibold text-slate-500">فروش پایه</p>
                 <p className="text-[10px] text-slate-400">نرخ ثابت اول سال</p>
               </div>
             </div>
@@ -147,8 +147,8 @@ export function GovernmentComparePanel({
                   <Zap className="h-3 w-3" />
                   مزیت فصلی
                 </div>
-                نرخ دولتی اول سال ثابت است؛ برقینو در فصل گرم گران‌تر می‌خرد و در فصل سرد کف{" "}
-                {valueProps.coldSeasonPremiumPercent}٪ بالاتر از دولت دارد.
+                نرخ پایه اول سال ثابت است؛ برقینو در فصل گرم گران‌تر می‌خرد و در فصل سرد کف{" "}
+                {valueProps.coldSeasonPremiumPercent}٪ بالاتر از پایه دارد.
               </div>
             </div>
           </div>

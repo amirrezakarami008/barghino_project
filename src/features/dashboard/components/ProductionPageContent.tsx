@@ -244,14 +244,14 @@ export function ProductionPageContent() {
                     <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-50 text-emerald-600 ring-1 ring-emerald-100">
                       <TrendingUp className="h-4 w-4" />
                     </div>
-                    <p className="text-xs font-semibold text-slate-500">سود بیشتر نسبت به دولت</p>
+                    <p className="text-xs font-semibold text-slate-500">سود بیشتر نسبت به پایه</p>
                   </div>
                   <p className="mt-3 font-display text-3xl font-black tracking-tight text-emerald-700">
                     +{formatMillion(barghinoExtra)}
                     <span className="mr-1 text-sm font-bold text-emerald-500">میلیون</span>
                   </p>
                   <p className="mt-1.5 text-[11px] leading-5 text-slate-500">
-                    فروش دولتی همین تولید ≈ {formatMillion(govIncome)} میلیون بود.
+                    فروش پایه همین تولید ≈ {formatMillion(govIncome)} میلیون بود.
                   </p>
                 </div>
                 <span className="rounded-xl bg-emerald-50 px-2.5 py-1.5 text-center text-[10px] font-bold text-emerald-700 ring-1 ring-emerald-100">
@@ -351,7 +351,7 @@ export function ProductionPageContent() {
           <p className="mt-1 text-xs text-brand-600/80">{SITE_CONFIG.valueProps.priceUnit}</p>
           <p className="mt-3 text-[11px] leading-5 text-slate-500">
             فصل گرم قیمت بالاتر · فصل سرد کف{" "}
-            {SITE_CONFIG.valueProps.coldSeasonPremiumPercent}٪ بالاتر از دولت
+            {SITE_CONFIG.valueProps.coldSeasonPremiumPercent}٪ بالاتر از پایه
           </p>
         </div>
       </section>

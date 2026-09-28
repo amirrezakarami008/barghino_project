@@ -8,15 +8,20 @@ import {
   FolderOpen,
   Headphones,
   LayoutDashboard,
+  Layers,
   LineChart,
   Newspaper,
+  Package,
   Receipt,
+  ScanSearch,
   Settings,
   Sparkles,
   Sun,
   TrendingUp,
   User,
   UserPlus,
+  Wallet,
+  BellRing,
   type LucideIcon,
 } from "lucide-react";
 import type { DashboardNavIcon } from "@/shared/types/dashboard";
@@ -40,6 +45,11 @@ const DASHBOARD_ICON_MAP: Record<DashboardNavIcon, LucideIcon> = {
   TrendingUp,
   LineChart,
   Sparkles,
+  Package,
+  ScanSearch,
+  Layers,
+  Wallet,
+  BellRing,
 };
 
 export function getDashboardIcon(name: DashboardNavIcon): LucideIcon {

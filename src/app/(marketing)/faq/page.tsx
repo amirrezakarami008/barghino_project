@@ -9,7 +9,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "سوالات متداول",
   description:
-    "پاسخ به پرسش‌های رایج درباره فروش برق خانگی به برقینو، مقایسه با دولت، و درخواست نصب نیروگاه خورشیدی",
+    "پاسخ به پرسش‌های رایج درباره فروش برق خانگی به برقینو، مقایسه با قرارداد رسمیی، و درخواست نصب نیروگاه خورشیدی",
 };
 
 export default function FAQPage() {
@@ -23,7 +23,7 @@ export default function FAQPage() {
           </span>
           <h1 className="text-3xl font-bold text-slate-900 sm:text-4xl">سوالات متداول</h1>
           <p className="mt-4 text-lg text-slate-600">
-            فروش برق خانگی، مقایسه با دولت، پرداخت تضمینی و مسیر نصب نیروگاه
+            فروش برق خانگی، مقایسه با قرارداد رسمیی، قرارداد رسمی و مسیر نصب نیروگاه
           </p>
         </Container>
       </section>

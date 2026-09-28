@@ -24,7 +24,11 @@ export function DashboardSidebar() {
 
   const navContent = (
     <div className="flex h-full min-h-0 flex-col">
-      <div className="mb-5 shrink-0 flex items-center gap-2.5 px-1">
+      <Link
+        href="/"
+        onClick={() => setMobileOpen(false)}
+        className="mb-5 shrink-0 flex items-center gap-2.5 rounded-xl px-1 py-1 transition hover:bg-slate-50"
+      >
         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-brand-500 to-brand-600 shadow-md shadow-brand-500/25">
           <Zap className="h-5 w-5 text-white" />
         </div>
@@ -32,7 +36,7 @@ export function DashboardSidebar() {
           <p className="font-display text-lg font-extrabold text-slate-900">{SITE_CONFIG.name}</p>
           <p className="text-[11px] text-slate-400">پنل مدیریت نیروگاه</p>
         </div>
-      </div>
+      </Link>
 
       <nav className="min-h-0 flex-1 space-y-0.5 overflow-y-auto overscroll-contain pe-1">
         {navItems.map((item) => {

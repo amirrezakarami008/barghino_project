@@ -2,7 +2,8 @@ export type ContractStatus = "active" | "pending" | "expired" | "draft" | "cance
 
 export type ContractFileKind = "system" | "signed" | "attachment" | "amendment";
 
-export type ContractPlanId = "basic" | "standard" | "premium";
+/** شناسه پلن — پلن‌های ادمین می‌توانند id دلخواه داشته باشند */
+export type ContractPlanId = string;
 
 export interface ContractPlan {
   id: ContractPlanId;
@@ -13,6 +14,11 @@ export interface ContractPlan {
   savings: string;
   features: string[];
   recommended?: boolean;
+  /** در ویزارد انتخاب پلن نمایش داده شود */
+  active: boolean;
+  sortOrder?: number;
+  source?: "seed" | "custom";
+  updatedAt?: string;
 }
 
 export interface ContractFile {

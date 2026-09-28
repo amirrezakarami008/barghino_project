@@ -10,7 +10,8 @@ import { isValidIranMobile, isValidNationalId, onlyDigits } from "@/features/aut
 import { Button, LinkArrow } from "@/shared/ui/Button";
 import { cn } from "@/shared/lib/utils";
 import { SITE_CONFIG } from "@/config";
-import { CONTRACT_PLANS, getContractPlanById } from "../constants";
+import { useActivePlans } from "@/features/plans/hooks/usePlans";
+import { getDefaultPlanId, getPlanById } from "@/features/plans/lib/store";
 import { ContractDocumentPreview } from "./ContractDocumentPreview";
 import { SignaturePad } from "./SignaturePad";
 import { useContract } from "../hooks/useContracts";
@@ -66,6 +67,7 @@ interface ContractSigningWizardProps {
 
 export function ContractSigningWizard({ contractId }: ContractSigningWizardProps) {
   const { contract } = useContract(contractId);
+  const { plans: activePlans } = useActivePlans();
   const [step, setStep] = useState<ContractSigningStep>("intro");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [submitting, setSubmitting] = useState(false);
@@ -75,7 +77,7 @@ export function ContractSigningWizard({ contractId }: ContractSigningWizardProps
   const [signedAt, setSignedAt] = useState("");
 
   const [draft, setDraft] = useState<ContractSigningDraft>(() => ({
-    planId: "standard",
+    planId: getDefaultPlanId(),
     fullName: DASHBOARD_USER.name,
     nationalId: isValidNationalId(DASHBOARD_USER.nationalId)
       ? onlyDigits(DASHBOARD_USER.nationalId)
@@ -89,10 +91,15 @@ export function ContractSigningWizard({ contractId }: ContractSigningWizardProps
     acceptedTerms: false,
   }));
 
-  const selectedPlan = useMemo(
-    () => getContractPlanById(draft.planId) ?? CONTRACT_PLANS[1]!,
-    [draft.planId],
-  );
+  const resolvedPlanId = useMemo(() => {
+    if (draft.planId && activePlans.some((p) => p.id === draft.planId)) return draft.planId;
+    return activePlans.find((p) => p.recommended)?.id ?? activePlans[0]?.id ?? null;
+  }, [draft.planId, activePlans]);
+
+  const selectedPlan = useMemo(() => {
+    if (!resolvedPlanId) return null;
+    return activePlans.find((p) => p.id === resolvedPlanId) ?? getPlanById(resolvedPlanId);
+  }, [resolvedPlanId, activePlans]);
 
   useEffect(() => {
     return () => {
@@ -155,8 +162,12 @@ export function ContractSigningWizard({ contractId }: ContractSigningWizardProps
   }
 
   function validatePlan(): boolean {
-    if (!draft.planId || !getContractPlanById(draft.planId)) {
-      setErrors({ planId: "یکی از پلن‌ها را انتخاب کنید." });
+    if (!resolvedPlanId || !activePlans.some((p) => p.id === resolvedPlanId)) {
+      setErrors({
+        planId: activePlans.length
+          ? "یکی از پلن‌ها را انتخاب کنید."
+          : "هیچ پلن فعالی تعریف نشده است. از پنل ادمین پلن اضافه کنید.",
+      });
       return false;
     }
     setErrors({});
@@ -245,7 +256,7 @@ export function ContractSigningWizard({ contractId }: ContractSigningWizardProps
   }
 
   async function submit() {
-    if (!contract || !draft.nationalIdPhoto || !draft.signatureDataUrl) return;
+    if (!contract || !draft.nationalIdPhoto || !draft.signatureDataUrl || !selectedPlan) return;
     setSubmitting(true);
     setSubmitError(null);
 
@@ -407,62 +418,83 @@ export function ContractSigningWizard({ contractId }: ContractSigningWizardProps
               <div>
                 <h2 className="font-display text-lg font-bold text-slate-900">انتخاب پلن فروش</h2>
                 <p className="mt-1 text-sm text-slate-500">
-                  پلن انتخابی روی نرخ، حجم توافقی و متن قرارداد اثر می‌گذارد.
+                  پلن‌های تعریف‌شده در پنل ادمین؛ انتخاب شما روی نرخ، حجم و متن قرارداد اثر می‌گذارد.
                 </p>
               </div>
-              <div className="grid gap-3 sm:grid-cols-3">
-                {CONTRACT_PLANS.map((plan) => {
-                  const selected = draft.planId === plan.id;
-                  return (
-                    <button
-                      key={plan.id}
-                      type="button"
-                      onClick={() => updateDraft("planId", plan.id)}
-                      className={cn(
-                        "relative flex h-full flex-col rounded-2xl border p-4 text-right transition",
-                        selected
-                          ? "border-brand-400 bg-brand-50/80 ring-2 ring-brand-500/25"
-                          : "border-slate-200 bg-white hover:border-brand-200 hover:bg-slate-50",
-                      )}
-                    >
-                      {plan.recommended ? (
-                        <span className="absolute -top-2 left-3 rounded-full bg-brand-600 px-2 py-0.5 text-[10px] font-bold text-white">
-                          پیشنهادی
-                        </span>
-                      ) : null}
-                      <div className="flex items-start justify-between gap-2">
-                        <div>
-                          <p className="font-display text-base font-black text-slate-900">{plan.name}</p>
-                          <p className="mt-1 text-xs leading-5 text-slate-500">{plan.tagline}</p>
+              {activePlans.length === 0 ? (
+                <div className="rounded-2xl border border-amber-200 bg-amber-50 px-4 py-5 text-sm text-amber-800">
+                  هنوز پلن فعالی تعریف نشده است. از بخش «پلن‌های فروش» در پنل ادمین حداقل یک پلن فعال
+                  اضافه کنید.
+                </div>
+              ) : (
+                <div
+                  className={cn(
+                    "grid gap-3",
+                    activePlans.length === 1
+                      ? "sm:grid-cols-1"
+                      : activePlans.length === 2
+                        ? "sm:grid-cols-2"
+                        : "sm:grid-cols-3",
+                  )}
+                >
+                  {activePlans.map((plan) => {
+                    const selected = resolvedPlanId === plan.id;
+                    return (
+                      <button
+                        key={plan.id}
+                        type="button"
+                        onClick={() => updateDraft("planId", plan.id)}
+                        className={cn(
+                          "relative flex h-full flex-col rounded-2xl border p-4 text-right transition",
+                          selected
+                            ? "border-brand-400 bg-brand-50/80 ring-2 ring-brand-500/25"
+                            : "border-slate-200 bg-white hover:border-brand-200 hover:bg-slate-50",
+                        )}
+                      >
+                        {plan.recommended ? (
+                          <span className="absolute -top-2 left-3 rounded-full bg-brand-600 px-2 py-0.5 text-[10px] font-bold text-white">
+                            پیشنهادی
+                          </span>
+                        ) : null}
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <p className="font-display text-base font-black text-slate-900">
+                              {plan.name}
+                            </p>
+                            <p className="mt-1 text-xs leading-5 text-slate-500">{plan.tagline}</p>
+                          </div>
+                          <span
+                            className={cn(
+                              "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border",
+                              selected
+                                ? "border-brand-600 bg-brand-600 text-white"
+                                : "border-slate-300 bg-white",
+                            )}
+                          >
+                            {selected ? <CheckCircle2 className="h-3.5 w-3.5" /> : null}
+                          </span>
                         </div>
-                        <span
-                          className={cn(
-                            "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full border",
-                            selected
-                              ? "border-brand-600 bg-brand-600 text-white"
-                              : "border-slate-300 bg-white",
-                          )}
-                        >
-                          {selected ? <CheckCircle2 className="h-3.5 w-3.5" /> : null}
-                        </span>
-                      </div>
-                      <div className="mt-4 space-y-1.5 text-xs">
-                        <p className="font-bold text-slate-800">{plan.rate}</p>
-                        <p className="text-slate-600">حجم: {plan.volume}</p>
-                        <p className="text-emerald-700">{plan.savings}</p>
-                      </div>
-                      <ul className="mt-3 space-y-1.5 border-t border-slate-100 pt-3">
-                        {plan.features.map((feature) => (
-                          <li key={feature} className="flex items-start gap-1.5 text-[11px] text-slate-600">
-                            <CheckCircle2 className="mt-0.5 h-3 w-3 shrink-0 text-brand-600" />
-                            {feature}
-                          </li>
-                        ))}
-                      </ul>
-                    </button>
-                  );
-                })}
-              </div>
+                        <div className="mt-4 space-y-1.5 text-xs">
+                          <p className="font-bold text-slate-800">{plan.rate}</p>
+                          <p className="text-slate-600">حجم: {plan.volume}</p>
+                          <p className="text-emerald-700">{plan.savings}</p>
+                        </div>
+                        <ul className="mt-3 space-y-1.5 border-t border-slate-100 pt-3">
+                          {plan.features.map((feature) => (
+                            <li
+                              key={feature}
+                              className="flex items-start gap-1.5 text-[11px] text-slate-600"
+                            >
+                              <CheckCircle2 className="mt-0.5 h-3 w-3 shrink-0 text-brand-600" />
+                              {feature}
+                            </li>
+                          ))}
+                        </ul>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
               {errors.planId ? (
                 <p className="text-sm font-medium text-rose-600">{errors.planId}</p>
               ) : null}
@@ -588,9 +620,9 @@ export function ContractSigningWizard({ contractId }: ContractSigningWizardProps
                       startDate:
                         contract.startDate === "—" ? displayDate : contract.startDate,
                       endDate: contract.endDate === "—" ? "یک سال پس از امضا" : contract.endDate,
-                      volume: selectedPlan.volume,
-                      rate: selectedPlan.rate,
-                      planName: selectedPlan.name,
+                      volume: selectedPlan?.volume ?? contract.volume,
+                      rate: selectedPlan?.rate ?? contract.rate,
+                      planName: selectedPlan?.name ?? contract.planName,
                     }}
                   />
                 </div>
@@ -706,15 +738,15 @@ export function ContractSigningWizard({ contractId }: ContractSigningWizardProps
               </div>
               <div className="flex justify-between gap-2">
                 <dt>پلن</dt>
-                <dd className="font-semibold text-slate-800">{selectedPlan.name}</dd>
+                <dd className="font-semibold text-slate-800">{selectedPlan?.name ?? "—"}</dd>
               </div>
               <div className="flex justify-between gap-2">
                 <dt>نرخ</dt>
-                <dd className="font-semibold text-slate-800">{selectedPlan.rate}</dd>
+                <dd className="font-semibold text-slate-800">{selectedPlan?.rate ?? "—"}</dd>
               </div>
               <div className="flex justify-between gap-2">
                 <dt>حجم</dt>
-                <dd className="font-semibold text-slate-800">{selectedPlan.volume}</dd>
+                <dd className="font-semibold text-slate-800">{selectedPlan?.volume ?? "—"}</dd>
               </div>
             </dl>
           </div>

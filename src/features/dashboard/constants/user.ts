@@ -21,6 +21,8 @@ export const DASHBOARD_NAV: DashboardNavItem[] = [
   { label: "تولید و درآمد", href: "/dashboard/production", icon: "BarChart3" },
   { label: "صورت‌حساب‌ها", href: "/dashboard/invoices", icon: "Receipt" },
   { label: "پرداخت‌ها", href: "/dashboard/payments", icon: "CreditCard" },
+  { label: "کیف پول", href: "/dashboard/wallet", icon: "Wallet" },
+  { label: "آلارم تجهیزات", href: "/dashboard/alarms", icon: "BellRing" },
   { label: "قراردادها", href: "/dashboard/contracts", icon: "FileCheck" },
   { label: "درخواست نصب", href: "/dashboard/install", icon: "ClipboardList" },
   { label: "اعلان‌ها", href: "/dashboard/notifications", icon: "Bell", badge: 3 },
@@ -38,6 +40,24 @@ export const DASHBOARD_NAV: DashboardNavItem[] = [
     label: "مدیریت مجله",
     href: "/dashboard/blog",
     icon: "Newspaper",
+    adminOnly: true,
+  },
+  {
+    label: "تجهیزات",
+    href: "/dashboard/equipment",
+    icon: "Package",
+    adminOnly: true,
+  },
+  {
+    label: "بررسی نصب",
+    href: "/dashboard/install-reviews",
+    icon: "ScanSearch",
+    adminOnly: true,
+  },
+  {
+    label: "پلن‌های فروش",
+    href: "/dashboard/plans",
+    icon: "Layers",
     adminOnly: true,
   },
 ];
@@ -93,10 +113,22 @@ export const QUICK_ACTIONS = [
     description: "نیروگاه جدید",
   },
   {
+    label: "آلارم تجهیزات",
+    href: "/dashboard/alarms",
+    icon: "BellRing" as const,
+    description: "پنل و تجهیزات",
+  },
+  {
     label: "دستیار هوشمند",
     href: "/dashboard/assistant",
     icon: "Sparkles" as const,
     description: "سؤال و تحلیل",
+  },
+  {
+    label: "کیف پول",
+    href: "/dashboard/wallet",
+    icon: "Wallet" as const,
+    description: "موجودی و برداشت",
   },
   {
     label: "صورت‌حساب‌ها",

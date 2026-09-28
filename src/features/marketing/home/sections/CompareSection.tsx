@@ -18,14 +18,14 @@ const ROWS = [
   {
     label: "فصل‌های گرم (تولید بیشتر)",
     government: "همان نرخ ثابت سالانه",
-    barghino: "خرید با قیمت بالاتر از مسیر دولتی",
+    barghino: "خرید با قیمت بالاتر از مسیر پایه",
     barghinoBadge: "بازده بیشتر",
   },
   {
     label: "فصل‌های سرد (تولید کمتر)",
     government: "همان نرخ ثابت سالانه",
-    barghino: `تضمین خرید با ${SITE_CONFIG.valueProps.coldSeasonPremiumPercent}٪ بیشتر از نرخ دولتی`,
-    barghinoBadge: "کف تضمینی",
+    barghino: `خرید با قرارداد رسمی و ${SITE_CONFIG.valueProps.coldSeasonPremiumPercent}٪ بیشتر از نرخ پایه`,
+    barghinoBadge: "کف قیمت قراردادی",
   },
   {
     label: "زمان پرداخت",
@@ -34,10 +34,28 @@ const ROWS = [
     barghinoBadge: "تسویه سریع‌تر",
   },
   {
-    label: "تضمین پرداخت",
-    government: "پرداخت می‌شود، ولی دیر",
-    barghino: "تضمین پرداخت + تسویه سریع‌تر",
-    barghinoBadge: "تضمینی",
+    label: "وجود قرارداد رسمی",
+    government: "قرارداد شفاف با کاربر معمولاً در دسترس نیست",
+    barghino: "وجود قرارداد رسمی + تسویه سریع‌تر",
+    barghinoBadge: "قرارداد رسمی",
+  },
+  {
+    label: "روند تولید نیروگاه",
+    government: "گزارش شفاف و لحظه‌ای معمولاً در دسترس نیست",
+    barghino: "نمودار روزانه، هفتگی و ماهانه تولید در پنل کاربری",
+    barghinoBadge: "پایش مستمر",
+  },
+  {
+    label: "مقایسه با بام‌های اطراف",
+    government: "مقایسه‌ای با همسایه‌ها ارائه نمی‌شود",
+    barghino: "تولید شما در برابر میانگین بام‌های اطراف همان منطقه",
+    barghinoBadge: "محلی",
+  },
+  {
+    label: "مقایسه با میانگین کشور",
+    government: "دید نسبت به میانگین ملی وجود ندارد",
+    barghino: "جایگاه نیروگاه نسبت به میانگین تولید کشور",
+    barghinoBadge: "ملی",
   },
   {
     label: "شفافیت مسیر",
@@ -59,18 +77,18 @@ export function CompareSection() {
       <Container>
         <div className="mx-auto mb-8 max-w-2xl text-center sm:mb-10">
           <h2 className="font-display text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl lg:text-4xl">
-            فروش به دولت یا فروش به {SITE_CONFIG.name}؟
+            فروش پایه یا فروش به {SITE_CONFIG.name}؟
           </h2>
           <p className="mt-3 text-base leading-relaxed text-slate-600">
-            نرخ دولتی اول سال قفل می‌شود؛ برقینو در فصل گرم گران‌تر می‌خرد و در فصل سرد هم
-            کف قیمت تضمینی دارد.
+            نرخ پایه اول سال قفل می‌شود؛ برقینو در فصل گرم گران‌تر می‌خرد و در فصل سرد هم
+            کف قیمت در قرارداد رسمی دارد.
           </p>
         </div>
 
         <div className="mx-auto max-w-4xl overflow-hidden rounded-2xl border border-slate-200/80 bg-white shadow-lg shadow-slate-200/50">
           <div className="grid grid-cols-[1.15fr_1fr_1.15fr] border-b border-slate-100 bg-slate-50 px-3 py-3.5 text-center text-xs font-bold sm:px-6 sm:py-4 sm:text-sm">
             <div className="text-right text-slate-500">معیار</div>
-            <div className="text-slate-500">دولت</div>
+            <div className="text-slate-500">پایه</div>
             <div className="text-brand-700">{SITE_CONFIG.name}</div>
           </div>
 

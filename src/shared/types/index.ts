@@ -198,6 +198,14 @@ export interface FAQItem {
 
 export type BlogPostStatus = "published" | "draft";
 
+export type {
+  EquipmentCategory,
+  EquipmentPricingMode,
+  EquipmentItem,
+  EquipmentCostLine,
+  EquipmentCostEstimate,
+} from "./equipment";
+
 export interface BlogPost {
   id: string;
   slug: string;
