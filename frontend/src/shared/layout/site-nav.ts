@@ -1,0 +1,46 @@
+import type { IconName } from "@/shared/ui/icon";
+
+export type NavItem = {
+  href: string;
+  label: string;
+  end?: boolean;
+  summary?: string;
+  icon?: IconName;
+};
+
+export const publicNav = [
+  { href: "/", label: "خانه", end: true },
+  { href: "/sell", label: "فروش برق" },
+  { href: "/install", label: "نصب نیروگاه" },
+  { href: "/blog", label: "مجله" },
+  { href: "/about", label: "درباره ما" },
+  { href: "/contact", label: "تماس" },
+] as const satisfies readonly NavItem[];
+
+export const userNav = [
+  { href: "/panel", label: "خانه", end: true, icon: "home", summary: "وضعیت حساب، نیروگاه و گام بعدی." },
+  { href: "/panel/plant", label: "نیروگاه من", icon: "plant", summary: "مشخصات نیروگاه و انشعاب بعد از ثبت." },
+  { href: "/panel/production", label: "تولید و درآمد", icon: "chart", summary: "نمودار تولید وقتی قرائت واقعی برسد." },
+  { href: "/panel/contracts", label: "قراردادها", icon: "file", summary: "قرارداد فروش یا نصب و وضعیت امضا." },
+  { href: "/panel/invoices", label: "صورت‌حساب‌ها", icon: "card", summary: "دوره‌های فروش و سررسید تسویه." },
+  { href: "/panel/payments", label: "پرداخت‌ها", icon: "coins", summary: "واریز، شبا و کیف پول." },
+  { href: "/panel/install", label: "درخواست نصب", icon: "sun", summary: "پیگیری احداث از ثبت تا بهره‌برداری." },
+  { href: "/panel/documents", label: "مدارک", icon: "file", summary: "اسناد هویتی و فایل‌های قرارداد." },
+  { href: "/panel/notifications", label: "اعلان‌ها", icon: "bell", summary: "رویدادهای حساب، بدون عدد ساختگی." },
+  { href: "/panel/support", label: "پشتیبانی", icon: "headset", summary: "تیکت فروش، نصب، پرداخت یا قرارداد." },
+  { href: "/panel/profile", label: "پروفایل", icon: "user", summary: "نام، موبایل و مسیر انتخاب‌شده." },
+  { href: "/panel/settings", label: "تنظیمات", icon: "settings", summary: "ترجیح اعلان و امنیت حساب." },
+] as const satisfies readonly NavItem[];
+
+export const adminNav = [
+  { href: "/admin", label: "خانه", end: true, icon: "home", summary: "کارهایی که منتظر مدیر هستند." },
+  { href: "/admin/reviews", label: "بررسی نصب", icon: "sun", summary: "صف درخواست‌هایی که باید دیده شوند." },
+  { href: "/admin/equipment", label: "تجهیزات", icon: "plant", summary: "قیمت و اقلام کاتالوگ نصب." },
+  { href: "/admin/plans", label: "پلن‌ها", icon: "coins", summary: "نرخ و حجم تعهد پلن‌های فروش." },
+  { href: "/admin/journal", label: "مجله", icon: "file", summary: "پیش‌نویس و انتشار نوشته‌ها." },
+] as const satisfies readonly NavItem[];
+
+export function isNavActive(pathname: string, item: Pick<NavItem, "href" | "end">) {
+  if (item.end) return pathname === item.href;
+  return pathname === item.href || pathname.startsWith(`${item.href}/`);
+}

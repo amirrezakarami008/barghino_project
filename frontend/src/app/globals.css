@@ -1,0 +1,95 @@
+@import "tailwindcss";
+
+:root {
+  --background: #fafcfa;
+  --foreground: #12243a;
+  --card: #ffffff;
+  --primary: #075b4d;
+  --primary-hover: #063f36;
+  --primary-foreground: #ffffff;
+  --emerald: #15966b;
+  --solar: #55c878;
+  --mint: #e8f5ee;
+  --surface: #f3f9f5;
+  --info: #eaf3ff;
+  --info-foreground: #1e3a5f;
+  --muted-foreground: #64748b;
+  --border: #e2eae5;
+  --danger: #b42318;
+  --danger-foreground: #ffffff;
+  --ring: #075b4d;
+  --sidebar: #063f36;
+  --sidebar-foreground: #f4faf7;
+  --sidebar-muted: #b7d0c8;
+  --shadow-soft: 0 18px 50px rgb(7 91 77 / 0.08);
+  color-scheme: light;
+}
+
+@theme inline {
+  --font-sans: var(--font-vazirmatn), ui-sans-serif, sans-serif;
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-primary: var(--primary);
+  --color-primary-hover: var(--primary-hover);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-emerald: var(--emerald);
+  --color-solar: var(--solar);
+  --color-mint: var(--mint);
+  --color-surface: var(--surface);
+  --color-info: var(--info);
+  --color-info-foreground: var(--info-foreground);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-border: var(--border);
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-muted: var(--sidebar-muted);
+  --radius-control: 999px;
+  --radius-panel: 1.25rem;
+  --shadow-soft: var(--shadow-soft);
+}
+
+@layer base {
+  html {
+    background: var(--background);
+    scroll-padding-top: 5.5rem;
+  }
+
+  body {
+    min-height: 100dvh;
+    background:
+      radial-gradient(900px 420px at 100% -10%, rgb(232 245 238 / 0.95), transparent 60%),
+      var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    text-rendering: optimizeLegibility;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 3px;
+  }
+
+  ::selection {
+    background: #cfe8da;
+    color: var(--foreground);
+  }
+}
+
+@utility text-balance {
+  text-wrap: balance;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+  }
+}
