@@ -1,154 +1,209 @@
 "use client";
 
 import Link from "next/link";
-import { useId, useState, type FormEvent, type ReactNode } from "react";
-import { isIranMobile, normalizeIranMobile } from "@/features/auth/lib/phone";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useEffect, useId, useState, type FormEvent, type ReactNode } from "react";
+import { ApiError, apiRequest } from "@/features/auth/lib/api";
+import { digitsOnly, formatIranMobile, isIranMobile, normalizeIranMobile } from "@/features/auth/lib/phone";
+import { userFromApi, type Session } from "@/features/auth/lib/session";
+import { destinationFor, useAuth } from "@/features/auth/session-provider";
+import { faDigits } from "@/shared/lib/fa";
 import { Button, ButtonLink } from "@/shared/ui/button";
-import { Icon } from "@/shared/ui/icon";
+import { Icon, type IconName } from "@/shared/ui/icon";
 import { Logo } from "@/shared/ui/logo";
 
-type Errors = { phone?: string; password?: string };
+const codeLifetimeSeconds = 120;
+
+type Step = "phone" | "code";
 
 export function LoginForm() {
+  const router = useRouter();
+  const next = useSearchParams().get("next");
+  const { session, ready, signIn } = useAuth();
+  const [step, setStep] = useState<Step>("phone");
   const [phone, setPhone] = useState("");
-  const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
-  const [remember, setRemember] = useState(false);
-  const [errors, setErrors] = useState<Errors>({});
-  const [notice, setNotice] = useState("");
-  const [recovery, setRecovery] = useState(false);
+  const [code, setCode] = useState("");
+  const [phoneError, setPhoneError] = useState("");
+  const [codeError, setCodeError] = useState("");
+  const [formError, setFormError] = useState("");
+  const [pending, setPending] = useState(false);
+  const [now, setNow] = useState(0);
+  const [resendAt, setResendAt] = useState(0);
   const phoneId = useId();
-  const passwordId = useId();
-  const rememberId = useId();
+  const codeId = useId();
+  const secondsLeft = resendAt > now ? Math.ceil((resendAt - now) / 1000) : 0;
 
-  function onSubmit(event: FormEvent<HTMLFormElement>) {
+  useEffect(() => {
+    if (ready && session) router.replace(destinationFor(session.user, next));
+  }, [next, ready, router, session]);
+
+  useEffect(() => {
+    if (resendAt === 0) return;
+    const timer = window.setInterval(() => {
+      const next = Date.now();
+      setNow(next);
+      if (next >= resendAt) window.clearInterval(timer);
+    }, 1000);
+    return () => window.clearInterval(timer);
+  }, [resendAt]);
+
+  async function requestCode(event?: FormEvent<HTMLFormElement>) {
+    event?.preventDefault();
+    const normalized = normalizeIranMobile(phone);
+    if (!isIranMobile(normalized)) {
+      setPhoneError("شماره موبایل را به شکل ۰۹۱۲۳۴۵۶۷۸۹ وارد کنید.");
+      return;
+    }
+    setPending(true);
+    setPhoneError("");
+    setFormError("");
+    try {
+      await apiRequest("/auth/otp/request/", { method: "POST", body: { phone: normalized } });
+      setPhone(normalized);
+      setCode("");
+      setCodeError("");
+      const started = Date.now();
+      setNow(started);
+      setResendAt(started + codeLifetimeSeconds * 1000);
+      setStep("code");
+    } catch (error) {
+      setFormError(error instanceof ApiError ? error.message : "ارسال کد انجام نشد.");
+    } finally {
+      setPending(false);
+    }
+  }
+
+  async function verifyCode(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    const next: Errors = {};
-    if (!isIranMobile(normalizeIranMobile(phone))) {
-      next.phone = "شماره موبایل را به شکل ۰۹۱۲۳۴۵۶۷۸۹ وارد کنید.";
+    const normalizedCode = digitsOnly(code);
+    if (normalizedCode.length !== 6) {
+      setCodeError("کد شش‌رقمی پیامک را وارد کنید.");
+      return;
     }
-    if (password.length < 8) {
-      next.password = "رمز عبور باید حداقل ۸ نویسه باشد.";
+    setPending(true);
+    setCodeError("");
+    setFormError("");
+    try {
+      const result = await apiRequest<{ access: string; refresh: string; user: unknown }>("/auth/otp/verify/", {
+        method: "POST",
+        body: { phone, code: normalizedCode },
+      });
+      const nextSession: Session = {
+        access: result.access,
+        refresh: result.refresh,
+        user: userFromApi(result.user),
+      };
+      signIn(nextSession);
+      router.replace(destinationFor(nextSession.user, next));
+    } catch (error) {
+      if (error instanceof ApiError) {
+        setCodeError(error.fields.code ?? error.message);
+      } else {
+        setCodeError("ورود انجام نشد.");
+      }
+    } finally {
+      setPending(false);
     }
-    setErrors(next);
-    setRecovery(false);
-    setNotice(Object.keys(next).length === 0 ? "بررسی شد" : "");
+  }
+
+  if (step === "code") {
+    return (
+      <form onSubmit={verifyCode} noValidate className="grid gap-4">
+        <div className="text-center">
+          <Logo href="/" caption={false} className="justify-center" />
+          <h1 className="mt-6 text-xl font-bold text-foreground">کد تأیید</h1>
+          <p className="mt-2 text-sm leading-7 text-muted-foreground">
+            اگر شماره {formatIranMobile(phone)} امکان دریافت پیامک داشته باشد، کد شش‌رقمی ارسال شده است.
+          </p>
+        </div>
+        <Field id={codeId} label="کد تأیید" icon="shield" error={codeError}>
+          <input
+            id={codeId}
+            name="code"
+            inputMode="numeric"
+            autoComplete="one-time-code"
+            dir="ltr"
+            maxLength={6}
+            placeholder="۱۲۳۴۵۶"
+            value={code}
+            aria-invalid={codeError ? true : undefined}
+            className="w-full bg-transparent text-end text-base tracking-[0.3em] outline-none placeholder:text-muted-foreground/70"
+            onChange={(event) => {
+              setCode(digitsOnly(event.target.value).slice(0, 6));
+              setCodeError("");
+            }}
+          />
+        </Field>
+        {formError ? <p className="text-sm leading-7 text-danger">{formError}</p> : null}
+        <Button type="submit" className="w-full" disabled={pending}>
+          {pending ? "در حال ورود…" : "ورود"}
+        </Button>
+        <div className="flex items-center justify-between gap-3 text-sm">
+          <button
+            type="button"
+            className="cursor-pointer font-semibold text-primary disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={pending || secondsLeft > 0}
+            onClick={() => void requestCode()}
+          >
+            {secondsLeft > 0 ? `ارسال دوباره تا ${faDigits(secondsLeft)} ثانیه` : "ارسال دوباره کد"}
+          </button>
+          <button
+            type="button"
+            className="cursor-pointer text-muted-foreground"
+            onClick={() => {
+              setStep("phone");
+              setCodeError("");
+              setFormError("");
+            }}
+          >
+            اصلاح شماره
+          </button>
+        </div>
+      </form>
+    );
   }
 
   return (
-    <form onSubmit={onSubmit} noValidate className="grid gap-4">
+    <form onSubmit={requestCode} noValidate className="grid gap-4">
       <div className="text-center">
         <Logo href="/" caption={false} className="justify-center" />
         <p className="mt-3 text-xs text-muted-foreground">پلتفرم فروش برق خانگی و نیروگاه خورشیدی</p>
         <h1 className="mt-5 text-xl font-bold text-foreground">ورود به حساب کاربری</h1>
-        <p className="mt-1 text-sm text-muted-foreground">خوشحالیم که دوباره همراه ما هستید.</p>
+        <p className="mt-1 text-sm leading-7 text-muted-foreground">شماره موبایل حساب را وارد کنید تا کد ورود برایتان پیامک شود.</p>
       </div>
-
-      <Field id={phoneId} label="شماره موبایل" icon="user" error={errors.phone}>
+      <Field id={phoneId} label="شماره موبایل" icon="user" error={phoneError} hideLabel>
         <input
           id={phoneId}
           name="phone"
           inputMode="tel"
           autoComplete="tel"
           dir="ltr"
-          placeholder="۰۹۱۲۳۴۵۶۷۸۹"
+          placeholder="شماره موبایل"
           value={phone}
-          aria-invalid={errors.phone ? true : undefined}
-          className="w-full bg-transparent text-end text-base tracking-wider text-foreground outline-none placeholder:font-normal placeholder:tracking-wider placeholder:text-muted-foreground/70"
+          aria-invalid={phoneError ? true : undefined}
+          className="w-full bg-transparent py-1 text-end text-base outline-none placeholder:text-muted-foreground/70"
           onChange={(event) => {
             setPhone(event.target.value);
-            setErrors((current) => ({ ...current, phone: undefined }));
-            setNotice("");
+            setPhoneError("");
+            setFormError("");
           }}
         />
       </Field>
-
-      <Field
-        id={passwordId}
-        label="رمز عبور"
-        icon="lock"
-        error={errors.password}
-        end={
-          <button
-            type="button"
-            className="grid size-9 cursor-pointer place-items-center rounded-full text-muted-foreground hover:text-primary"
-            aria-label={showPassword ? "پنهان کردن رمز" : "نمایش رمز"}
-            aria-pressed={showPassword}
-            onClick={() => setShowPassword((value) => !value)}
-          >
-            <Icon name={showPassword ? "eyeOff" : "eye"} className="size-4" />
-          </button>
-        }
-      >
-        <input
-          id={passwordId}
-          name="password"
-          type={showPassword ? "text" : "password"}
-          autoComplete="current-password"
-          value={password}
-          aria-invalid={errors.password ? true : undefined}
-          className="w-full bg-transparent text-base text-foreground outline-none"
-          onChange={(event) => {
-            setPassword(event.target.value);
-            setErrors((current) => ({ ...current, password: undefined }));
-            setNotice("");
-          }}
-        />
-      </Field>
-
-      <div className="flex flex-wrap items-center justify-between gap-3 text-sm">
-        <label htmlFor={rememberId} className="inline-flex cursor-pointer items-center gap-2">
-          <input
-            id={rememberId}
-            name="remember"
-            type="checkbox"
-            checked={remember}
-            onChange={(event) => setRemember(event.target.checked)}
-            className="size-4 accent-primary"
-          />
-          مرا به خاطر بسپار
-        </label>
-        <button
-          type="button"
-          className="cursor-pointer font-semibold text-primary"
-          onClick={() => {
-            setRecovery(true);
-            setNotice("");
-          }}
-        >
-          رمز عبور را فراموش کرده‌ام؟
-        </button>
-      </div>
-      {recovery ? (
-        <p role="status" className="text-sm leading-7 text-muted-foreground">
-          بازیابی رمز هنوز به سرویس حساب وصل نیست.
-        </p>
-      ) : null}
-
-      <Button type="submit" className="w-full">
-        ورود
-        <Icon name="arrow" className="size-4" />
+      {formError ? <p className="text-sm leading-7 text-danger">{formError}</p> : null}
+      <Button type="submit" className="w-full" disabled={pending}>
+        {pending ? "در حال ارسال…" : "دریافت کد"}
       </Button>
-      {notice ? (
-        <p role="status" className="text-center text-sm leading-7 text-muted-foreground">
-          شماره و رمز از نظر شکل درست‌اند. ورود هنوز به سرویس حساب وصل نیست
-          {remember ? " و گزینه به‌خاطر سپردن فقط در همین صفحه مانده است." : "."}
-        </p>
-      ) : null}
-
       <div className="flex items-center gap-3 text-xs text-muted-foreground">
         <span className="h-px flex-1 bg-border" />
         یا
         <span className="h-px flex-1 bg-border" />
       </div>
-
       <ButtonLink href="/register" variant="secondary" className="w-full">
         <Icon name="user" className="size-4" />
         ثبت‌نام در برقینو
       </ButtonLink>
-
       <p className="text-center text-xs leading-6 text-muted-foreground">
-        با ورود یا ثبت‌نام، شما با{" "}
+        با ورود، شما با{" "}
         <Link href="/terms" className="font-semibold text-primary">
           شرایط
         </Link>{" "}
@@ -167,14 +222,14 @@ function Field({
   label,
   icon,
   error,
-  end,
+  hideLabel = false,
   children,
 }: {
   id: string;
   label: string;
-  icon: "user" | "lock";
+  icon: IconName;
   error?: string;
-  end?: ReactNode;
+  hideLabel?: boolean;
   children: ReactNode;
 }) {
   return (
@@ -185,12 +240,11 @@ function Field({
         <div className="flex items-center gap-3">
           <Icon name={icon} className="size-4 shrink-0 text-muted-foreground" />
           <div className="grid min-w-0 flex-1">
-            <label htmlFor={id} className="text-xs font-medium text-muted-foreground">
+            <label htmlFor={id} className={hideLabel ? "sr-only" : "text-xs font-medium text-muted-foreground"}>
               {label}
             </label>
             {children}
           </div>
-          {end}
         </div>
       </div>
       {error ? (

@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Vazirmatn } from "next/font/google";
+import { AuthProvider } from "@/features/auth/session-provider";
 import "./globals.css";
 
 const vazirmatn = Vazirmatn({
@@ -26,7 +27,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         >
           رفتن به محتوا
         </a>
-        {children}
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );

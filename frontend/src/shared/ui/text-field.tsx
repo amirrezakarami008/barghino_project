@@ -5,25 +5,28 @@ type TextFieldProps = InputHTMLAttributes<HTMLInputElement> & {
   label: string;
   hint?: string;
   error?: string;
+  labelMode?: "above" | "placeholder";
 };
 
 export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(function TextField(
-  { label, hint, error, id, className, ...props },
+  { label, hint, error, id, className, labelMode = "above", placeholder, ...props },
   ref,
 ) {
   const fieldId = id ?? props.name;
-  const hintId = hint ? `${fieldId}-hint` : undefined;
+  const hintId = hint && labelMode === "above" ? `${fieldId}-hint` : undefined;
   const errorId = error ? `${fieldId}-error` : undefined;
   const describedBy = [hintId, errorId].filter(Boolean).join(" ") || undefined;
+  const fieldPlaceholder = placeholder ?? (labelMode === "placeholder" ? (hint ? `${label} (${hint})` : label) : undefined);
 
   return (
     <div className="grid gap-2">
-      <label htmlFor={fieldId} className="text-sm font-medium">
+      <label htmlFor={fieldId} className={labelMode === "placeholder" ? "sr-only" : "text-sm font-medium"}>
         {label}
       </label>
       <input
         ref={ref}
         id={fieldId}
+        placeholder={fieldPlaceholder}
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy}
         className={cx(
@@ -33,7 +36,7 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(function T
         )}
         {...props}
       />
-      {hint ? (
+      {hint && labelMode === "above" ? (
         <p id={hintId} className="text-sm leading-6 text-muted-foreground">
           {hint}
         </p>
