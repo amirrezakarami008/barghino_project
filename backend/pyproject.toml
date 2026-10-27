@@ -1,0 +1,79 @@
+[project]
+name = "backend"
+version = "0.1.0"
+description = "Reusable Django project base"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "django>=5.2,<6.0",
+    "djangorestframework>=3.16",
+    "djangorestframework-simplejwt>=5.5",
+    "drf-spectacular>=0.28",
+    "django-environ>=0.12",
+    "django-filter>=25.1",
+    "psycopg[binary]>=3.2",
+    "celery[redis]>=5.5",
+    "redis>=5.2",
+    "gunicorn>=23.0",
+    "whitenoise>=6.9",
+    "django-cors-headers>=4.9.0",
+    "sentry-sdk>=2.69.2",
+    "django-storages>=1.14.6",
+    "boto3>=1.43.98",
+    "channels>=4",
+    "channels-redis>=4",
+    "daphne>=4.2.3",
+]
+
+[dependency-groups]
+dev = [
+    "ruff>=0.12",
+    "pre-commit>=4.0",
+    "pytest>=8.3",
+    "pytest-django>=4.11",
+    "pytest-cov>=6.0",
+    "factory-boy>=3.3",
+    "fakeredis>=2.38.0",
+    "pytest-asyncio>=1.4.0",
+]
+
+# ---------------------------------------------------------------------------
+# Ruff (lint + format)
+# ---------------------------------------------------------------------------
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+exclude = ["**/migrations/*"]
+
+[tool.ruff.lint]
+select = [
+    "E",   # pycodestyle errors
+    "W",   # pycodestyle warnings
+    "F",   # pyflakes
+    "I",   # isort
+    "B",   # flake8-bugbear
+    "C4",  # flake8-comprehensions
+    "UP",  # pyupgrade
+    "DJ",  # flake8-django
+    "S",   # flake8-bandit (security)
+    "T20", # flake8-print
+]
+ignore = [
+    "S101", # assert allowed (pytest)
+]
+
+[tool.ruff.lint.per-file-ignores]
+"**/tests/**" = ["S105", "S106"] # hardcoded passwords in test fixtures are fine
+"config/settings/*" = ["F403", "F405"] # star imports in settings
+
+# ---------------------------------------------------------------------------
+# Pytest
+# ---------------------------------------------------------------------------
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.development"
+python_files = ["test_*.py"]
+asyncio_mode = "auto"
+addopts = "--cov=apps --cov=config --cov-report=term-missing --no-cov-on-fail"
+
+[tool.coverage.run]
+omit = ["*/migrations/*", "*/tests/*", "config/asgi.py", "config/wsgi.py"]

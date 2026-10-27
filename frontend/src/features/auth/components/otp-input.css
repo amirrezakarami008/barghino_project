@@ -1,0 +1,143 @@
+.otp-input {
+  --otp-size: clamp(32px, 12cqi, 48px);
+  --otp-gap: min(10px, 2.5cqi);
+  container-type: inline-size;
+}
+
+.otp-input__stage {
+  position: relative;
+  height: 224px;
+  isolation: isolate;
+}
+
+.otp-input__slot {
+  position: absolute;
+  top: calc(50% - var(--otp-size) / 2);
+  left: calc(50% - var(--otp-size) / 2);
+  width: var(--otp-size);
+  height: var(--otp-size);
+  transform: translateX(calc((var(--slot-index) - (var(--slot-count) - 1) / 2) * (var(--otp-size) + var(--otp-gap))));
+  will-change: transform;
+}
+
+.otp-input__slot input {
+  width: 100%;
+  height: 100%;
+  border: 1.5px solid var(--border);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--card) 88%, transparent);
+  color: var(--foreground);
+  box-shadow: 0 4px 12px rgb(18 36 58 / 0.04), inset 0 1px 0 rgb(255 255 255 / 0.9);
+  text-align: center;
+  font-size: 23px;
+  font-weight: 600;
+  caret-color: var(--primary);
+  outline: none;
+  transition: border-color 200ms, background 200ms, box-shadow 200ms, color 200ms;
+}
+
+.otp-input__slot input::placeholder {
+  color: color-mix(in srgb, var(--muted-foreground) 40%, transparent);
+  font-weight: 400;
+}
+
+.otp-input__slot[data-filled="true"] input {
+  border-color: color-mix(in srgb, var(--primary) 40%, var(--border));
+}
+
+.otp-input__slot input:focus-visible {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 12%, transparent), 0 6px 18px rgb(7 91 77 / 0.08);
+}
+
+.otp-input__slot input:disabled {
+  opacity: 0.55;
+  cursor: wait;
+}
+
+.otp-input__orbit {
+  position: absolute;
+  width: 156px;
+  height: 156px;
+  inset: 0;
+  margin: auto;
+  border: 1px dashed color-mix(in srgb, var(--primary) 20%, transparent);
+  border-radius: 50%;
+  opacity: 0;
+  transform: scale(0.8);
+  transition: opacity 300ms, transform 450ms;
+  z-index: -1;
+}
+
+.otp-input__center {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  margin: auto;
+  border-radius: 50%;
+  background: var(--mint);
+  color: var(--primary);
+  opacity: 0;
+  transform: scale(0.7);
+  transition: opacity 250ms, transform 350ms, color 200ms, background 200ms;
+  pointer-events: none;
+}
+
+.otp-input:is([data-phase="pending"], [data-phase="success"], [data-phase="error"]) :is(.otp-input__orbit, .otp-input__center) {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.otp-input[data-phase="pending"] .otp-input__slot input {
+  border-color: color-mix(in srgb, var(--primary) 60%, var(--border));
+  box-shadow: 0 5px 18px rgb(7 91 77 / 0.1);
+  cursor: wait;
+}
+
+.otp-input[data-phase="success"] .otp-input__slot input {
+  border-color: var(--emerald);
+  background: var(--mint);
+  color: var(--primary);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--emerald) 12%, transparent), 0 6px 20px rgb(21 150 107 / 0.12);
+}
+
+.otp-input[data-invalid="true"] .otp-input__slot input {
+  border-color: var(--danger);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 8%, transparent);
+}
+
+.otp-input[data-invalid="true"] .otp-input__center {
+  color: var(--danger);
+  background: color-mix(in srgb, var(--danger) 10%, var(--card));
+}
+
+.otp-input__status {
+  min-height: 3rem;
+  margin: 0;
+  color: var(--muted-foreground);
+  text-align: center;
+  font-size: 13px;
+  line-height: 1.8;
+}
+
+.otp-input[data-invalid="true"] .otp-input__status {
+  color: var(--danger);
+}
+
+.otp-input[data-phase="success"] .otp-input__status {
+  color: var(--primary);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .otp-input .otp-input__orbit,
+  .otp-input .otp-input__center {
+    display: none;
+  }
+
+  .otp-input__slot {
+    will-change: auto;
+  }
+}

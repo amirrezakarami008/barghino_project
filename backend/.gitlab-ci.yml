@@ -1,0 +1,45 @@
+# stages:
+#   - lint
+#   - test
+
+# variables:
+#   UV_CACHE_DIR: .uv-cache
+
+# .python:
+#   image: ghcr.io/astral-sh/uv:python3.12-bookworm-slim
+#   cache:
+#     key:
+#       files:
+#         - uv.lock
+#     paths:
+#       - $UV_CACHE_DIR
+#   before_script:
+#     - uv sync --frozen
+
+# lint:
+#   extends: .python
+#   stage: lint
+#   script:
+#     - uv run ruff check .
+#     - uv run ruff format --check .
+
+# test:
+#   extends: .python
+#   stage: test
+#   services:
+#     - postgres:16-alpine
+#   variables:
+#     POSTGRES_DB: backend
+#     POSTGRES_USER: postgres
+#     POSTGRES_PASSWORD: postgres
+#     DATABASE_URL: postgres://postgres:postgres@postgres:5432/backend
+#     DJANGO_SECRET_KEY: ci-only-secret-key
+#   script:
+#     - uv run pytest
+#   coverage: '/TOTAL.*\s+(\d+%)$/'
+
+# sast:
+#   stage: test
+
+# include:
+#   - template: Jobs/SAST.gitlab-ci.yml

@@ -12,10 +12,10 @@ const variants = {
 export type ButtonVariant = keyof typeof variants;
 
 const base =
-  "inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-control px-5 text-sm font-semibold transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-50";
+  "product-button inline-flex min-h-11 cursor-pointer items-center justify-center gap-2 rounded-control px-5 text-sm font-semibold transition-colors duration-200 disabled:cursor-not-allowed disabled:opacity-50";
 
 export function buttonClass(variant: ButtonVariant = "primary", className?: string) {
-  return cx(base, variants[variant], className);
+  return cx(base, `product-button-${variant}`, variants[variant], className);
 }
 
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {

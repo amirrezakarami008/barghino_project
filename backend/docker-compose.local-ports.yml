@@ -1,0 +1,12 @@
+# Publish DB/Redis ports on the host for local tooling.
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.local-ports.yml up
+
+services:
+  db:
+    ports:
+      - "5432:5432"
+
+  redis:
+    ports:
+      - "6379:6379"

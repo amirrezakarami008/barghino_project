@@ -23,9 +23,32 @@ export type IconName =
   | "lock"
   | "eye"
   | "eyeOff"
-  | "leaf";
+  | "leaf"
+  | "logout"
+  | "search"
+  | "chevron"
+  | "solarPanel"
+  | "edit"
+  | "trash"
+  | "star"
+  | "grid"
+  | "book"
+  | "plan"
+  | "table"
+  | "plus";
 
 const glyphs: Record<IconName, string> = {
+  grid: "M3 3h7v7H3V3Zm11 0h7v7h-7V3ZM3 14h7v7H3v-7Zm11 0h7v7h-7v-7Z",
+  book: "M12 5C8 2 3 4 3 4v15s5-2 9 1c4-3 9-1 9-1V4s-5-2-9 1ZM12 5v15",
+  plan: "M7 3h10a3 3 0 0 1 3 3v12a3 3 0 0 1-3 3H7a3 3 0 0 1-3-3V6a3 3 0 0 1 3-3ZM8 8h8m-8 4h5m-5 4h8",
+  table: "M5 4h14a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2ZM3 10h18M3 15h18m-12-5v10",
+  plus: "M12 5v14M5 12h14",
+  search: "M10.5 17a6.5 6.5 0 1 0 0-13 6.5 6.5 0 0 0 0 13Zm4.7-1.8L21 21",
+  chevron: "m14 6-6 6 6 6",
+  solarPanel: "M5 5h14l3 12H2L5 5ZM3.5 11h17M9 5 8 17M15 5l1 12M12 17v4M8 21h8",
+  edit: "m14 5 5 5M4 20l4.2-.9L19 8.3a2.1 2.1 0 0 0-3-3L5.2 16.1 4 20Z",
+  trash: "M4 7h16M10 11v6M14 11v6M6.5 7l.8 13h9.4l.8-13M9 7V4h6v3",
+  star: "m12 3 2.7 5.5 6.1.9-4.4 4.3 1 6.1-5.4-2.9-5.4 2.9 1-6.1-4.4-4.3 6.1-.9L12 3Z",
   bolt: "M13 2.5 4.2 13.2h6.2L9.2 21.5 19.8 10.2h-6.3L13 2.5Z",
   shield: "M12 2.8 4.5 6v6.2c0 4.2 3 7.1 7.5 8.8 4.5-1.7 7.5-4.6 7.5-8.8V6L12 2.8Z",
   clock: "M12 7.2V12l3.2 1.9M12 20.5a8.5 8.5 0 1 0 0-17 8.5 8.5 0 0 0 0 17Z",
@@ -50,6 +73,7 @@ const glyphs: Record<IconName, string> = {
   eye: "M2.5 12S6 6.5 12 6.5 21.5 12 21.5 12 18 17.5 12 17.5 2.5 12 2.5 12Z M12 14.5a2.5 2.5 0 1 0 0-5 2.5 2.5 0 0 0 0 5Z",
   eyeOff: "M4 5.5 19 19M9.5 9.8A3 3 0 0 0 14.2 14.5M7.2 7.6C4.8 9 3 12 3 12s3.2 5.5 9 5.5c1.4 0 2.6-.3 3.7-.8M10 6.7A9 9 0 0 1 12 6.5C17.8 6.5 21 12 21 12a16 16 0 0 1-2.2 2.8",
   leaf: "M5 19s1-7 7.5-11.5S20 5 20 5s-.2 6.5-4.5 11S5 19 5 19Z M8 16c2-2 4-5 6-8",
+  logout: "M9 4H4v16h5M10 12h11m-4-4 4 4-4 4",
 };
 
 export function Icon({

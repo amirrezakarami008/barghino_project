@@ -19,7 +19,7 @@ const rows = [
 export function HomeView() {
   return (
     <div>
-      <section className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-10 sm:px-6 sm:py-14 lg:grid-cols-2 lg:gap-14 lg:py-16">
+      <section className="product-home-hero mx-auto grid max-w-6xl items-center gap-10 px-4 py-10 sm:px-6 sm:py-14 lg:grid-cols-2 lg:gap-14 lg:py-16">
         <div>
           <p className="text-sm font-semibold text-emerald">پلتفرم فروش برق خانگی و نیروگاه خورشیدی</p>
           <h1 className="mt-3 text-4xl leading-[1.45] font-bold tracking-tight text-balance text-primary sm:text-5xl">
@@ -173,8 +173,8 @@ function DashboardPreview() {
           <div className="mt-3 rounded-2xl border border-border p-4">
             <p className="text-sm font-semibold">روند نمونه تولید</p>
             <svg viewBox="0 0 320 110" className="mt-3 h-28 w-full" role="img" aria-label="نمودار نمونه صعودی، بدون داده واقعی">
-              <path d="M8 88 C 50 84, 70 70, 100 72 S 150 40, 190 48 250 22 312 18 V 100 H 8 Z" fill="#e8f5ee" />
-              <path d="M8 88 C 50 84, 70 70, 100 72 S 150 40, 190 48 250 22 312 18" fill="none" stroke="#15966b" strokeWidth="3" />
+              <path d="M8 88 C 50 84, 70 70, 100 72 S 150 40, 190 48 250 22 312 18 V 100 H 8 Z" fill="var(--mint)" />
+              <path d="M8 88 C 50 84, 70 70, 100 72 S 150 40, 190 48 250 22 312 18" fill="none" stroke="var(--emerald)" strokeWidth="3" />
             </svg>
           </div>
         </div>

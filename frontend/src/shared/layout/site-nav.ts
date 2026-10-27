@@ -6,6 +6,7 @@ export type NavItem = {
   end?: boolean;
   summary?: string;
   icon?: IconName;
+  disabled?: boolean;
 };
 
 export const publicNav = [
@@ -33,11 +34,12 @@ export const userNav = [
 ] as const satisfies readonly NavItem[];
 
 export const adminNav = [
-  { href: "/admin", label: "خانه", end: true, icon: "home", summary: "کارهایی که منتظر مدیر هستند." },
-  { href: "/admin/reviews", label: "بررسی نصب", icon: "sun", summary: "صف درخواست‌هایی که باید دیده شوند." },
-  { href: "/admin/equipment", label: "تجهیزات", icon: "plant", summary: "قیمت و اقلام کاتالوگ نصب." },
-  { href: "/admin/plans", label: "پلن‌ها", icon: "coins", summary: "نرخ و حجم تعهد پلن‌های فروش." },
-  { href: "/admin/journal", label: "مجله", icon: "file", summary: "پیش‌نویس و انتشار نوشته‌ها." },
+  { href: "/admin", label: "نمای کلی", end: true, icon: "grid", summary: "میز عملیات و دسترسی به بخش‌های مدیریت." },
+  { href: "/admin/plans", label: "پلن‌های فروش", icon: "plan", summary: "نرخ و حجم تعهد پلن‌های فروش." },
+  { href: "/admin/reviews", label: "بررسی نصب", icon: "sun", summary: "صف درخواست‌هایی که باید دیده شوند.", disabled: true },
+  { href: "/admin/equipment", label: "تجهیزات", icon: "solarPanel", summary: "قیمت و اقلام کاتالوگ نصب.", disabled: true },
+  { href: "/admin/journal", label: "مجله و راهنماها", icon: "book", summary: "جست‌وجو و مشاهده راهنماهای منتشرشدهٔ سایت." },
+  { href: "/admin/profile", label: "پروفایل", icon: "user", summary: "اطلاعات حساب و مشخصات مدیر." },
 ] as const satisfies readonly NavItem[];
 
 export function isNavActive(pathname: string, item: Pick<NavItem, "href" | "end">) {

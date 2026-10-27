@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState, type ComponentProps, type FormEvent } from "react";
+import { OtpInput } from "@/features/auth/components/otp-input";
 import { ApiError, apiRequest } from "@/features/auth/lib/api";
 import { isCompanyNationalId, isNationalId } from "@/features/auth/lib/identity";
 import { digitsOnly, formatIranMobile, isIranMobile, normalizeIranMobile } from "@/features/auth/lib/phone";
@@ -76,7 +77,6 @@ export function RegisterForm({ initialPath }: { initialPath: Path }) {
   const [step, setStep] = useState<Step>("details");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState("");
-  const [code, setCode] = useState("");
   const [pending, setPending] = useState(false);
   const [now, setNow] = useState(0);
   const [resendAt, setResendAt] = useState(0);
@@ -106,6 +106,7 @@ export function RegisterForm({ initialPath }: { initialPath: Path }) {
 
   async function start(event?: FormEvent<HTMLFormElement>) {
     event?.preventDefault();
+    if (pending) return;
     const payload = buildPayload(draft);
     if ("errors" in payload) {
       setErrors(payload.errors);
@@ -123,7 +124,6 @@ export function RegisterForm({ initialPath }: { initialPath: Path }) {
       await apiRequest("/auth/register/", { method: "POST", body: payload.body });
       setSentPayload(JSON.stringify(payload.body));
       setDraft((current) => ({ ...current, phone: payload.phone }));
-      setCode("");
       const started = Date.now();
       setNow(started);
       setResendAt(started + codeLifetimeSeconds * 1000);
@@ -140,64 +140,36 @@ export function RegisterForm({ initialPath }: { initialPath: Path }) {
     }
   }
 
-  async function verify(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const normalizedCode = digitsOnly(code);
-    if (normalizedCode.length !== 6) {
-      setErrors({ code: "کد شش‌رقمی پیامک را وارد کنید." });
-      return;
-    }
-    setPending(true);
+  async function verify(code: string): Promise<Session> {
     setErrors({});
     setFormError("");
-    try {
-      const result = await apiRequest<{ access: string; refresh: string; user: unknown }>("/auth/register/verify/", {
-        method: "POST",
-        body: { phone: normalizeIranMobile(draft.phone), code: normalizedCode },
-      });
-      const nextSession: Session = {
-        access: result.access,
-        refresh: result.refresh,
-        user: userFromApi(result.user),
-      };
-      signIn(nextSession);
-      router.replace(destinationFor(nextSession.user, null));
-    } catch (error) {
-      if (error instanceof ApiError) setErrors({ code: error.fields.code ?? error.message });
-      else setFormError("تأیید ثبت‌نام انجام نشد.");
-    } finally {
-      setPending(false);
-    }
+    const result = await apiRequest<{ access: string; refresh: string; user: unknown }>("/auth/register/verify/", {
+      method: "POST",
+      body: { phone: normalizeIranMobile(draft.phone), code },
+    });
+    return { access: result.access, refresh: result.refresh, user: userFromApi(result.user) };
   }
 
   if (step === "code") {
     return (
-      <form onSubmit={verify} noValidate className="grid gap-5">
+      <div className="grid gap-5">
         <div>
           <h1 className="text-3xl font-bold text-primary">کد تأیید</h1>
           <p className="mt-2 leading-7 text-muted-foreground">
             کد شش‌رقمی برای {formatIranMobile(draft.phone)} را وارد کنید. حساب پس از تأیید این کد ساخته می‌شود.
           </p>
         </div>
-        <TextField
-          name="code"
-          label="کد تأیید"
-          inputMode="numeric"
-          autoComplete="one-time-code"
-          dir="ltr"
-          maxLength={6}
-          value={code}
-          error={errors.code}
-          className="text-center text-2xl tracking-[0.4em]"
-          onChange={(event) => {
-            setCode(digitsOnly(event.target.value).slice(0, 6));
-            setErrors({});
+        <OtpInput
+          key={resendAt}
+          disabled={pending}
+          onVerify={verify}
+          onBusyChange={setPending}
+          onVerified={(nextSession) => {
+            signIn(nextSession);
+            router.replace(destinationFor(nextSession.user, null));
           }}
         />
         {formError ? <p className="text-sm leading-7 text-danger">{formError}</p> : null}
-        <Button type="submit" disabled={pending}>
-          {pending ? "در حال ساخت حساب…" : "تأیید و ساخت حساب"}
-        </Button>
         <div className="flex items-center justify-between gap-3 text-sm">
           <button
             type="button"
@@ -207,11 +179,16 @@ export function RegisterForm({ initialPath }: { initialPath: Path }) {
           >
             {secondsLeft > 0 ? `ارسال دوباره تا ${faDigits(secondsLeft)} ثانیه` : "ارسال دوباره کد"}
           </button>
-          <button type="button" className="cursor-pointer text-muted-foreground" onClick={() => setStep("details")}>
+          <button
+            type="button"
+            className="cursor-pointer text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={pending}
+            onClick={() => setStep("details")}
+          >
             اصلاح اطلاعات
           </button>
         </div>
-      </form>
+      </div>
     );
   }
 

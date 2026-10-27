@@ -3,8 +3,9 @@
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useId, useState, type FormEvent, type ReactNode } from "react";
+import { OtpInput } from "@/features/auth/components/otp-input";
 import { ApiError, apiRequest } from "@/features/auth/lib/api";
-import { digitsOnly, formatIranMobile, isIranMobile, normalizeIranMobile } from "@/features/auth/lib/phone";
+import { formatIranMobile, isIranMobile, normalizeIranMobile } from "@/features/auth/lib/phone";
 import { userFromApi, type Session } from "@/features/auth/lib/session";
 import { destinationFor, useAuth } from "@/features/auth/session-provider";
 import { faDigits } from "@/shared/lib/fa";
@@ -22,15 +23,12 @@ export function LoginForm() {
   const { session, ready, signIn } = useAuth();
   const [step, setStep] = useState<Step>("phone");
   const [phone, setPhone] = useState("");
-  const [code, setCode] = useState("");
   const [phoneError, setPhoneError] = useState("");
-  const [codeError, setCodeError] = useState("");
   const [formError, setFormError] = useState("");
   const [pending, setPending] = useState(false);
   const [now, setNow] = useState(0);
   const [resendAt, setResendAt] = useState(0);
   const phoneId = useId();
-  const codeId = useId();
   const secondsLeft = resendAt > now ? Math.ceil((resendAt - now) / 1000) : 0;
 
   useEffect(() => {
@@ -49,6 +47,7 @@ export function LoginForm() {
 
   async function requestCode(event?: FormEvent<HTMLFormElement>) {
     event?.preventDefault();
+    if (pending) return;
     const normalized = normalizeIranMobile(phone);
     if (!isIranMobile(normalized)) {
       setPhoneError("شماره موبایل را به شکل ۰۹۱۲۳۴۵۶۷۸۹ وارد کنید.");
@@ -60,8 +59,6 @@ export function LoginForm() {
     try {
       await apiRequest("/auth/otp/request/", { method: "POST", body: { phone: normalized } });
       setPhone(normalized);
-      setCode("");
-      setCodeError("");
       const started = Date.now();
       setNow(started);
       setResendAt(started + codeLifetimeSeconds * 1000);
@@ -73,42 +70,18 @@ export function LoginForm() {
     }
   }
 
-  async function verifyCode(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const normalizedCode = digitsOnly(code);
-    if (normalizedCode.length !== 6) {
-      setCodeError("کد شش‌رقمی پیامک را وارد کنید.");
-      return;
-    }
-    setPending(true);
-    setCodeError("");
+  async function verifyCode(code: string): Promise<Session> {
     setFormError("");
-    try {
-      const result = await apiRequest<{ access: string; refresh: string; user: unknown }>("/auth/otp/verify/", {
-        method: "POST",
-        body: { phone, code: normalizedCode },
-      });
-      const nextSession: Session = {
-        access: result.access,
-        refresh: result.refresh,
-        user: userFromApi(result.user),
-      };
-      signIn(nextSession);
-      router.replace(destinationFor(nextSession.user, next));
-    } catch (error) {
-      if (error instanceof ApiError) {
-        setCodeError(error.fields.code ?? error.message);
-      } else {
-        setCodeError("ورود انجام نشد.");
-      }
-    } finally {
-      setPending(false);
-    }
+    const result = await apiRequest<{ access: string; refresh: string; user: unknown }>("/auth/otp/verify/", {
+      method: "POST",
+      body: { phone, code },
+    });
+    return { access: result.access, refresh: result.refresh, user: userFromApi(result.user) };
   }
 
   if (step === "code") {
     return (
-      <form onSubmit={verifyCode} noValidate className="grid gap-4">
+      <div className="grid gap-4">
         <div className="text-center">
           <Logo href="/" caption={false} className="justify-center" />
           <h1 className="mt-6 text-xl font-bold text-foreground">کد تأیید</h1>
@@ -116,28 +89,17 @@ export function LoginForm() {
             اگر شماره {formatIranMobile(phone)} امکان دریافت پیامک داشته باشد، کد شش‌رقمی ارسال شده است.
           </p>
         </div>
-        <Field id={codeId} label="کد تأیید" icon="shield" error={codeError}>
-          <input
-            id={codeId}
-            name="code"
-            inputMode="numeric"
-            autoComplete="one-time-code"
-            dir="ltr"
-            maxLength={6}
-            placeholder="۱۲۳۴۵۶"
-            value={code}
-            aria-invalid={codeError ? true : undefined}
-            className="w-full bg-transparent text-end text-base tracking-[0.3em] outline-none placeholder:text-muted-foreground/70"
-            onChange={(event) => {
-              setCode(digitsOnly(event.target.value).slice(0, 6));
-              setCodeError("");
-            }}
-          />
-        </Field>
+        <OtpInput
+          key={resendAt}
+          disabled={pending}
+          onVerify={verifyCode}
+          onBusyChange={setPending}
+          onVerified={(nextSession) => {
+            signIn(nextSession);
+            router.replace(destinationFor(nextSession.user, next));
+          }}
+        />
         {formError ? <p className="text-sm leading-7 text-danger">{formError}</p> : null}
-        <Button type="submit" className="w-full" disabled={pending}>
-          {pending ? "در حال ورود…" : "ورود"}
-        </Button>
         <div className="flex items-center justify-between gap-3 text-sm">
           <button
             type="button"
@@ -149,17 +111,17 @@ export function LoginForm() {
           </button>
           <button
             type="button"
-            className="cursor-pointer text-muted-foreground"
+            className="cursor-pointer text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
+            disabled={pending}
             onClick={() => {
               setStep("phone");
-              setCodeError("");
               setFormError("");
             }}
           >
             اصلاح شماره
           </button>
         </div>
-      </form>
+      </div>
     );
   }
 

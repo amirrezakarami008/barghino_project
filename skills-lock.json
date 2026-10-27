@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "skills": {
+    "accessibility": {
+      "source": "danielteles/awesome-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/accessibility/SKILL.md",
+      "computedHash": "018324936cfe8034ad5ce29ab1953578b2bcc3331ef966dd758b8221cd3f162d"
+    },
+    "architecture-and-design": {
+      "source": "danielteles/awesome-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/architecture-and-design/SKILL.md",
+      "computedHash": "bd993ed8c10736aaec4b01b0aa7203d43212a1ade835f4dbfaec8e3705c920a3"
+    },
+    "core-typescript": {
+      "source": "danielteles/awesome-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/core-typescript/SKILL.md",
+      "computedHash": "99f86e70d6461d25b7ec22428e8900c9b6b97569360fe09c3cad9243d00845d3"
+    },
+    "e2e-testing": {
+      "source": "danielteles/awesome-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/e2e-testing/SKILL.md",
+      "computedHash": "c5abe2da25547a226cdb4bdc0f95aad64637f2c9764c1aa4c44475a4a2aa147c"
+    },
+    "frontend-design": {
+      "source": "anthropics/skills",
+      "sourceType": "github",
+      "skillPath": "skills/frontend-design/SKILL.md",
+      "computedHash": "89496d5dd00f4810205f351759594fc2742bf8eea85a2f2b2d1de59f4bd91576"
+    },
+    "react": {
+      "source": "danielteles/awesome-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/react/SKILL.md",
+      "computedHash": "eac199a3c8f74462b32b36704d859f075bc6a5c9547e3ef5cb8b8939725f033b"
+    },
+    "test-quality": {
+      "source": "danielteles/awesome-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/test-quality/SKILL.md",
+      "computedHash": "85be9d393de876e10acc36817f3047dde75e742bdbbd92ac8fd021b13e1c6732"
+    },
+    "web-performance": {
+      "source": "danielteles/awesome-agent-skills",
+      "sourceType": "github",
+      "skillPath": "skills/web-performance/SKILL.md",
+      "computedHash": "059522b7409a74bf19d5c6494547e700bf5d96f3b5dd507a375fb78b67fd2530"
+    }
+  }
+}

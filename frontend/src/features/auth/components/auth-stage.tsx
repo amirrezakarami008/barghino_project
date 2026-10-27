@@ -5,7 +5,7 @@ import { Icon } from "@/shared/ui/icon";
 
 export function AuthStage({ children, wide = false }: { children: ReactNode; wide?: boolean }) {
   return (
-    <div className="relative min-h-dvh">
+    <div className="auth-stage relative min-h-dvh">
       <div className="fixed inset-0 z-0">
         <Image
           src="/auth-sunset.jpg"
@@ -26,7 +26,7 @@ export function AuthStage({ children, wide = false }: { children: ReactNode; wid
       </Link>
       <div className="relative z-10 flex min-h-dvh items-center justify-center px-4 py-16 sm:px-8 lg:justify-end lg:py-10 lg:pe-16 xl:pe-24">
         <div
-          className={`relative w-full ${wide ? "max-w-lg" : "max-w-md"} overflow-hidden rounded-[1.75rem] border border-white/70 bg-white/72 shadow-[0_28px_70px_rgb(18_36_58/0.24),inset_0_1px_0_rgb(255_255_255/0.9)] backdrop-blur-2xl backdrop-saturate-150`}
+          className={`auth-surface relative w-full ${wide ? "max-w-lg" : "max-w-md"} overflow-hidden rounded-[1.75rem] border border-white/70 bg-white/72 shadow-[0_28px_70px_rgb(18_36_58/0.24),inset_0_1px_0_rgb(255_255_255/0.9)] backdrop-blur-2xl backdrop-saturate-150`}
         >
           <div className="pointer-events-none absolute -top-20 -start-10 size-48 rounded-full bg-white/50 blur-3xl" />
           <div className="pointer-events-none absolute -bottom-16 -end-8 size-40 rounded-full bg-mint/70 blur-3xl" />

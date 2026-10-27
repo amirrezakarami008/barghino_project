@@ -1,0 +1,64 @@
+name: backend
+
+x-app: &app
+  build:
+    context: .
+  env_file: .env
+  environment:
+    DATABASE_URL: postgres://postgres:postgres@db:5432/backend
+    CELERY_BROKER_URL: redis://redis:6379/0
+    REDIS_URL: redis://redis:6379/1
+    REDIS_STREAMS_URL: redis://redis:6379/2
+    REDIS_CHANNELS_URL: redis://redis:6379/3
+    USE_WEBSOCKETS: "True"
+  volumes:
+    - .:/app
+    # Host .venv scripts point at the host interpreter. Keep the image env.
+    - app_venv:/app/.venv
+  depends_on:
+    db:
+      condition: service_healthy
+    redis:
+      condition: service_started
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: backend
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    # Not published on the host by default (safer). For local psql/redis-cli:
+    #   docker compose -f docker-compose.yml -f docker-compose.local-ports.yml up
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+
+  web:
+    <<: *app
+    command: daphne -b 0.0.0.0 -p 8000 config.asgi:application
+    environment:
+      DATABASE_URL: postgres://postgres:postgres@db:5432/backend
+      CELERY_BROKER_URL: redis://redis:6379/0
+      REDIS_URL: redis://redis:6379/1
+      REDIS_STREAMS_URL: redis://redis:6379/2
+      REDIS_CHANNELS_URL: redis://redis:6379/3
+      USE_WEBSOCKETS: "True"
+      DJANGO_SETTINGS_MODULE: config.settings.development
+    ports:
+      - "8000:8000"
+
+  worker:
+    <<: *app
+    command: celery -A config worker --loglevel=info
+
+volumes:
+  postgres_data:
+  app_venv:

@@ -1,0 +1,36 @@
+/* Plan interactions complement the approved admin foundation. */
+.admin-shell .admin-plan-description{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;min-height:47px}
+.admin-shell .admin-plan-card[data-recommended=true] .admin-plan-price-block strong{color:var(--gold)}
+.admin-shell .admin-plan-details{margin-inline:15px;border-top:1px solid var(--line)}
+.admin-shell .admin-plan-details summary{display:flex;align-items:center;justify-content:space-between;min-height:32px;padding-block:6px;list-style:none;color:var(--faint);font-size:10px;cursor:pointer}
+.admin-shell .admin-plan-details summary::-webkit-details-marker{display:none}
+.admin-shell .admin-plan-details summary svg{width:12px;height:12px;transform:rotate(-90deg)}
+.admin-shell .admin-plan-details[open] summary svg{transform:rotate(90deg)}
+.admin-shell .admin-plan-details>div{padding-block:3px 10px}
+.admin-shell .admin-plan-details p{display:flex;align-items:flex-start;gap:5px;margin:0 0 6px;color:var(--muted);font-size:11px;line-height:1.9;overflow-wrap:anywhere}
+.admin-shell .admin-plan-details p svg{width:12px;height:12px;margin-top:4px;color:var(--emerald)}
+.admin-shell .admin-plan-card-header h3{overflow-wrap:anywhere}
+.admin-shell .admin-plan-benefits li{align-items:flex-start;overflow-wrap:anywhere}
+.admin-shell .admin-plan-benefits li svg{margin-top:4px}
+.admin-shell .admin-collection-table .admin-plan-star{margin-inline-start:9px}
+.admin-shell .admin-empty-state,.admin-shell .admin-plans-list>.admin-data-state{min-height:250px;border:1px dashed var(--line);border-radius:12px;background:color-mix(in srgb,var(--surface) 40%,transparent)}
+.admin-shell .admin-plans-pagination{display:flex;align-items:center;justify-content:center;gap:14px;padding:18px 0 0;color:var(--muted);font-size:11px}
+.admin-shell .admin-plan-notice{display:flex;align-items:center;gap:8px;margin-bottom:14px;padding:10px 13px;border:1px solid color-mix(in srgb,var(--emerald) 40%,var(--line));border-radius:9px;color:var(--emerald);background:var(--emerald-wash);font-size:12px}
+.admin-shell .admin-plan-notice>svg{width:16px;height:16px}
+.admin-shell .admin-plan-notice button{margin-inline-start:auto;color:inherit}
+.admin-shell .admin-plan-form-grid{margin:0;border:0;min-width:0}
+.admin-shell .admin-plan-error{margin:16px 22px 0;padding:10px 12px;border:1px solid color-mix(in srgb,var(--danger) 30%,var(--line));border-radius:7px;color:var(--danger);background:color-mix(in srgb,var(--danger) 7%,var(--surface));font-size:12px;line-height:1.9}
+.admin-shell .admin-field-error{color:var(--danger)!important}
+.admin-shell .admin-plan-form-grid [aria-invalid=true]{border-color:var(--danger)!important}
+.admin-shell .admin-plan-form-actions{position:sticky;bottom:0;z-index:2;background:var(--surface)}
+.admin-shell .admin-plan-confirm{width:min(410px,calc(100vw - 28px))}
+.admin-shell .admin-plan-confirm-content{display:grid;gap:13px;padding:23px}
+.admin-shell .admin-plan-confirm-content>.admin-icon-tile{width:36px;height:36px}
+.admin-shell .admin-plan-confirm-content h2{font-size:17px;font-weight:600}
+.admin-shell .admin-plan-confirm-content>p{color:var(--muted);font-size:12px;line-height:2}
+.admin-shell .admin-plan-confirm-content .admin-plan-error{margin:0;color:var(--danger)}
+.admin-shell .admin-plan-confirm-content .admin-plan-form-actions{padding:14px 0 0;margin-top:3px;border-top:1px solid var(--line)}
+.admin-shell .admin-button-danger{background:#b94f58;color:#fff}
+.admin-shell .admin-button-danger:hover{background:#cb5d67}
+@media(min-width:761px) and (max-width:1023px){.admin-shell .admin-plan-grid{grid-template-columns:repeat(3,minmax(0,1fr))}}
+@media(max-width:440px){.admin-shell .admin-plan-description{min-height:0}.admin-shell .admin-plan-details summary{font-size:11px;min-height:34px}}

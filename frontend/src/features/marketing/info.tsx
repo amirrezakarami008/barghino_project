@@ -14,7 +14,7 @@ export function PageIntro({
   action?: { href: string; label: string };
 }) {
   return (
-    <header className="max-w-3xl">
+    <header className="product-page-intro max-w-3xl">
       <p className="text-sm font-semibold text-emerald">{eyebrow}</p>
       <h1 className="mt-2 text-3xl leading-[1.45] font-bold text-primary sm:text-4xl">{title}</h1>
       <p className="mt-4 text-base leading-8 text-muted-foreground">{lede}</p>
@@ -33,7 +33,7 @@ export function InfoShell({ children }: { children: ReactNode }) {
 
 export function StepList({ items }: { items: { title: string; text: string }[] }) {
   return (
-    <ol className="mt-8 grid gap-4 md:grid-cols-3">
+    <ol className="product-steps mt-8 grid gap-4 md:grid-cols-3">
       {items.map((item, index) => (
         <li key={item.title} className="rounded-panel border border-border bg-card p-5">
           <span className="text-sm font-bold text-emerald">{faDigits(index + 1)}</span>

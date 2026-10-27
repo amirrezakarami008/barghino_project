@@ -16,9 +16,10 @@ export function WorkspacePage({
   children?: ReactNode;
 }) {
   return (
-    <div className="mx-auto max-w-5xl">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <p className="max-w-2xl text-sm leading-7 text-muted-foreground">{lede}</p>
+    <div className="product-workspace-page mx-auto max-w-5xl">
+      <div className="product-workspace-intro flex flex-wrap items-start justify-between gap-4">
+        <span className="product-page-icon" aria-hidden="true"><Icon name={icon} /></span>
+        <div className="product-workspace-intro-copy"><h2>{title}</h2><p className="max-w-2xl text-sm leading-7 text-muted-foreground">{lede}</p></div>
         {action ? <ButtonLink href={action.href}>{action.label}</ButtonLink> : null}
       </div>
       <div className="mt-6">{children ?? <EmptyPanel icon={icon} title={title} text={lede} />}</div>
@@ -28,7 +29,7 @@ export function WorkspacePage({
 
 export function EmptyPanel({ icon, title, text }: { icon: IconName; title: string; text: string }) {
   return (
-    <div className="rounded-panel border border-dashed border-border bg-card px-6 py-10 text-center">
+    <div className="product-empty rounded-panel border border-dashed border-border bg-card px-6 py-10 text-center">
       <span className="mx-auto grid size-12 place-items-center rounded-2xl bg-mint text-primary">
         <Icon name={icon} className="size-6" />
       </span>
@@ -40,7 +41,7 @@ export function EmptyPanel({ icon, title, text }: { icon: IconName; title: strin
 
 export function MetricGrid({ items }: { items: { label: string; hint: string }[] }) {
   return (
-    <ul className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+    <ul className="product-metrics grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
       {items.map((item) => (
         <li key={item.label} className="rounded-panel border border-border bg-card p-4">
           <p className="text-sm text-muted-foreground">{item.label}</p>

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { createContext, useContext, useMemo, useSyncExternalStore, type ReactNode } from "react";
+import { createContext, useCallback, useContext, useMemo, useState, useSyncExternalStore, type ReactNode } from "react";
 import { apiRequest } from "@/features/auth/lib/api";
 import {
   clearSession,
@@ -15,8 +15,10 @@ import {
 
 type AuthContextValue = {
   session: Session | null;
+  profile: AuthUser | null;
   ready: boolean;
   signIn: (session: Session) => void;
+  hydrateProfile: (user: AuthUser) => void;
   signOut: () => Promise<void>;
 };
 
@@ -35,14 +37,23 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const raw = useSyncExternalStore(subscribeSession, sessionSnapshot, () => null);
   const ready = useClientReady();
   const session = useMemo(() => parseStoredSession(raw), [raw]);
+  const [verifiedProfile, setVerifiedProfile] = useState<AuthUser | null>(null);
+  const hydrateProfile = useCallback((user: AuthUser) => {
+    setVerifiedProfile((current) =>
+      current && JSON.stringify(current) === JSON.stringify(user) ? current : user,
+    );
+  }, []);
 
   const value = useMemo<AuthContextValue>(
     () => ({
       session,
+      profile: verifiedProfile?.uuid === session?.user.uuid ? verifiedProfile : session?.user ?? null,
       ready,
       signIn(next) {
+        setVerifiedProfile(null);
         writeSession(next);
       },
+      hydrateProfile,
       async signOut() {
         const current = readSession();
         if (current) {
@@ -60,7 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         router.replace("/login");
       },
     }),
-    [ready, router, session],
+    [hydrateProfile, ready, router, session, verifiedProfile],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
