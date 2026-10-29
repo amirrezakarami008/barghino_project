@@ -64,6 +64,7 @@ export function ProfileDetails() {
 }
 
 const identityLabels: Record<string, string> = {
+  account_type: "نوع حساب مشتری",
   kind: "نوع پروفایل",
   first_name: "نام",
   last_name: "نام خانوادگی",

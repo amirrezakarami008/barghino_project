@@ -1,0 +1,25 @@
+.admin-shell .admin-review-tabs{display:flex;gap:8px;flex-wrap:wrap;margin-block:20px}
+.admin-shell .admin-review-tabs button{padding:9px 20px;border:1px solid var(--line);border-radius:10px;background:var(--surface);color:var(--muted)}
+.admin-shell .admin-review-tabs button[aria-pressed=true]{background:var(--gradient-action);color:#fff;border-color:transparent}
+.admin-shell .admin-review-guide{padding:14px 18px;border:1px solid var(--line);border-radius:12px;background:var(--surface);color:var(--muted);font-size:12px;line-height:2}
+.admin-shell .admin-review-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;margin-block:20px}
+.admin-shell .admin-review-item{min-width:0;padding:20px;border:1px solid var(--line);border-top:3px solid var(--electric);border-radius:15px;background:var(--surface)}
+.admin-shell .admin-review-item header{display:flex;align-items:center;gap:10px;margin-bottom:18px}
+.admin-shell .admin-review-item h2{font-size:17px;font-weight:600;overflow-wrap:anywhere}
+.admin-shell .admin-review-item dl{display:grid;gap:12px;margin-bottom:20px}
+.admin-shell .admin-review-item dt{font-size:11px;color:var(--muted)}
+.admin-shell .admin-review-item dd{font-size:13px;overflow-wrap:anywhere;line-height:1.9}
+.admin-shell .admin-review-notice{padding:12px;border:1px solid var(--emerald);border-radius:10px;color:var(--emerald);background:var(--emerald-wash);margin-block:16px}
+.admin-shell .admin-review-error{color:var(--danger);padding:12px;border:1px solid var(--danger);border-radius:10px;margin-block:12px;line-height:2}
+.admin-shell .admin-review-pagination{display:flex;justify-content:center;align-items:center;gap:14px;flex-wrap:wrap;margin-block:20px;font-size:12px}
+.admin-shell .admin-review-dialog{position:fixed;inset:50% auto auto 50%;transform:translate(-50%,-50%);margin:0;width:min(480px,calc(100vw - 28px));max-height:calc(100dvh - 40px);overflow:auto;padding:24px;border:1px solid var(--line);border-top:3px solid var(--electric);border-radius:17px;background:var(--surface);color:var(--text);box-shadow:var(--shadow);font:inherit}
+.admin-shell .admin-review-dialog::backdrop{background:#091627ad;backdrop-filter:blur(4px)}
+.admin-shell .admin-review-dialog h2{font-size:19px;font-weight:600}.admin-shell .admin-review-dialog p{font-size:12px;color:var(--muted);line-height:2;margin-block:12px}
+.admin-shell .admin-review-dialog fieldset{display:grid;gap:12px;margin-block:15px;border:0;padding:0}
+.admin-shell .admin-review-dialog legend{font-size:13px;margin-bottom:10px}
+.admin-shell .admin-review-dialog label:has(input){display:flex;align-items:center;gap:9px}
+.admin-shell .admin-review-dialog textarea{width:100%;padding:12px;border:1px solid var(--line);border-radius:10px;color:var(--text);background:var(--surface-hi)}
+.admin-shell .admin-review-dialog footer{display:flex;gap:12px;flex-wrap:wrap;margin-top:18px}
+.admin-shell .admin-review-item .contract-signature-preview{padding:12px;border:1px solid var(--line);border-radius:10px;margin-block:12px;line-height:2;font-size:12px}
+.admin-shell .admin-review-item .contract-signature-preview img{max-height:180px;object-fit:contain;background:#fff;border-radius:8px}
+@media(max-width:760px){.admin-shell .admin-review-grid{grid-template-columns:1fr}.admin-shell .admin-review-item{padding:16px}}

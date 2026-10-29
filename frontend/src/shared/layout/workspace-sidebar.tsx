@@ -24,7 +24,7 @@ export function WorkspaceSidebar({ kind, items, pathname, account, onSignOut, on
   const accountPaths = [`${home}/profile`, `${home}/settings`, `${home}/support`];
   const groups = [
     { id: "workspace", items: items.filter((item) => !accountPaths.includes(item.href)) },
-    { id: "account", items: items.filter((item) => accountPaths.includes(item.href) && item.href !== `${home}/support`) },
+    { id: "account", items: items.filter((item) => accountPaths.includes(item.href)) },
   ];
   const navigation = groups.map((group) => (
     <div key={group.id} className="workspace-navigation-group">
@@ -51,7 +51,7 @@ export function WorkspaceSidebar({ kind, items, pathname, account, onSignOut, on
       <WorkspaceBrand href={home} caption={kind === "admin" ? "مدیریت برقینو" : "انرژیِ خانهٔ شما"} onNavigate={onNavigate} />
       <nav ref={navigationRef} aria-label={kind === "admin" ? "منوی مدیر" : "منوی پنل"} className="workspace-navigation">{navigation}</nav>
       <div className="workspace-sidebar-footer">
-        {kind === "admin" ? null : <Link href="/panel/support" className="workspace-support-link" onClick={onNavigate}><Icon name="headset" />گفت‌وگو با پشتیبانی</Link>}
+        {kind === "admin" ? null : <Link href="/contact" className="workspace-support-link" onClick={onNavigate}><Icon name="headset" />تماس با برقینو</Link>}
         <div className="workspace-session-status"><span className="workspace-session-dot" aria-hidden="true" /><span>{kind === "admin" ? "دسترسی مدیریت" : "نشست فعال"}</span><small>{kind === "admin" ? "ورود با حساب تأییدشده" : account.label}</small></div>
         <WorkspaceAccount account={account} profileHref={`${home}/profile`} onSignOut={onSignOut} onNavigate={onNavigate} />
       </div>

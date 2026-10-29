@@ -11,7 +11,37 @@ from rest_framework.exceptions import NotFound, ValidationError
 from apps.accounts.models import AccountType, IndividualProfile, LegalProfile, User
 from apps.contracts.models import Contract, ContractHistory, ContractStatus
 from apps.files.models import FilePurpose, FileVisibility, StoredFile
-from apps.plants.models import BranchStatus, PlantStatus
+from apps.plants.models import Branch, BranchStatus, Plant, PlantStatus
+
+
+def _lock_contract_and_site(*, contract_id: int, owner_id: int | None = None) -> Contract:
+    """Lock branch -> plant -> contract, matching draft creation's lock order.
+
+    Nullable profile/plan joins must not be locked by PostgreSQL's FOR UPDATE.
+    Read the site separately so deleted sites cannot be signed or approved.
+    """
+    scope = Contract.objects.filter(pk=contract_id)
+    if owner_id is not None:
+        scope = scope.filter(owner_id=owner_id)
+    site = scope.values("plant_id", "plant__branch_id").first()
+    if not site or not site["plant_id"] or not site["plant__branch_id"]:
+        raise ValidationError({"plant": "Select an approved plant first."})
+    branch = Branch.objects.select_for_update().filter(pk=site["plant__branch_id"]).first()
+    if branch is None:
+        raise ValidationError({"branch": "The branch is no longer available."})
+    plant = Plant.objects.select_for_update().filter(pk=site["plant_id"], branch=branch).first()
+    if plant is None:
+        raise ValidationError({"plant": "The plant is no longer available."})
+    locked = (
+        scope.select_for_update(of=("self",))
+        .select_related("plan", "owner__individual_profile", "owner__legal_profile")
+        .get()
+    )
+    if locked.plant_id != plant.pk:
+        raise ValidationError({"plant": "Plant information changed; reload the contract."})
+    plant.branch = branch
+    locked.plant = plant
+    return locked
 
 
 def _identity_snapshot(owner: User) -> dict | None:
@@ -88,16 +118,7 @@ def sign_contract(
     terms_version: str,
     terms_sha256: str,
 ) -> Contract:
-    contract = (
-        Contract.objects.select_for_update()
-        .select_related(
-            "plant__branch",
-            "plan",
-            "owner__individual_profile",
-            "owner__legal_profile",
-        )
-        .get(pk=contract.pk, owner=signer)
-    )
+    contract = _lock_contract_and_site(contract_id=contract.pk, owner_id=signer.pk)
     if contract.status != ContractStatus.DRAFT:
         raise ValidationError({"detail": "Only a draft contract can be signed."})
     if contract.plant_id is None or contract.plan_id is None:
@@ -107,7 +128,7 @@ def sign_contract(
     if contract.plant.branch.status != BranchStatus.ACTIVE:
         raise ValidationError({"branch": "The branch must still be approved before signing."})
 
-    identity = _identity_snapshot(signer)
+    identity = _identity_snapshot(contract.owner)
     if identity is None:
         raise ValidationError(
             {"identity_profile": "Complete the required identity information before signing."}
@@ -179,11 +200,7 @@ def review_contract(
 ) -> Contract:
     if decision not in {"approved", "rejected"}:
         raise ValidationError({"decision": "Select approved or rejected."})
-    contract = (
-        Contract.objects.select_for_update()
-        .select_related("plant__branch")
-        .get(pk=contract.pk)
-    )
+    contract = _lock_contract_and_site(contract_id=contract.pk)
     if contract.status != ContractStatus.PENDING or contract.review_decision:
         raise ValidationError({"detail": "Only a signed contract awaiting review can be decided."})
     if contract.plant_id is None or contract.plan_id is None:

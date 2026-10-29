@@ -9,7 +9,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:contracts": "node src/features/contracts/contract-model.test.mjs"
   },
   "dependencies": {
     "next": "16.4.3",

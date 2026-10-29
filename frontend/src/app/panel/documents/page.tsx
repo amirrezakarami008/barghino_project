@@ -1,14 +1,4 @@
 import type { Metadata } from "next";
-import { WorkspacePage } from "@/features/workspace/workspace-page";
-
+import { WorkspaceLockedSection } from "@/features/workspace/workspace-locked-section";
 export const metadata: Metadata = { title: "مدارک" };
-
-export default function DocumentsPage() {
-  return (
-    <WorkspacePage
-      icon="file"
-      title="مدرکی بارگذاری نشده"
-      lede="کارت ملی، شناسنامه و فایل قرارداد اینجا می‌مانند. آپلود وقتی سرویس فایل وصل شود فعال می‌شود."
-    />
-  );
-}
+export default function LockedPage() { return <WorkspaceLockedSection title="مدارک" />; }

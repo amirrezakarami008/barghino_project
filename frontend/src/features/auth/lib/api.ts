@@ -22,13 +22,16 @@ type RequestOptions = {
   body?: unknown;
   auth?: boolean;
   retry?: boolean;
+  signal?: AbortSignal;
+  responseType?: "json" | "blob";
 };
 
 let refreshing: Promise<string | null> | null = null;
 
 export async function apiRequest<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const headers = new Headers({ Accept: "application/json" });
-  if (options.body !== undefined) headers.set("Content-Type", "application/json");
+  const isMultipart = typeof FormData !== "undefined" && options.body instanceof FormData;
+  if (options.body !== undefined && !isMultipart) headers.set("Content-Type", "application/json");
   if (options.auth) {
     const access = readSession()?.access;
     if (access) headers.set("Authorization", `Bearer ${access}`);
@@ -39,10 +42,14 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
     response = await fetch(`${env.apiUrl}/api/v1${path}`, {
       method: options.method ?? "GET",
       headers,
-      body: options.body === undefined ? undefined : JSON.stringify(options.body),
-      signal: AbortSignal.timeout(15000),
+      cache: options.auth ? "no-store" : "default",
+      body: typeof FormData !== "undefined" && options.body instanceof FormData
+        ? options.body
+        : options.body === undefined ? undefined : JSON.stringify(options.body),
+      signal: options.signal ? AbortSignal.any([options.signal, AbortSignal.timeout(15000)]) : AbortSignal.timeout(15000),
     });
-  } catch {
+  } catch (error) {
+    if (options.signal?.aborted) throw error;
     throw new ApiError("ارتباط با سرویس برقرار نشد.", 0, "network", {});
   }
 
@@ -53,6 +60,7 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
 
   if (!response.ok) throw await toApiError(response);
   if (response.status === 204) return undefined as T;
+  if (options.responseType === "blob") return await response.blob() as T;
   const text = await response.text();
   return (text ? JSON.parse(text) : undefined) as T;
 }

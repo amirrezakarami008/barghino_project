@@ -163,7 +163,8 @@ class UserSerializer(serializers.ModelSerializer):
                 "representative_national_id": legal.representative_national_id if legal else None,
             }
         else:
-            required = {}
+            # An account created for staff is not a completed customer identity.
+            required = {"account_type": user.account_type}
         missing_fields = [name for name, value in required.items() if not value]
         return {"is_complete": not missing_fields, "missing_fields": missing_fields}
 

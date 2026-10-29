@@ -11,9 +11,10 @@ import { usePlanOverview } from "./use-plan-overview";
 
 type Guide = { readonly slug: string; readonly title: string; readonly minutes: number };
 const tools = [
+  { href: "/admin/plants", title: "مدیریت نیروگاه‌ها", description: "ثبت، ویرایش و بررسی نیروگاه", icon: "solarPanel", locked: false },
   { href: "/admin/plans", title: "تعریف پلن فروش", description: "نرخ، تعهد و شرایط قرارداد", icon: "plan", locked: false },
   { href: "/admin/journal", title: "مجله و راهنماها", description: "محتوای منتشرشدهٔ برقینو", icon: "book", locked: false },
-  { href: "/admin/reviews", title: "بررسی درخواست نصب", description: "در مرحلهٔ بعد", icon: "sun", locked: true },
+  { href: "/admin/reviews", title: "بررسی درخواست‌ها", description: "انشعاب، نیروگاه و قرارداد", icon: "shield", locked: false },
   { href: "/admin/equipment", title: "کاتالوگ تجهیزات", description: "در مرحلهٔ بعد", icon: "solarPanel", locked: true },
 ] as const;
 

@@ -17,6 +17,7 @@ from apps.plants.api.serializers import (
     PlantWriteSerializer,
     ReviewDecisionSerializer,
 )
+from apps.plants.api.staff_views import create_staff_plant, inventory_filters
 from apps.plants.models import Branch, BranchStatus, Plant, PlantStatus
 from apps.plants.selectors import branches_for_user, plants_for_user
 from apps.plants.services.branches import create_branch, soft_delete_branch, update_branch
@@ -229,10 +230,15 @@ class BranchReviewQueueView(generics.ListAPIView):
 
     serializer_class = BranchSerializer
     permission_classes = (IsStaff,)
+    search_fields = ("name", "meter_number", "owner__phone")
 
     @extend_schema(
         tags=[TAG_BRANCHES],
-        summary="List branches waiting for staff review",
+        summary="Staff branch inventory (defaults to pending review)",
+        description=(
+            "Use status=all to select owned branches for plant creation; "
+            "supports owner_uuid and search."
+        ),
         responses={200: BranchSerializer(many=True)},
     )
     def get(self, request: Request, *args, **kwargs):
@@ -241,8 +247,10 @@ class BranchReviewQueueView(generics.ListAPIView):
     def get_queryset(self):
         if getattr(self, "swagger_fake_view", False):
             return Branch.objects.none()
-        return Branch.objects.filter(status=BranchStatus.PENDING).select_related(
-            "owner", "reviewed_by"
+        return inventory_filters(
+            Branch.objects.select_related("owner", "reviewed_by"),
+            self.request.query_params,
+            branch=True,
         )
 
 
@@ -273,15 +281,20 @@ class BranchReviewView(generics.GenericAPIView):
         return Response(BranchSerializer(result).data)
 
 
-class PlantReviewQueueView(generics.ListAPIView):
+class PlantReviewQueueView(generics.ListCreateAPIView):
     """Staff queue for unreviewed plants."""
 
     serializer_class = PlantSerializer
     permission_classes = (IsStaff,)
+    search_fields = ("name", "owner__phone", "branch__meter_number")
 
     @extend_schema(
         tags=[TAG_PLANTS],
-        summary="List plants waiting for staff review",
+        summary="Staff plant inventory (defaults to pending review)",
+        description=(
+            "Use status=all for inventory, or an explicit status; "
+            "supports owner_uuid and search."
+        ),
         responses={200: PlantSerializer(many=True)},
     )
     def get(self, request: Request, *args, **kwargs):
@@ -290,9 +303,19 @@ class PlantReviewQueueView(generics.ListAPIView):
     def get_queryset(self):
         if getattr(self, "swagger_fake_view", False):
             return Plant.objects.none()
-        return Plant.objects.filter(status=PlantStatus.PENDING).select_related(
-            "owner", "branch", "reviewed_by"
+        return inventory_filters(
+            Plant.objects.select_related("owner", "branch", "reviewed_by"),
+            self.request.query_params,
         )
+
+    @extend_schema(
+        tags=[TAG_PLANTS],
+        summary="Create a plant for the selected branch owner (staff)",
+        request=PlantWriteSerializer,
+        responses={201: PlantSerializer},
+    )
+    def create(self, request: Request, *args, **kwargs) -> Response:
+        return create_staff_plant(request)
 
 
 class PlantReviewView(generics.GenericAPIView):

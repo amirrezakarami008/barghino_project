@@ -1,8 +1,5 @@
 import type { Metadata } from "next";
-import { AdminLockedSection } from "@/features/admin/admin-locked-section";
+import { AdminReviews } from "@/features/admin/admin-reviews";
 
-export const metadata: Metadata = { title: "بررسی نصب" };
-
-export default function ReviewsPage() {
-  return <AdminLockedSection title="بررسی درخواست‌های نصب" />;
-}
+export const metadata: Metadata = { title: "بررسی درخواست‌ها" };
+export default function ReviewsPage() { return <AdminReviews />; }

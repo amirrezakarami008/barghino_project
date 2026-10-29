@@ -1,5 +1,6 @@
 from django.urls import path
 
+from apps.plants.api.staff_views import StaffPlantDetailView
 from apps.plants.api.views import (
     BranchDetailView,
     BranchListCreateView,
@@ -21,5 +22,6 @@ urlpatterns = [
     path("staff/branches/", BranchReviewQueueView.as_view(), name="branch-review-queue"),
     path("staff/branches/<uuid:uuid>/review/", BranchReviewView.as_view(), name="branch-review"),
     path("staff/plants/", PlantReviewQueueView.as_view(), name="plant-review-queue"),
+    path("staff/plants/<uuid:uuid>/", StaffPlantDetailView.as_view(), name="staff-plant-detail"),
     path("staff/plants/<uuid:uuid>/review/", PlantReviewView.as_view(), name="plant-review"),
 ]

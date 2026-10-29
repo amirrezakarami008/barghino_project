@@ -61,7 +61,6 @@ export function WorkspaceShell({ kind, theme: initialTheme = "light", account, o
               <button type="button" className="workspace-icon-button" aria-pressed={isDark} aria-label={isDark ? "روشن کردن پوسته" : "تاریک کردن پوسته"} title={isDark ? "روشن کردن پوسته" : "تاریک کردن پوسته"} onClick={toggleTheme}>
                 <Icon name={isDark ? "sun" : "moon"} />
               </button>
-              {kind === "user" ? <Link href="/panel/notifications" className="workspace-icon-button" aria-label="اعلان‌ها" title="اعلان‌ها"><Icon name="bell" /></Link> : null}
               <Link href={`${home}/profile`} className="workspace-icon-button workspace-toolbar-profile" aria-label="حساب" title="پروفایل حساب"><Icon name="user" /></Link>
             </div>
           </header>

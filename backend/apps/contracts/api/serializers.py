@@ -24,8 +24,7 @@ class ContractSignSerializer(serializers.Serializer):
     )
     signature_file_uuid = serializers.UUIDField(
         help_text=(
-            "UUID of the signer's private PNG, JPEG, or WebP file uploaded for "
-            "purpose=contract."
+            "UUID of the signer's private PNG, JPEG, or WebP file uploaded for purpose=contract."
         )
     )
 
@@ -137,4 +136,44 @@ class ContractSerializer(serializers.ModelSerializer):
         read_only_fields = fields
 
     def get_seller_identity(self, contract: Contract) -> dict | None:
+        snapshot = self._signed_snapshot(contract)
+        if snapshot is not None:
+            return snapshot.get("seller")
         return UserSerializer(contract.owner).data.get("identity_profile")
+
+    @staticmethod
+    def _signed_snapshot(contract: Contract) -> dict | None:
+        if contract.signed_at is None:
+            return None
+        for event in contract.history.all():
+            if event.event_type == ContractHistory.EventType.SIGNED:
+                snapshot = event.details.get("contract_snapshot")
+                if isinstance(snapshot, dict):
+                    return snapshot
+        return None
+
+    def to_representation(self, instance: Contract) -> dict:
+        data = super().to_representation(instance)
+        snapshot = self._signed_snapshot(instance)
+        if snapshot is None:
+            return data
+        # These fields describe the accepted version, not today's mutable site/profile.
+        plant = snapshot.get("plant", {})
+        branch = snapshot.get("branch", {})
+        terms = snapshot.get("commercial_terms", {})
+        data.update(
+            plant_uuid=plant.get("uuid"),
+            plant_name=plant.get("name"),
+            plant_capacity_kwp=self.fields["plant_capacity_kwp"].to_representation(
+                plant.get("capacity_kwp")
+            )
+            if plant.get("capacity_kwp") is not None
+            else None,
+            branch_uuid=branch.get("uuid"),
+            meter_number=branch.get("meter_number"),
+            branch_address=branch.get("address"),
+            seller_identity=snapshot.get("seller"),
+            plan_uuid=terms.get("plan_uuid"),
+            plan_name=terms.get("plan_name"),
+        )
+        return data
