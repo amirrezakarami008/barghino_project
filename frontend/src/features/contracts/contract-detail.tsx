@@ -3,23 +3,30 @@
 import { useCallback, useEffect, type ReactElement } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
-import { WorkspacePage } from "@/features/workspace/workspace-page";
-import { Button, ButtonLink } from "@/shared/ui/button";
+import {
+  Alert,
+  Button,
+  ButtonLink,
+  Card,
+  LockedFeature,
+  Skeleton,
+  StatusPill,
+  Timeline,
+} from "@/components/ui";
 import { Icon } from "@/shared/ui/icon";
-import { LoadingCards } from "@/shared/ui/loading-cards";
 import { getContract } from "./contracts-api";
-import { formatDecimal, signedSnapshot, type Contract, type Identity } from "./contract-model";
-import { ContractDate, ContractError, ContractStatus, statusInfo } from "./contract-ui";
+import { formatDecimal, localDate, signedSnapshot, type Contract, type Identity } from "./contract-model";
+import { ContractError } from "./contract-ui";
+import { contractStatusMeta } from "./status-map";
 import { useContractResource } from "./use-contract-resource";
-import { ContractSignature } from "./contract-signature";
-import { SignaturePreview } from "./signature-preview";
 import { IdentityNotice } from "./identity-notice";
-import "./contracts.css";
+import { SignaturePreview } from "./signature-preview";
 
 export function ContractDetail(): ReactElement {
   const { uuid } = useParams<{ uuid: string }>();
   const load = useCallback((signal: AbortSignal) => getContract(uuid, signal), [uuid]);
-  const { state, reload, replaceData, refreshing, refreshError } = useContractResource(`contract:${uuid}`, load);
+  const { state, reload, refreshing, refreshError } = useContractResource(`contract:${uuid}`, load);
+
   useEffect(() => {
     function visible(): void {
       if (document.visibilityState === "visible") reload();
@@ -29,286 +36,207 @@ export function ContractDetail(): ReactElement {
   }, [reload]);
 
   return (
-    <div className="contracts-feature">
-      <WorkspacePage title="جزئیات قرارداد" icon="file" lede="مشخصات، شرایط ذخیره‌شده و روند بررسی این نسخه را ببینید.">
-        <div className="contract-detail-toolbar">
-          <Link href="/panel/contracts" className="contract-back">
-            <Icon name="arrow" className="size-4" />
-            بازگشت به قراردادها
-          </Link>
-          <Button variant="secondary" disabled={refreshing} onClick={reload}>
-            {refreshing ? "در حال دریافت…" : "تازه‌سازی وضعیت"}
-          </Button>
-        </div>
-        {refreshError ? (
-          <ContractError message={`اطلاعات تازه نشد؛ آخرین دادهٔ دریافت‌شده را می‌بینید. ${refreshError}`} retry={reload} />
-        ) : null}
-        {state.status === "loading" ? (
-          <LoadingCards label="دریافت جزئیات قرارداد…" />
-        ) : state.status === "error" ? (
-          <ContractError message={state.message} retry={reload} />
-        ) : (
-          <ContractContents key={state.data.uuid} contract={state.data} onServerChange={replaceData} />
-        )}
-      </WorkspacePage>
+    <div className="mx-auto max-w-5xl space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Link
+          href="/panel/contracts"
+          className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-foreground-muted hover:text-foreground"
+        >
+          <Icon name="arrow" className="size-4" />
+          بازگشت به قراردادها
+        </Link>
+        <Button variant="secondary" disabled={refreshing} onClick={reload}>
+          {refreshing ? "در حال دریافت…" : "تازه‌سازی وضعیت"}
+        </Button>
+      </div>
+
+      {refreshError ? (
+        <Alert tone="warning" title="اطلاعات تازه نشد">
+          آخرین دادهٔ دریافت‌شده را می‌بینید. {refreshError}
+        </Alert>
+      ) : null}
+
+      {state.status === "loading" ? (
+        <Skeleton className="h-64" />
+      ) : state.status === "error" ? (
+        <ContractError message={state.message} retry={reload} />
+      ) : (
+        <ContractContents contract={state.data} />
+      )}
     </div>
   );
 }
 
-function ContractContents({ contract, onServerChange }: { readonly contract: Contract; readonly onServerChange: (contract: Contract) => void }): ReactElement {
+function ContractContents({ contract }: { readonly contract: Contract }): ReactElement {
   const snapshot = signedSnapshot(contract);
   const hasSignedEvidence = Boolean(contract.signedAt || contract.history.some((event) => event.type === "signed"));
   const seller = snapshot?.seller ?? contract.seller;
   const plant = snapshot?.plant ?? { name: contract.plantName, uuid: contract.plantUuid, capacity: contract.capacity };
   const branch = snapshot?.branch ?? { meter: contract.meter, uuid: contract.branchUuid, address: contract.address };
-  const terms = snapshot?.terms ?? { planName: contract.planName, rate: contract.rate, commitment: contract.commitment };
-  const signedEvent = contract.history.find((event) => event.type === "signed");
-  const version = signedEvent?.termsVersion || contract.termsVersion;
-  const hash = signedEvent?.termsHash || contract.termsHash;
-  const info = statusInfo(contract.status);
-  const plantSuffix = hasSignedEvidence && !snapshot ? " · اطلاعات فعلی" : "";
-  const sellerHeading = `فروشنده${plantSuffix}`;
+  const terms = snapshot?.terms ?? {
+    planName: contract.planName,
+    rate: contract.rate,
+    commitment: contract.commitment,
+  };
+  const meta = contractStatusMeta(contract.status);
+
+  const timelineEvents = [
+    {
+      id: "created",
+      title: "ایجاد پیش‌نویس",
+      description: "شرایط پلن در قرارداد ذخیره شد.",
+      time: localDate(contract.createdAt),
+      tone: "draft" as const,
+    },
+    ...contract.history.map((event) => ({
+      id: event.uuid,
+      title:
+        event.type === "signed"
+          ? "ثبت امضای فروشنده"
+          : event.type === "approved"
+            ? "تأیید شرکت"
+            : event.type === "rejected"
+              ? "رد شرکت"
+              : "تغییر ثبت‌شده",
+      description: event.reason || undefined,
+      time: localDate(event.createdAt),
+      tone:
+        event.type === "rejected"
+          ? ("rejected" as const)
+          : event.type === "approved"
+            ? ("approved" as const)
+            : ("pending" as const),
+    })),
+  ];
 
   return (
     <>
-      <section className={`contract-detail-banner contract-tone-${info.tone}`}>
-        <div className="contract-masthead-copy">
-          <div className="contract-masthead-meta">
-            <ContractStatus status={contract.status} />
-            <span className="contract-masthead-plan">{terms.planName || "پلن ثبت نشده"}</span>
-          </div>
-          <h2>{plant.name || "قرارداد فروش برق"}</h2>
-          <p>{info.next}</p>
-          <span className="contract-document-id">
-            شناسهٔ قرارداد <bdi dir="ltr">{contract.uuid}</bdi>
-          </span>
-        </div>
-        <div className="contract-masthead-finance" aria-label="شرایط مالی">
+      <Card variant="gradient-border">
+        <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
-            <span>نرخ خرید</span>
-            <strong>
-              <bdi dir="ltr">{formatDecimal(terms.rate)}</bdi>
-            </strong>
-            <small>تومان / kWh</small>
-          </div>
-          <div>
-            <span>تعهد انرژی</span>
-            <strong>
-              <bdi dir="ltr">{formatDecimal(terms.commitment)}</bdi>
-            </strong>
-            <small>kWh</small>
-          </div>
-        </div>
-      </section>
-
-      {contract.status === "cancelled" ? (
-        <div className="contract-feedback contract-feedback-error">
-          <Icon name="close" className="size-5" />
-          <div>
-            <h3>{contract.reviewDecision === "rejected" ? "دلیل رد شرکت" : "این نسخه بسته شده است"}</h3>
-            <p>{contract.reviewNote || contract.history.find((event) => event.type === "rejected")?.reason || "دلیلی در اطلاعات دریافتی ثبت نشده است."}</p>
-            <p>
-              زمان بررسی: <ContractDate value={contract.reviewedAt} />
+            <StatusPill status={meta.tone} label={meta.label} />
+            <h2 className="mt-3 text-h2">{plant.name || "قرارداد فروش برق"}</h2>
+            <p className="mt-2 text-sm text-foreground-muted">{meta.next}</p>
+            <p className="mt-2 text-caption text-foreground-muted">
+              شناسه · <bdi dir="ltr">{contract.uuid}</bdi>
             </p>
-            <ButtonLink href="/panel/contracts/new" variant="secondary" className="mt-3">
-              ساخت پیش‌نویس جدید
-            </ButtonLink>
+          </div>
+          <div className="rounded-lg border border-border bg-card p-4 text-sm">
+            <p className="text-caption text-foreground-muted">شرایط مالی ذخیره‌شده</p>
+            <p className="mt-2 font-bold tabular-nums">
+              <bdi dir="ltr">{formatDecimal(terms.rate)}</bdi> تومان/kWh
+            </p>
+            <p className="mt-1 tabular-nums text-foreground-muted">
+              تعهد · <bdi dir="ltr">{formatDecimal(terms.commitment)}</bdi> kWh
+            </p>
+            <p className="mt-2 text-caption text-foreground-muted">
+              این مقادیر هنگام ساخت پیش‌نویس قفل شده‌اند.
+            </p>
           </div>
         </div>
+      </Card>
+
+      {contract.status === "cancelled" || contract.reviewDecision === "rejected" ? (
+        <Alert tone="danger" title={contract.reviewDecision === "rejected" ? "دلیل رد شرکت" : "این نسخه بسته شده است"}>
+          <p>
+            {contract.reviewNote ||
+              contract.history.find((event) => event.type === "rejected")?.reason ||
+              "دلیلی در اطلاعات دریافتی ثبت نشده است."}
+          </p>
+          <ButtonLink href="/panel/contracts/new" variant="secondary" className="mt-3">
+            ساخت پیش‌نویس جدید
+          </ButtonLink>
+        </Alert>
       ) : null}
 
-      <div className="contract-details-grid">
-        <div className="contract-dossier">
-          <section className="contract-document-sheet" aria-labelledby="contract-record-heading">
-            <div className="contract-section-heading">
-              <span>
-                <Icon name="shield" />
-              </span>
-              <div>
-                <h2 id="contract-record-heading">{snapshot ? "مشخصات ثبت‌شده هنگام امضا" : "مشخصات قرارداد"}</h2>
-                <p>
-                  {snapshot
-                    ? "این اطلاعات از snapshot رویداد امضا خوانده شده‌اند."
-                    : hasSignedEvidence
-                      ? "snapshot کامل امضا در دسترس نیست؛ مشخصات زنده را به‌جای نسخهٔ امضاشده در نظر نگیرید."
-                      : "اطلاعات نیروگاه و هویت تا پیش از امضا ممکن است تغییر کنند."}
-                </p>
-              </div>
-            </div>
-
-            <div className="contract-financial-terms">
-              <div>
-                <span>نرخ خرید هر کیلووات‌ساعت</span>
-                <strong>
-                  <bdi dir="ltr">{formatDecimal(terms.rate)}</bdi> <small>تومان</small>
-                </strong>
-              </div>
-              <div>
-                <span>تعهد انرژی</span>
-                <strong>
-                  <bdi dir="ltr">{formatDecimal(terms.commitment)}</bdi>{" "}
-                  <small>
-                    <bdi dir="ltr">kWh</bdi>
-                  </small>
-                </strong>
-              </div>
-            </div>
-
-            <h3 className="contract-subheading">نیروگاه و انشعاب{plantSuffix}</h3>
-            <dl className="contract-spec-board">
-              <div>
-                <dt>پلن</dt>
-                <dd>{terms.planName || "ثبت نشده"}</dd>
-              </div>
-              <div>
-                <dt>ظرفیت نیروگاه</dt>
-                <dd>
-                  <bdi dir="ltr">{formatDecimal(plant.capacity)}</bdi> <bdi dir="ltr">kWp</bdi>
-                </dd>
-              </div>
-              <div>
-                <dt>نیروگاه</dt>
-                <dd>{plant.name || "ثبت نشده"}</dd>
-              </div>
-              <div>
-                <dt>شماره کنتور</dt>
-                <dd>
-                  <bdi dir="ltr">{branch.meter || "ثبت نشده"}</bdi>
-                </dd>
-              </div>
-              <div className="contract-spec-wide">
-                <dt>نشانی انشعاب</dt>
-                <dd>{branch.address || "ثبت نشده"}</dd>
-              </div>
+      <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+        <div className="space-y-4">
+          <Card>
+            <h3 className="text-h4">خلاصه</h3>
+            <dl className="mt-4 grid gap-3 sm:grid-cols-2">
+              <Field label="پلن" value={terms.planName || "ثبت نشده"} />
+              <Field
+                label="ظرفیت نیروگاه"
+                value={`${formatDecimal(plant.capacity)} kWp`}
+              />
+              <Field label="نیروگاه" value={plant.name || "ثبت نشده"} />
+              <Field label="شماره کنتور" value={branch.meter || "ثبت نشده"} dir="ltr" />
+              <Field label="نشانی انشعاب" value={branch.address || "ثبت نشده"} wide />
             </dl>
-
-            <h3 className="contract-subheading">{sellerHeading}</h3>
+            <h4 className="mt-6 text-h4">فروشنده</h4>
             <SellerIdentity value={seller} />
-
-            {hasSignedEvidence ? (
-              <div className="contract-evidence-record">
-                <h3>ردپای ثبت امضا</h3>
-                <dl className="contract-spec-board">
-                  <div>
-                    <dt>زمان ثبت امضا</dt>
-                    <dd>
-                      <ContractDate value={contract.signedAt} />
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>نسخهٔ ثبت‌شده</dt>
-                    <dd>
-                      <bdi dir="ltr">{version || "ثبت نشده"}</bdi>
-                    </dd>
-                  </div>
-                  <div className="contract-spec-wide">
-                    <dt>SHA-256 ثبت‌شده</dt>
-                    <dd className="contract-hash">
-                      <bdi dir="ltr">{hash || "ثبت نشده"}</bdi>
-                    </dd>
-                  </div>
-                </dl>
-                <p className="contract-note">
-                  ثبت این شناسه‌ها به معنی دسترسی به متن اصلی یا تأیید مستقل صحت آن نیست. فایل سند قرارداد از API فعلی ارائه نمی‌شود.
-                </p>
-                {contract.signatureUuid ? <SignaturePreview key={contract.signatureUuid} uuid={contract.signatureUuid} /> : null}
-              </div>
-            ) : null}
-
-            <div className="contract-record-dates">
-              <span>
-                ایجاد: <ContractDate value={contract.createdAt} />
-              </span>
-              <span>
-                آخرین تغییر: <ContractDate value={contract.updatedAt} />
-              </span>
-            </div>
-          </section>
+          </Card>
 
           {contract.status === "draft" ? (
             <>
               <IdentityNotice />
-              <ContractSignature contract={contract} onServerChange={onServerChange} />
+              <LockedFeature
+                title="امضای قرارداد فعلاً غیرفعال است"
+                description="گام امضا وقتی سند رسمی و نسخه‌بندی‌شدهٔ قرارداد آماده شود باز می‌شود. ساخت پیش‌نویس به‌معنی امضا یا شروع خرید برق نیست."
+              />
             </>
+          ) : null}
+
+          {hasSignedEvidence && contract.signatureUuid ? (
+            <Card>
+              <h3 className="text-h4">ردپای امضای ثبت‌شده</h3>
+              <SignaturePreview key={contract.signatureUuid} uuid={contract.signatureUuid} />
+            </Card>
           ) : null}
         </div>
 
-        <ContractTimeline contract={contract} />
+        <Card>
+          <h3 className="text-h4">تاریخچه رویدادها</h3>
+          <div className="mt-4">
+            <Timeline events={timelineEvents} />
+          </div>
+        </Card>
       </div>
     </>
   );
 }
 
-function SellerIdentity({ value }: { readonly value: Identity | null }): ReactElement {
-  if (!value) return <p className="contract-note">مشخصات هویتی در پاسخ قرارداد موجود نیست.</p>;
-  const legal = value.kind === "legal";
+function Field({
+  label,
+  value,
+  wide,
+  dir,
+}: {
+  label: string;
+  value: string;
+  wide?: boolean;
+  dir?: "ltr";
+}) {
   return (
-    <dl className="contract-spec-board">
-      <div>
-        <dt>{legal ? "نام شرکت" : "نام و نام خانوادگی"}</dt>
-        <dd>{legal ? value.company_name || "ثبت نشده" : [value.first_name, value.last_name].filter(Boolean).join(" ") || "ثبت نشده"}</dd>
-      </div>
-      <div>
-        <dt>{legal ? "شناسه ملی شرکت" : "کد ملی"}</dt>
-        <dd>
-          <bdi dir="ltr">{legal ? value.company_national_id || "ثبت نشده" : value.national_id || "ثبت نشده"}</bdi>
-        </dd>
-      </div>
-      {legal ? (
-        <>
-          <div>
-            <dt>نماینده</dt>
-            <dd>{[value.representative_first_name, value.representative_last_name].filter(Boolean).join(" ") || "ثبت نشده"}</dd>
-          </div>
-          <div>
-            <dt>کد ملی نماینده</dt>
-            <dd>
-              <bdi dir="ltr">{value.representative_national_id || "ثبت نشده"}</bdi>
-            </dd>
-          </div>
-        </>
-      ) : null}
-    </dl>
+    <div className={wide ? "rounded-md bg-surface p-3 sm:col-span-2" : "rounded-md bg-surface p-3"}>
+      <dt className="text-caption text-foreground-muted">{label}</dt>
+      <dd className="mt-1 font-semibold" dir={dir}>
+        {dir === "ltr" ? <bdi dir="ltr">{value}</bdi> : value}
+      </dd>
+    </div>
   );
 }
 
-function ContractTimeline({ contract }: { readonly contract: Contract }): ReactElement {
-  const eventLabels: Record<string, string> = { signed: "ثبت امضای فروشنده", approved: "تأیید شرکت", rejected: "رد شرکت" };
+function SellerIdentity({ value }: { readonly value: Identity | null }): ReactElement {
+  if (!value) {
+    return <p className="mt-3 text-sm text-foreground-muted">مشخصات هویتی در پاسخ قرارداد موجود نیست.</p>;
+  }
+  const legal = value.kind === "legal";
   return (
-    <aside className="contract-timeline">
-      <h2>
-        <Icon name="clock" className="size-5" />
-        مسیر این قرارداد
-      </h2>
-      <ol>
-        <li>
-          <span className="contract-timeline-dot">
-            <Icon name="file" />
-          </span>
-          <div>
-            <h3>ایجاد پیش‌نویس</h3>
-            <ContractDate value={contract.createdAt} />
-            <p>شرایط پلن در قرارداد ذخیره شد.</p>
-          </div>
-        </li>
-        {contract.history.map((event) => (
-          <li key={event.uuid}>
-            <span className={`contract-timeline-dot contract-tone-${event.type === "rejected" ? "coral" : event.type === "approved" ? "emerald" : "blue"}`}>
-              <Icon name={event.type === "rejected" ? "close" : event.type === "approved" ? "check" : "edit"} />
-            </span>
-            <div>
-              <h3>{Object.hasOwn(eventLabels, event.type) ? eventLabels[event.type] : "تغییر ثبت‌شده در قرارداد"}</h3>
-              <ContractDate value={event.createdAt} />
-              <p>
-                {statusInfo(event.from).label} ← {statusInfo(event.to).label}
-              </p>
-              {event.reason ? <p className="contract-rejection-reason">{event.reason}</p> : null}
-            </div>
-          </li>
-        ))}
-      </ol>
-      {!contract.history.length ? <p className="contract-note">هنوز رویداد امضا یا تصمیم شرکت ثبت نشده است.</p> : null}
-      <Link href="/contact">پرسشی دربارهٔ این قرارداد دارید؟</Link>
-    </aside>
+    <dl className="mt-3 grid gap-3 sm:grid-cols-2">
+      <Field
+        label={legal ? "نام شرکت" : "نام و نام خانوادگی"}
+        value={
+          legal
+            ? value.company_name || "ثبت نشده"
+            : [value.first_name, value.last_name].filter(Boolean).join(" ") || "ثبت نشده"
+        }
+      />
+      <Field
+        label={legal ? "شناسه ملی شرکت" : "کد ملی"}
+        value={legal ? value.company_national_id || "ثبت نشده" : value.national_id || "ثبت نشده"}
+        dir="ltr"
+      />
+    </dl>
   );
 }

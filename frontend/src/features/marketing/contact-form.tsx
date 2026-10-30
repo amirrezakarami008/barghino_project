@@ -1,8 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { Button } from "@/shared/ui/button";
-import { TextField } from "@/shared/ui/text-field";
+import { Alert, Button, Input, Textarea } from "@/components/ui";
 
 type Errors = {
   name?: string;
@@ -30,33 +29,28 @@ export function ContactForm() {
 
   if (ready) {
     return (
-      <div role="status" className="rounded-panel border border-border bg-mint p-6">
-        <h2 className="text-xl font-semibold text-primary">پیام از نظر فرم کامل است</h2>
-        <p className="mt-2 text-sm leading-7 text-muted-foreground">
-          ارسال به صندوق پشتیبانی هنوز به سرویس وصل نیست. تا آن زمان می‌توانید با تلفن ۰۲۱-۴۴۰۰۰۶۶۴ تماس بگیرید.
-        </p>
-      </div>
+      <Alert tone="success" title="پیام از نظر فرم کامل است">
+        ارسال به صندوق پشتیبانی هنوز به سرویس وصل نیست. تا آن زمان می‌توانید با تلفن{" "}
+        <bdi dir="ltr">۰۲۱-۴۴۰۰۰۶۶۴</bdi> تماس بگیرید.
+      </Alert>
     );
   }
 
   return (
-    <form onSubmit={onSubmit} noValidate className="grid gap-5 rounded-panel border border-border bg-card p-5 sm:p-6">
-      <TextField name="name" label="نام" autoComplete="name" error={errors.name} />
-      <TextField name="contact" label="موبایل یا ایمیل" autoComplete="tel" error={errors.contact} />
-      <label className="grid gap-2 text-sm font-medium">
-        پیام
-        <textarea
-          name="message"
-          rows={5}
-          aria-invalid={errors.message ? true : undefined}
-          className="rounded-2xl border border-border px-3.5 py-3 text-base font-normal"
-        />
-        {errors.message ? (
-          <span role="alert" className="font-normal text-danger">
-            {errors.message}
-          </span>
-        ) : null}
-      </label>
+    <form
+      onSubmit={onSubmit}
+      noValidate
+      className="grid gap-5 rounded-lg border border-border bg-card p-5 shadow-soft sm:p-6"
+    >
+      <Input name="name" label="نام" autoComplete="name" error={errors.name} required />
+      <Input
+        name="contact"
+        label="موبایل یا ایمیل"
+        autoComplete="tel"
+        error={errors.contact}
+        required
+      />
+      <Textarea name="message" label="پیام" rows={5} error={errors.message} required />
       <Button type="submit">بررسی پیام</Button>
     </form>
   );

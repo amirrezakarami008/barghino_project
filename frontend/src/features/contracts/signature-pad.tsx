@@ -24,7 +24,8 @@ export function SignaturePad({ onChange, disabled = false }: SignaturePadProps):
     const canvas = canvasRef.current; if (!canvas) return;
     const context = canvas.getContext("2d"); if (!context) return;
     context.setTransform(1, 0, 0, 1, 0, 0);
-    context.fillStyle = "#fff"; context.fillRect(0, 0, canvas.width, canvas.height);
+    context.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--ink-0").trim() || "#ffffff";
+    context.fillRect(0, 0, canvas.width, canvas.height);
     const scale = Math.min(canvas.width / logicalWidth, canvas.height / logicalHeight);
     context.setTransform(scale, 0, 0, scale, (canvas.width - logicalWidth * scale) / 2, (canvas.height - logicalHeight * scale) / 2);
     const image = imageRef.current;
@@ -81,7 +82,9 @@ export function SignaturePad({ onChange, disabled = false }: SignaturePadProps):
       if (current !== operation.current) { image.close(); return; }
       const check = document.createElement("canvas"); check.width = 160; check.height = 64;
       const context = check.getContext("2d"); if (!context) throw new Error();
-      context.fillStyle = "#fff"; context.fillRect(0, 0, 160, 64); context.drawImage(image, 0, 0, 160, 64);
+      context.fillStyle = getComputedStyle(document.documentElement).getPropertyValue("--ink-0").trim() || "#ffffff";
+      context.fillRect(0, 0, 160, 64);
+      context.drawImage(image, 0, 0, 160, 64);
       const pixels = context.getImageData(0, 0, 160, 64).data;
       let ink = 0;
       for (let index = 0; index < pixels.length; index += 4) if ((pixels[index] ?? 255) < 220 || (pixels[index + 1] ?? 255) < 220 || (pixels[index + 2] ?? 255) < 220) ink += 1;

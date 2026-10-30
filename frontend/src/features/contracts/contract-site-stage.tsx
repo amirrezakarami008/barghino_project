@@ -3,11 +3,12 @@
 import { useCallback, useEffect, useState, type ReactElement } from "react";
 import { useSearchParams } from "next/navigation";
 import { getBranches, getPlants, getBranch, getPlant, PlantRegistrationForm, type Branch, type Plant, type Registration, type RegistrationResult } from "@/features/plants";
-import { Button, ButtonLink } from "@/shared/ui/button";
+import { Alert, Button, ButtonLink, StatusPill } from "@/components/ui";
 import { Icon } from "@/shared/ui/icon";
 import { LoadingCards } from "@/shared/ui/loading-cards";
 import { ContractEmpty, ContractError, ContractPagination } from "./contract-ui";
 import { formatDecimal, type PlantOption } from "./contract-model";
+import { plantStatusMeta } from "./status-map";
 import { useContractResource } from "./use-contract-resource";
 import "@/features/plants/plants.css";
 
@@ -282,54 +283,77 @@ export function ContractSiteStage({ phase, onPhaseChange, onReady }: Props): Rea
               </ContractEmpty>
             ) : (
               <>
-                <div className={`contract-feedback ${approved ? "contract-feedback-approved" : "contract-feedback-warning"}`} role="status">
-                  <Icon name={approved ? "check" : "clock"} className="size-5" />
-                  <div>
-                    <strong>{approved ? "انشعاب و نیروگاه تأیید شده‌اند" : "مرحلهٔ بررسی شرکت"}</strong>
+                {branch.status === "inactive" || plant.status === "inactive" ? (
+                  <Alert tone="danger" title="درخواست رد شده است">
                     <p>
-                      {approved
-                        ? "می‌توانید پلن را انتخاب و پیش‌نویس قرارداد را بسازید."
-                        : "اطلاعات ثبت شده است؛ پس از تأیید هر دو مورد، انتخاب پلن و ساخت پیش‌نویس فعال می‌شود. می‌توانید خارج شوید و بعداً همین مسیر را ادامه دهید."}
+                      {[branch.status === "inactive" ? branch.review_note : "", plant.status === "inactive" ? plant.review_note : ""]
+                        .filter(Boolean)
+                        .join(" · ") || "دلیل رد در پاسخ سرویس ثبت نشده است."}
                     </p>
-                  </div>
-                </div>
-                <div className="contract-site-review">
+                    <p className="mt-2">
+                      با «اصلاح اطلاعات»، مورد دوباره برای بررسی شرکت ارسال می‌شود.
+                    </p>
+                  </Alert>
+                ) : approved ? (
+                  <Alert tone="success" title="انشعاب و نیروگاه تأیید شده‌اند">
+                    می‌توانید پلن را انتخاب و پیش‌نویس قرارداد را بسازید.
+                  </Alert>
+                ) : (
+                  <Alert tone="warning" title="در انتظار بررسی شرکت">
+                    پس از تأیید هر دو مورد، انتخاب پلن فعال می‌شود. می‌توانید خارج شوید و بعداً ادامه دهید.
+                  </Alert>
+                )}
+                <div className="grid gap-3 md:grid-cols-2">
                   {(
                     [
                       { kind: "branch" as const, item: branch, title: "انشعاب", icon: "home" as const },
                       { kind: "plant" as const, item: plant, title: "نیروگاه", icon: "solarPanel" as const },
                     ]
-                  ).map((entry) => (
-                    <article key={entry.kind} className={`contract-review-tile contract-tone-${statusTone(entry.item.status)}`}>
-                      <div className="contract-review-tile-head">
-                        <span className="contract-select-mark">
-                          <Icon name={entry.icon} />
-                        </span>
-                        <div>
-                          <h3>
-                            {entry.title}: {entry.item.name}
-                          </h3>
-                          <small className={`contract-inline-status contract-tone-${statusTone(entry.item.status)}`}>{statusLabel(entry.item.status)}</small>
+                  ).map((entry) => {
+                    const meta = plantStatusMeta(entry.item.status);
+                    return (
+                      <article key={entry.kind} className="rounded-lg border border-border bg-card p-5 shadow-soft">
+                        <div className="flex items-start justify-between gap-3">
+                          <div className="flex gap-3">
+                            <span className="grid size-10 place-items-center rounded-md bg-surface">
+                              <Icon name={entry.icon} className="size-5" />
+                            </span>
+                            <div>
+                              <h3 className="text-h4">
+                                {entry.title}: {entry.item.name}
+                              </h3>
+                              <p className="mt-1 text-sm text-foreground-muted">{entry.item.address}</p>
+                            </div>
+                          </div>
+                          <StatusPill status={meta.tone} label={meta.label} />
                         </div>
-                      </div>
-                      <p>{entry.item.address}</p>
-                      {entry.item.review_note ? <p className="plant-warning">نتیجهٔ بررسی: {entry.item.review_note}</p> : null}
-                      <Button
-                        variant="secondary"
-                        onClick={() => setRegistration(entry.kind === "branch" ? { kind: "branch", item: branch } : { kind: "plant", item: plant })}
-                      >
-                        اصلاح اطلاعات {entry.title}
-                      </Button>
-                    </article>
-                  ))}
+                        {entry.item.review_note ? (
+                          <p className="mt-3 rounded-md bg-status-rejected-bg px-3 py-2 text-sm text-status-rejected">
+                            نتیجهٔ بررسی: {entry.item.review_note}
+                          </p>
+                        ) : null}
+                        <Button
+                          variant="secondary"
+                          className="mt-4"
+                          onClick={() =>
+                            setRegistration(
+                              entry.kind === "branch" ? { kind: "branch", item: branch } : { kind: "plant", item: plant },
+                            )
+                          }
+                        >
+                          اصلاح اطلاعات {entry.title}
+                        </Button>
+                      </article>
+                    );
+                  })}
                 </div>
-                <p className="contract-note">
-                  اصلاح مشخصات تأییدشده، آن‌ها را به بررسی دوباره می‌فرستد. تغییر انشعاب، نیروگاه‌های متصل را نیز نیازمند تأیید مجدد می‌کند.
+                <p className="text-caption text-foreground-muted">
+                  اصلاح مشخصات تأییدشده، آن‌ها را دوباره به بررسی می‌فرستد.
                 </p>
                 <Button variant="secondary" disabled={refreshing || selected.refreshing} onClick={refresh}>
                   {refreshing || selected.refreshing ? "در حال بررسی…" : "بررسی دوبارهٔ تأیید شرکت"}
                 </Button>
-                <div className="contract-stage-actions">
+                <div className="flex flex-wrap gap-3">
                   <Button variant="secondary" onClick={() => onPhaseChange(2)}>
                     مرحلهٔ نیروگاه
                   </Button>

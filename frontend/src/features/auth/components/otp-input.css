@@ -13,7 +13,7 @@
 .otp-input__slot {
   position: absolute;
   top: calc(50% - var(--otp-size) / 2);
-  left: calc(50% - var(--otp-size) / 2);
+  inset-inline-start: calc(50% - var(--otp-size) / 2);
   width: var(--otp-size);
   height: var(--otp-size);
   transform: translateX(calc((var(--slot-index) - (var(--slot-count) - 1) / 2) * (var(--otp-size) + var(--otp-gap))));
@@ -24,10 +24,10 @@
   width: 100%;
   height: 100%;
   border: 1.5px solid var(--border);
-  border-radius: 14px;
+  border-radius: var(--radius-input);
   background: color-mix(in srgb, var(--card) 88%, transparent);
   color: var(--foreground);
-  box-shadow: 0 4px 12px rgb(18 36 58 / 0.04), inset 0 1px 0 rgb(255 255 255 / 0.9);
+  box-shadow: var(--shadow-input);
   text-align: center;
   font-size: 23px;
   font-weight: 600;
@@ -47,7 +47,8 @@
 
 .otp-input__slot input:focus-visible {
   border-color: var(--primary);
-  box-shadow: 0 0 0 4px color-mix(in srgb, var(--primary) 12%, transparent), 0 6px 18px rgb(7 91 77 / 0.08);
+  box-shadow: var(--shadow-focus-ring), var(--shadow-input);
+  outline: none;
 }
 
 .otp-input__slot input:disabled {
@@ -93,7 +94,7 @@
 
 .otp-input[data-phase="pending"] .otp-input__slot input {
   border-color: color-mix(in srgb, var(--primary) 60%, var(--border));
-  box-shadow: 0 5px 18px rgb(7 91 77 / 0.1);
+  box-shadow: var(--shadow-soft);
   cursor: wait;
 }
 
@@ -101,12 +102,12 @@
   border-color: var(--emerald);
   background: var(--mint);
   color: var(--primary);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--emerald) 12%, transparent), 0 6px 20px rgb(21 150 107 / 0.12);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--emerald) 18%, transparent), var(--shadow-energy-glow);
 }
 
 .otp-input[data-invalid="true"] .otp-input__slot input {
   border-color: var(--danger);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 8%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--danger) 16%, transparent);
 }
 
 .otp-input[data-invalid="true"] .otp-input__center {

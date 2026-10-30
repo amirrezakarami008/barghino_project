@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { articles, getArticle } from "@/features/marketing/articles";
 import { InfoShell } from "@/features/marketing/info";
-import { faDigits } from "@/shared/lib/fa";
+import { faNumber } from "@/shared/lib/fa";
 
 type Props = { params: Promise<{ slug: string }> };
 
@@ -22,9 +22,9 @@ export default async function ArticlePage({ params }: Props) {
   return (
     <InfoShell>
       <article className="mx-auto max-w-3xl">
-        <p className="text-sm text-emerald">{faDigits(article.minutes)} دقیقه مطالعه</p>
-        <h1 className="mt-2 text-3xl leading-[1.5] font-bold text-primary">{article.title}</h1>
-        <p className="mt-4 text-lg leading-8 text-muted-foreground">{article.summary}</p>
+        <p className="text-sm text-energy-700 dark:text-energy-300">{faNumber(article.minutes)} دقیقه مطالعه</p>
+        <h1 className="mt-2 text-h1 font-bold text-foreground">{article.title}</h1>
+        <p className="mt-4 text-lg leading-8 text-foreground-muted">{article.summary}</p>
         <div className="mt-8 grid gap-4">
           {article.body.map((paragraph) => (
             <p key={paragraph} className="leading-8">

@@ -1,0 +1,366 @@
+/**
+ * Solar Aurora — Barghino design tokens (vivid / energetic / premium)
+ * Primitive → semantic. Consume via Tailwind theme or var(--token).
+ */
+
+:root {
+  /* ——— Brand: sun (gold → orange → rose) ——— */
+  --sun-50: #fff8eb;
+  --sun-100: #ffefc7;
+  --sun-200: #ffe08a;
+  --sun-300: #ffcc4d;
+  --sun-400: #ffb800;
+  --sun-500: #ffb800;
+  --sun-600: #ff7a18;
+  --sun-700: #b45309;
+  --sun-800: #92400e;
+  --sun-900: #78350f;
+  --sun-text: #b45309;
+
+  /* ——— Secondary: energy (mint → cyan) ——— */
+  --energy-50: #ecfffb;
+  --energy-100: #cffcf4;
+  --energy-200: #9ff5e6;
+  --energy-300: #5eebd5;
+  --energy-400: #19e3b1;
+  --energy-500: #19e3b1;
+  --energy-600: #22d3ee;
+  --energy-700: #0e9f9a;
+  --energy-800: #0f766e;
+  --energy-900: #115e59;
+
+  /* ——— Accent: volt (violet → orchid) ——— */
+  --volt-50: #f5f1ff;
+  --volt-100: #ede5ff;
+  --volt-200: #d9ccff;
+  --volt-300: #b9a0ff;
+  --volt-400: #9a7aff;
+  --volt-500: #7c5cff;
+  --volt-600: #b06bff;
+  --volt-700: #6d28d9;
+  --volt-800: #5b21b6;
+  --volt-900: #4c1d95;
+
+  /* ——— Neutrals ——— */
+  --ink-0: #ffffff;
+  --ink-25: #f8f9ff;
+  --ink-50: #f1f3fb;
+  --ink-100: #e6e8f5;
+  --ink-200: #d5d9ec;
+  --ink-300: #b8bfd8;
+  --ink-400: #8b94b5;
+  --ink-500: #55607a;
+  --ink-600: #3d4660;
+  --ink-700: #2a3148;
+  --ink-800: #151c3f;
+  --ink-900: #0b1020;
+  --ink-950: #070b1a;
+
+  /* ——— Semantic surfaces (light) ——— */
+  --background: #f8f9ff;
+  --foreground: #0b1020;
+  --foreground-muted: #55607a;
+  --card: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #f1f3fb;
+  --border: #e6e8f5;
+  --ring: var(--volt-500);
+
+  --primary: var(--sun-600);
+  --primary-hover: var(--sun-700);
+  --primary-foreground: #ffffff;
+  --secondary: var(--energy-500);
+  --secondary-foreground: #0b1020;
+  --accent: var(--volt-500);
+  --accent-foreground: #ffffff;
+
+  --mint: var(--energy-50);
+  --info: var(--volt-50);
+  --info-foreground: var(--volt-700);
+  --solar: var(--sun-500);
+  --emerald: var(--energy-500);
+
+  --status-pending-bg: #fff6e0;
+  --status-pending-fg: #b45309;
+  --status-pending-border: #f0c56a;
+
+  --status-approved-bg: #e6faf2;
+  --status-approved-fg: #0e9f9a;
+  --status-approved-border: #9ff5e6;
+
+  --status-rejected-bg: #ffe8ec;
+  --status-rejected-fg: #b4233c;
+  --status-rejected-border: #f5a3b0;
+
+  --status-draft-bg: var(--ink-50);
+  --status-draft-fg: var(--ink-600);
+  --status-draft-border: var(--ink-200);
+
+  --status-active-bg: #e3faf8;
+  --status-active-fg: #0e9f9a;
+  --status-active-border: #9ff5e6;
+
+  --status-closed-bg: #f1f3f7;
+  --status-closed-fg: #55607a;
+  --status-closed-border: #d5d9ec;
+
+  --status-expired-bg: #f4efe8;
+  --status-expired-fg: #92400e;
+  --status-expired-border: #d2c0b0;
+
+  --danger: #c62f48;
+  --danger-foreground: #ffffff;
+
+  --sidebar: var(--ink-900);
+  --sidebar-foreground: #f4f6ff;
+  --sidebar-muted: #a3accb;
+
+  /* Gradients — fills only; amber UI text uses --sun-text */
+  --grad-sun: linear-gradient(135deg, #ffb800 0%, #ff7a18 52%, #ff3d77 100%);
+  --grad-energy: linear-gradient(135deg, #19e3b1 0%, #22d3ee 100%);
+  --grad-volt: linear-gradient(135deg, #7c5cff 0%, #b06bff 100%);
+  --grad-aurora:
+    radial-gradient(920px 520px at 100% -8%, rgb(255 184 0 / 0.28), transparent 58%),
+    radial-gradient(720px 460px at 0% 8%, rgb(124 92 255 / 0.16), transparent 55%),
+    radial-gradient(640px 400px at 72% 48%, rgb(25 227 177 / 0.14), transparent 60%),
+    radial-gradient(480px 320px at 40% 100%, rgb(255 61 119 / 0.08), transparent 55%),
+    var(--background);
+  --grad-border: linear-gradient(135deg, #ffb800, #7c5cff 48%, #19e3b1);
+  --grad-section:
+    linear-gradient(
+      180deg,
+      transparent 0%,
+      color-mix(in srgb, var(--volt-200) 35%, transparent) 48%,
+      transparent 100%
+    );
+
+  --electric: var(--volt-500);
+  --energy: var(--energy-500);
+  --teal: var(--energy-700);
+  --amber: var(--sun-500);
+  --violet: var(--volt-500);
+  --coral: #ff3d77;
+  --navy: var(--ink-900);
+  --gradient-action: var(--grad-sun);
+  --gradient-energy: var(--grad-energy);
+
+  --radius-sm: 10px;
+  --radius-md: 14px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-2xl: var(--radius-xl);
+  --radius-3xl: 36px;
+  --radius-pill: 9999px;
+  --radius-card: var(--radius-lg);
+  --radius-control: var(--radius-pill);
+  --radius-panel: var(--radius-lg);
+  --radius-input: var(--radius-md);
+  --radius-dialog: var(--radius-xl);
+
+  --shadow-soft: 0 10px 30px rgb(11 16 32 / 0.06);
+  --shadow-lifted: 0 18px 48px rgb(11 16 32 / 0.1);
+  --shadow-sun: 0 12px 40px rgb(255 122 24 / 0.35);
+  --shadow-energy: 0 12px 40px rgb(25 227 177 / 0.32);
+  --shadow-volt: 0 12px 40px rgb(124 92 255 / 0.32);
+  --shadow-sun-glow: var(--shadow-sun);
+  --shadow-energy-glow: var(--shadow-energy);
+  --shadow-input: 0 1px 2px rgb(11 16 32 / 0.04);
+  --shadow-dialog: var(--shadow-lifted);
+  --shadow-focus-ring: 0 0 0 3px color-mix(in srgb, var(--ring) 28%, transparent);
+
+  --glass-bg: rgb(255 255 255 / 0.78);
+  --glass-bg-strong: rgb(255 255 255 / 0.9);
+  --glass-border: 1px solid rgb(255 255 255 / 0.65);
+  --glass-blur: 18px;
+  --glass-shadow: 0 12px 40px rgb(11 16 32 / 0.08);
+  --glass-solid-fallback: rgb(255 255 255 / 0.96);
+  --glass-foreground: var(--foreground);
+  /* Stronger than body muted so AA holds on translucent glass. */
+  --glass-foreground-muted: var(--ink-600);
+
+  --motion-fast: 160ms;
+  --motion-header: 200ms;
+  --motion-standard: 220ms;
+  --motion-panel: 250ms;
+  --ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+  --space-28: 7rem;
+
+  /* Typography — Persian-friendly */
+  --text-display: 2.75rem;
+  --leading-display: 1.35;
+  --text-h1: 2.25rem;
+  --leading-h1: 1.35;
+  --text-h2: 1.75rem;
+  --leading-h2: 1.35;
+  --text-h3: 1.375rem;
+  --leading-h3: 1.35;
+  --text-h4: 1.125rem;
+  --leading-h4: 1.35;
+  --text-body: 1rem;
+  --leading-body: 1.8;
+  --text-caption: 0.8125rem;
+  --leading-caption: 1.65;
+  --text-nav: 0.9375rem;
+  --leading-nav: 1.5;
+  --font-weight-number: 700;
+
+  --container-max: 80rem;
+  --section-y: var(--space-20);
+  --section-y-md: var(--space-28);
+
+  color-scheme: light;
+}
+
+.dark {
+  --background: #070b1a;
+  --foreground: #f4f6ff;
+  --foreground-muted: #a3accb;
+  --card: #0e1430;
+  --surface: #0e1430;
+  --surface-2: #151c3f;
+  --border: rgb(255 255 255 / 0.08);
+  --ring: var(--volt-400);
+
+  --primary: var(--sun-400);
+  --primary-hover: var(--sun-300);
+  --primary-foreground: #070b1a;
+  --secondary: var(--energy-400);
+  --secondary-foreground: #070b1a;
+  --accent: var(--volt-400);
+  --accent-foreground: #070b1a;
+
+  --mint: #0d2f2c;
+  --info: #1a1640;
+  --info-foreground: #d9ccff;
+  --solar: var(--sun-400);
+  --emerald: var(--energy-400);
+  --sun-text: var(--sun-300);
+
+  --status-pending-bg: #3a2e14;
+  --status-pending-fg: #ffd680;
+  --status-pending-border: #7a5a1a;
+
+  --status-approved-bg: #0d2f2c;
+  --status-approved-fg: #5eebd5;
+  --status-approved-border: #0e9f9a;
+
+  --status-rejected-bg: #3a1820;
+  --status-rejected-fg: #ffb3c0;
+  --status-rejected-border: #7a3040;
+
+  --status-draft-bg: #151c3f;
+  --status-draft-fg: #a3accb;
+  --status-draft-border: rgb(255 255 255 / 0.08);
+
+  --status-active-bg: #0d2a33;
+  --status-active-fg: #67e8f9;
+  --status-active-border: #0e7490;
+
+  --status-closed-bg: #12182e;
+  --status-closed-fg: #a3accb;
+  --status-closed-border: rgb(255 255 255 / 0.08);
+
+  --status-expired-bg: #2a241c;
+  --status-expired-fg: #d2c0b0;
+  --status-expired-border: #5a4a3a;
+
+  --danger: #ff9cad;
+  --danger-foreground: #3c1020;
+
+  --sidebar: #050815;
+  --sidebar-foreground: #f4f6ff;
+  --sidebar-muted: #a3accb;
+
+  --grad-sun: linear-gradient(135deg, #ffb800 0%, #ff7a18 52%, #ff3d77 100%);
+  --grad-energy: linear-gradient(135deg, #19e3b1 0%, #22d3ee 100%);
+  --grad-volt: linear-gradient(135deg, #7c5cff 0%, #b06bff 100%);
+  --grad-aurora:
+    radial-gradient(920px 520px at 100% -8%, rgb(255 184 0 / 0.22), transparent 58%),
+    radial-gradient(720px 460px at 0% 8%, rgb(124 92 255 / 0.22), transparent 55%),
+    radial-gradient(640px 400px at 72% 48%, rgb(25 227 177 / 0.16), transparent 60%),
+    radial-gradient(480px 320px at 40% 100%, rgb(176 107 255 / 0.12), transparent 55%),
+    var(--background);
+  --grad-border: linear-gradient(135deg, #ffb800, #b06bff 48%, #22d3ee);
+  --grad-section:
+    linear-gradient(
+      180deg,
+      transparent 0%,
+      color-mix(in srgb, var(--volt-500) 18%, transparent) 48%,
+      transparent 100%
+    );
+
+  --navy: #f4f6ff;
+  --gradient-action: var(--grad-sun);
+  --gradient-energy: var(--grad-energy);
+
+  --shadow-soft: 0 10px 30px rgb(0 0 0 / 0.35);
+  --shadow-lifted: 0 18px 48px rgb(0 0 0 / 0.45);
+  --shadow-sun: 0 12px 40px rgb(255 122 24 / 0.4);
+  --shadow-energy: 0 12px 40px rgb(25 227 177 / 0.32);
+  --shadow-volt: 0 12px 40px rgb(124 92 255 / 0.36);
+  --shadow-sun-glow: var(--shadow-sun);
+  --shadow-energy-glow: var(--shadow-energy);
+  --shadow-input: 0 1px 2px rgb(0 0 0 / 0.25);
+  --shadow-focus-ring: 0 0 0 3px color-mix(in srgb, var(--ring) 40%, transparent);
+
+  --glass-bg: rgb(14 20 48 / 0.78);
+  --glass-bg-strong: rgb(14 20 48 / 0.9);
+  --glass-border: 1px solid rgb(255 255 255 / 0.1);
+  --glass-blur: 20px;
+  --glass-shadow: 0 12px 40px rgb(0 0 0 / 0.4);
+  --glass-solid-fallback: rgb(14 20 48 / 0.96);
+  --glass-foreground: var(--foreground);
+  --glass-foreground-muted: #c5d0e4;
+
+  --motion-fast: 160ms;
+  --motion-header: 200ms;
+  --motion-standard: 220ms;
+  --motion-panel: 250ms;
+
+  color-scheme: dark;
+}
+
+/* Force light semantic tokens inside a dark page (style-guide dual preview). */
+.theme-force-light {
+  color-scheme: light;
+  --background: #f8f9ff;
+  --foreground: #0b1020;
+  --foreground-muted: #55607a;
+  --card: #ffffff;
+  --surface: #ffffff;
+  --surface-2: #f1f3fb;
+  --border: #e6e8f5;
+  --ring: var(--volt-500);
+  --primary: var(--sun-600);
+  --primary-hover: var(--sun-700);
+  --primary-foreground: #ffffff;
+  --secondary: var(--energy-500);
+  --secondary-foreground: #0b1020;
+  --accent: var(--volt-500);
+  --accent-foreground: #ffffff;
+  --sun-text: #b45309;
+  --grad-aurora:
+    radial-gradient(920px 520px at 100% -8%, rgb(255 184 0 / 0.28), transparent 58%),
+    radial-gradient(720px 460px at 0% 8%, rgb(124 92 255 / 0.16), transparent 55%),
+    radial-gradient(640px 400px at 72% 48%, rgb(25 227 177 / 0.14), transparent 60%),
+    radial-gradient(480px 320px at 40% 100%, rgb(255 61 119 / 0.08), transparent 55%),
+    var(--background);
+  --shadow-soft: 0 10px 30px rgb(11 16 32 / 0.06);
+  --shadow-sun: 0 12px 40px rgb(255 122 24 / 0.35);
+  --shadow-energy: 0 12px 40px rgb(25 227 177 / 0.32);
+  --shadow-volt: 0 12px 40px rgb(124 92 255 / 0.32);
+  --glass-foreground: var(--foreground);
+  --glass-foreground-muted: var(--foreground-muted);
+}

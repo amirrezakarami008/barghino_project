@@ -1,21 +1,25 @@
+"use client";
+
 import Link from "next/link";
+import { ThemeToggle } from "@/shared/theme";
 import { Logo } from "@/shared/ui/logo";
+import "./site-footer.css";
 
 const columns = [
   {
     title: "محصول",
     links: [
-      { href: "/sell", label: "فروش برق" },
-      { href: "/install", label: "نصب نیروگاه" },
-      { href: "/faq", label: "پرسش‌ها" },
+      { href: "/services#sell", label: "فروش برق" },
+      { href: "/services#install", label: "نصب نیروگاه" },
+      { href: "/services", label: "همه خدمات" },
     ],
   },
   {
     title: "برقینو",
     links: [
-      { href: "/about", label: "درباره ما" },
-      { href: "/blog", label: "مجله" },
+      { href: "/learn", label: "آموزش" },
       { href: "/contact", label: "تماس" },
+      { href: "/about", label: "درباره ما" },
       { href: "/support", label: "پشتیبانی" },
     ],
   },
@@ -30,27 +34,28 @@ const columns = [
 
 export function SiteFooter() {
   return (
-    <footer className="mt-8 border-t border-border bg-card">
-      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[1.3fr_2fr]">
+    <footer className="site-footer">
+      <div className="site-footer__inner">
         <div>
           <Logo />
-          <p className="mt-4 max-w-sm text-sm leading-7 text-muted-foreground">
-            برق خانگی را با قرارداد رسمی و تسویه حداکثر دو ماه می‌فروشید. نیروگاه ندارید؟ مسیر نصب از همین‌جا شروع می‌شود.
+          <p className="site-footer__lede">
+            مسیر شفاف فروش برق خانگی و نصب نیروگاه خورشیدی — با قرارداد قابل‌پیگیری.
           </p>
-          <p className="mt-4 text-sm leading-7 text-muted-foreground">
+          <p className="site-footer__contact">
             تلفن ۰۲۱-۴۴۰۰۰۶۶۴
             <br />
             info@bargheto.com
           </p>
         </div>
-        <div className="grid gap-8 sm:grid-cols-3">
+
+        <div className="site-footer__cols">
           {columns.map((column) => (
             <div key={column.title}>
-              <p className="text-sm font-semibold text-primary">{column.title}</p>
-              <ul className="mt-3 grid gap-2">
+              <p className="site-footer__col-title">{column.title}</p>
+              <ul className="site-footer__links">
                 {column.links.map((link) => (
                   <li key={link.href}>
-                    <Link href={link.href} className="text-sm text-muted-foreground hover:text-primary">
+                    <Link href={link.href} className="site-footer__link">
                       {link.label}
                     </Link>
                   </li>
@@ -58,6 +63,20 @@ export function SiteFooter() {
               </ul>
             </div>
           ))}
+        </div>
+      </div>
+
+      <div className="site-footer__bar">
+        <p className="site-footer__meta">برقینو</p>
+        <div className="site-footer__bar-actions">
+          <ThemeToggle />
+          <div
+            className="site-footer__trust"
+            role="img"
+            aria-label="جایگاه نماد اعتماد — به‌زودی"
+          >
+            نماد اعتماد
+          </div>
         </div>
       </div>
     </footer>

@@ -1,0 +1,209 @@
+/* How it works — process explainer (not user progress) */
+
+.home-how {
+  border-block: 1px solid var(--border);
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  padding-block: var(--section-y);
+}
+
+@media (min-width: 768px) {
+  .home-how {
+    padding-block: var(--section-y-md);
+  }
+}
+
+.home-how__inner {
+  margin-inline: auto;
+  width: 100%;
+  max-width: var(--container-max);
+  padding-inline: 1rem;
+}
+
+@media (min-width: 640px) {
+  .home-how__inner {
+    padding-inline: 1.5rem;
+  }
+}
+
+@media (min-width: 1024px) {
+  .home-how__inner {
+    padding-inline: 2rem;
+  }
+}
+
+.home-how__panel {
+  margin-block-start: 2.5rem;
+  overflow: hidden;
+  border-radius: var(--radius-xl);
+  border: 1px solid var(--border);
+  background: var(--card);
+  box-shadow: var(--shadow-soft);
+  padding: 1.25rem;
+}
+
+@media (min-width: 640px) {
+  .home-how__panel {
+    padding: 1.75rem 2rem;
+  }
+}
+
+.home-how__track {
+  position: relative;
+}
+
+/* —— Mobile: vertical timeline —— */
+.home-how__list {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 1.25rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home-how__rail {
+  display: none;
+}
+
+.home-how__step {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.875rem;
+  align-items: start;
+  min-width: 0;
+  padding: 0.75rem;
+  border-radius: var(--radius-lg);
+  transition:
+    transform var(--motion-fast) var(--ease-out),
+    background-color var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out);
+}
+
+.home-how__step:hover,
+.home-how__step:focus-within {
+  transform: translateY(-4px);
+  background: color-mix(in srgb, var(--surface-2) 80%, transparent);
+  box-shadow: var(--shadow-soft);
+}
+
+.home-how__index {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex-shrink: 0;
+  border-radius: var(--radius-pill);
+  background-image: var(--grad-sun);
+  color: var(--primary-foreground);
+  font-size: 1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  box-shadow: var(--shadow-sun);
+}
+
+.home-how__icon {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  margin-block-end: 0.35rem;
+  border-radius: var(--radius-md);
+  background: color-mix(in srgb, var(--volt-400) 12%, var(--surface-2));
+  color: var(--volt-700);
+}
+
+.dark .home-how__icon {
+  color: var(--volt-300);
+}
+
+.home-how__title {
+  font-size: max(0.9375rem, 0.9375rem);
+  font-weight: 700;
+  line-height: 1.45;
+  color: var(--foreground);
+}
+
+.home-how__desc {
+  margin-block-start: 0.25rem;
+  font-size: max(0.875rem, 0.875rem);
+  line-height: 1.65;
+  color: var(--foreground-muted);
+}
+
+/* Mobile connector (vertical) */
+.home-how__v-line {
+  position: absolute;
+  inset-block: 2.75rem 0.5rem;
+  inset-inline-start: calc(0.75rem + 1.375rem - 1px);
+  width: 2px;
+  background: var(--border);
+  z-index: 0;
+  overflow: hidden;
+  border-radius: var(--radius-pill);
+}
+
+.home-how__v-line-fill {
+  width: 100%;
+  height: 100%;
+  transform-origin: top center;
+  background-image: var(--grad-sun);
+}
+
+@media (min-width: 1024px) {
+  .home-how__v-line {
+    display: none;
+  }
+
+  .home-how__list {
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 0.75rem;
+  }
+
+  .home-how__step {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    text-align: center;
+    padding-block-start: 0.5rem;
+  }
+
+  .home-how__icon {
+    margin-inline: auto;
+  }
+
+  /* Horizontal connector fully inside the panel content box */
+  .home-how__rail {
+    display: block;
+    position: absolute;
+    z-index: 0;
+    inset-block-start: calc(0.5rem + 1.375rem);
+    /* Keep endpoints under the 1st/5th circle centers (10% / 90% of track) */
+    inset-inline: 10%;
+    height: 2px;
+    overflow: hidden;
+    border-radius: var(--radius-pill);
+    background: var(--border);
+    pointer-events: none;
+  }
+
+  .home-how__rail-fill {
+    height: 100%;
+    width: 100%;
+    transform-origin: right center; /* RTL: draw from start (right) toward left */
+    background-image: var(--grad-sun);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home-how__step {
+    transition: none;
+  }
+
+  .home-how__step:hover,
+  .home-how__step:focus-within {
+    transform: none;
+  }
+}

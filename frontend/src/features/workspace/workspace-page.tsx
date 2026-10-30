@@ -30,11 +30,11 @@ export function WorkspacePage({
 export function EmptyPanel({ icon, title, text }: { icon: IconName; title: string; text: string }) {
   return (
     <div className="product-empty rounded-panel border border-dashed border-border bg-card px-6 py-10 text-center">
-      <span className="mx-auto grid size-12 place-items-center rounded-2xl bg-mint text-primary">
+      <span className="mx-auto grid size-12 place-items-center rounded-xl bg-mint text-primary">
         <Icon name={icon} className="size-6" />
       </span>
       <p className="mt-4 font-semibold">{title}</p>
-      <p className="mx-auto mt-2 max-w-md text-sm leading-7 text-muted-foreground">{text}</p>
+      <p className="mx-auto mt-2 max-w-md text-sm leading-7 text-foreground-muted">{text}</p>
     </div>
   );
 }

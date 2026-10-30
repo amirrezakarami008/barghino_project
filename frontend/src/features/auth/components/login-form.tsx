@@ -8,7 +8,7 @@ import { ApiError, apiRequest } from "@/features/auth/lib/api";
 import { formatIranMobile, isIranMobile, normalizeIranMobile } from "@/features/auth/lib/phone";
 import { userFromApi, type Session } from "@/features/auth/lib/session";
 import { destinationFor, useAuth } from "@/features/auth/session-provider";
-import { faDigits } from "@/shared/lib/fa";
+import { faNumber } from "@/shared/lib/fa";
 import { Button, ButtonLink } from "@/shared/ui/button";
 import { Icon, type IconName } from "@/shared/ui/icon";
 import { Logo } from "@/shared/ui/logo";
@@ -107,7 +107,7 @@ export function LoginForm() {
             disabled={pending || secondsLeft > 0}
             onClick={() => void requestCode()}
           >
-            {secondsLeft > 0 ? `ارسال دوباره تا ${faDigits(secondsLeft)} ثانیه` : "ارسال دوباره کد"}
+            {secondsLeft > 0 ? `ارسال دوباره تا ${faNumber(secondsLeft)} ثانیه` : "ارسال دوباره کد"}
           </button>
           <button
             type="button"
@@ -143,7 +143,7 @@ export function LoginForm() {
           placeholder="شماره موبایل"
           value={phone}
           aria-invalid={phoneError ? true : undefined}
-          className="w-full bg-transparent py-1 text-end text-base outline-none placeholder:text-muted-foreground/70"
+          className="w-full bg-transparent py-1 text-end text-base outline-none focus-visible:outline-none placeholder:text-foreground-muted/70"
           onChange={(event) => {
             setPhone(event.target.value);
             setPhoneError("");
@@ -197,7 +197,7 @@ function Field({
   return (
     <div className="grid gap-1.5">
       <div
-        className={`rounded-2xl border bg-card px-3.5 py-2.5 transition-colors focus-within:border-primary ${error ? "border-danger" : "border-border"}`}
+        className={`rounded-xl border bg-card px-3.5 py-2.5 shadow-soft transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-ring/30 ${error ? "border-danger" : "border-border"}`}
       >
         <div className="flex items-center gap-3">
           <Icon name={icon} className="size-4 shrink-0 text-muted-foreground" />

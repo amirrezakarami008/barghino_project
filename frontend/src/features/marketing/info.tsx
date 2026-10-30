@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 import { faDigits } from "@/shared/lib/fa";
-import { ButtonLink } from "@/shared/ui/button";
+import { ButtonLink } from "@/components/ui";
 
 export function PageIntro({
   eyebrow,

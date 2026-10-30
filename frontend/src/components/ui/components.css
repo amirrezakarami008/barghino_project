@@ -1,0 +1,33 @@
+@keyframes ui-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ui-shimmer {
+  to {
+    background-position: -220% 0;
+  }
+}
+
+.ui-spinner {
+  animation: ui-spin 0.7s linear infinite;
+}
+
+.ui-skeleton {
+  background: linear-gradient(
+    100deg,
+    var(--surface) 20%,
+    color-mix(in srgb, var(--sun-200) 35%, var(--surface)) 45%,
+    var(--surface) 70%
+  );
+  background-size: 220% 100%;
+  animation: ui-shimmer 1.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-spinner,
+  .ui-skeleton {
+    animation: none;
+  }
+}

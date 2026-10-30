@@ -1,30 +1,30 @@
 .plants-feature{color:var(--foreground);font-size:14px}
 .plant-steps{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-block:24px;padding:0;list-style:none}
-.plant-steps li{display:flex;align-items:center;gap:9px;padding:14px;border:1px solid var(--border);border-radius:13px;background:var(--card);font-weight:600}
+.plant-steps li{display:flex;align-items:center;gap:9px;padding:14px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--card);font-weight:600}
 .plant-steps svg{width:22px;height:22px;color:var(--primary);flex-shrink:0}
 .plant-steps li:nth-child(2) svg{color:var(--emerald)}
 .plant-steps li:nth-child(3) svg{color:var(--violet)}
-.plant-section,.plant-registration{padding:22px;margin-block:22px;border:1px solid var(--border);border-radius:18px;background:var(--card);box-shadow:var(--shadow-soft)}
+.plant-section,.plant-registration{padding:22px;margin-block:22px;border:1px solid var(--border);border-radius:var(--radius-lg);background:var(--card);box-shadow:var(--shadow-soft)}
 .plant-section>header,.plant-section>header>div,.plant-card-title{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
 .plant-section>header>div{justify-content:flex-start}
 .plant-section h2,.plant-registration h2{font-size:19px;font-weight:700}
 .plant-section h2 small{color:var(--muted-foreground);font-size:13px;margin-inline-start:7px}
-.plant-section-icon{display:grid;place-items:center;width:38px;height:38px;border-radius:11px;background:var(--info);color:var(--primary)}
+.plant-section-icon{display:grid;place-items:center;width:38px;height:38px;border-radius:var(--radius-sm);background:var(--info);color:var(--primary)}
 .plant-section-icon svg{width:21px;height:21px}
 .plant-section-icon.is-energy{background:var(--mint);color:var(--emerald)}
 .plant-empty{text-align:center;padding:32px 15px;color:var(--muted-foreground);line-height:2}
 .plant-empty>svg{width:35px;height:35px;margin:auto auto 12px;color:var(--primary)}
 .plant-empty h3{color:var(--foreground);font-size:16px;font-weight:600}
 .plant-inventory{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:20px}
-.plant-inventory article{min-width:0;border:1px solid var(--border);border-radius:14px;padding:17px;background:linear-gradient(125deg,var(--card),var(--surface));overflow-wrap:anywhere}
+.plant-inventory article{min-width:0;border:1px solid var(--border);border-radius:var(--radius-md);padding:17px;background:linear-gradient(125deg,var(--card),var(--surface));overflow-wrap:anywhere}
 .plant-card-title h3{font-size:16px;font-weight:600}
 .plant-inventory p,.plant-registration>p{font-size:13px;line-height:2;color:var(--muted-foreground);margin-block:9px}
 .plant-inventory article>.product-button,.plant-card-actions{margin-top:14px}
 .plant-card-actions{display:flex;gap:9px;flex-wrap:wrap}
-.plant-status{display:inline-flex;padding:4px 9px;border-radius:20px;background:var(--info);color:var(--info-foreground);font-size:11px;white-space:nowrap}
+.plant-status{display:inline-flex;padding:4px 9px;border-radius:var(--radius-pill);background:var(--info);color:var(--info-foreground);font-size:11px;white-space:nowrap}
 .plant-status[data-status=active]{background:var(--mint);color:var(--emerald)}
 .plant-status[data-status=inactive]{background:color-mix(in srgb,var(--danger) 9%,var(--card));color:var(--danger)}
-.plant-success,.plant-next{display:flex;align-items:center;gap:12px;padding:17px;border:1px solid color-mix(in srgb,var(--emerald) 35%,var(--border));border-radius:14px;background:var(--mint);line-height:2}
+.plant-success,.plant-next{display:flex;align-items:center;gap:12px;padding:17px;border:1px solid color-mix(in srgb,var(--emerald) 35%,var(--border));border-radius:var(--radius-md);background:var(--mint);line-height:2}
 .plant-success{color:var(--emerald)}
 .plant-success>svg,.plant-next>svg{width:24px;height:24px;flex-shrink:0}
 .plant-next{flex-wrap:wrap}.plant-next>div{flex:1;min-width:180px}.plant-next p{font-size:12px;color:var(--muted-foreground)}
@@ -33,9 +33,10 @@
 .plant-registration{border-top:3px solid var(--electric)}
 .plant-form-grid{border:0;padding:0;margin-block:20px;display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;min-width:0}
 .plant-form-grid label{display:grid;gap:8px;font-size:14px;font-weight:500;min-width:0}
-.plant-form-grid select,.plant-form-grid textarea{width:100%;min-height:48px;border:1px solid var(--border);border-radius:12px;background:var(--card);color:var(--foreground);padding:12px;font:inherit}
+.plant-form-grid select,.plant-form-grid textarea{width:100%;min-height:48px;border:1px solid var(--border);border-radius:var(--radius-md);background:var(--card);color:var(--foreground);padding:12px;font:inherit}
 .plant-form-grid small{font-size:12px;color:var(--muted-foreground);font-weight:400;line-height:1.9}
 .plant-form-wide{grid-column:1/-1}.plant-form-actions{display:flex;gap:12px;flex-wrap:wrap}
-.plant-warning{border-inline-start:3px solid var(--amber);background:color-mix(in srgb,var(--amber) 10%,var(--card));padding:12px;line-height:2;border-radius:8px}
-.plant-error{border:1px solid var(--danger);padding:15px;color:var(--danger);border-radius:10px;margin-block:12px;line-height:2}
+.plant-warning{border-inline-start:3px solid var(--amber);background:color-mix(in srgb,var(--amber) 10%,var(--card));padding:12px;line-height:2;border-radius:var(--radius-sm)}
+.plant-error{border:1px solid var(--danger);padding:15px;color:var(--danger);border-radius:var(--radius-sm);margin-block:12px;line-height:2}
 @media(max-width:760px){.plant-steps{grid-template-columns:repeat(2,minmax(0,1fr));font-size:12px}.plant-section,.plant-registration{padding:16px}.plant-inventory,.plant-form-grid{grid-template-columns:1fr}.plant-form-actions .product-button{flex:1}.plant-section>header>.product-button{font-size:12px;padding-inline:12px}}
+@media(max-width:400px){.plant-steps{grid-template-columns:1fr}.plant-next>div{min-width:0}}

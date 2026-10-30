@@ -28,7 +28,12 @@ export function Logo({
           برقینو
         </span>
         {caption ? (
-          <span className={cx("mt-1 text-[11px]", tone === "inverse" ? "text-sidebar-muted" : "text-muted-foreground")}>
+          <span
+            className={cx(
+              "mt-1 text-caption",
+              tone === "inverse" ? "text-sidebar-muted" : "text-muted-foreground",
+            )}
+          >
             فروش برق خانگی
           </span>
         ) : null}

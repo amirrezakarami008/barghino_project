@@ -1,25 +1,119 @@
 "use client";
 
 import { useState, type ReactElement } from "react";
-import { WorkspacePage } from "@/features/workspace/workspace-page";
-import { Button, ButtonLink } from "@/shared/ui/button";
+import {
+  Alert,
+  Button,
+  ButtonLink,
+  Card,
+  EmptyState,
+  Skeleton,
+  StatusPill,
+} from "@/components/ui";
+import { formatDecimal } from "@/features/contracts";
+import { plantStatusMeta } from "@/features/contracts/status-map";
+import { faNumber } from "@/shared/lib/fa";
 import { Icon } from "@/shared/ui/icon";
-import { LoadingCards } from "@/shared/ui/loading-cards";
 import { usePlantInventory } from "./use-plant-inventory";
-import "./plants.css";
 
-function Status({ value }: { readonly value: string }): ReactElement {
-  const labels: Record<string, string> = { active: "تأییدشده", pending: "در انتظار بررسی", inactive: "تأیید نشده", maintenance: "در حال تعمیر" };
-  return <span className="plant-status" data-status={value}>{Object.hasOwn(labels, value) ? labels[value] : "وضعیت نامشخص"}</span>;
-}
 export function PlantWorkspace(): ReactElement {
   const [page, setPage] = useState(1);
   const { state, reload } = usePlantInventory(1, page);
-  return <div className="plants-feature"><WorkspacePage title="نیروگاه من" icon="solarPanel" lede="مشخصات و وضعیت بررسی نیروگاه‌های ثبت‌شدهٔ شما. ثبت و اصلاح اطلاعات در مراحل قرارداد انجام می‌شود.">
-    {state.status === "loading" ? <LoadingCards label="دریافت نیروگاه‌ها…" /> : state.status === "error" ? <div className="plant-error" role="alert"><p>{state.message}</p><Button variant="secondary" onClick={reload}>تلاش دوباره</Button></div> : <section className="plant-section" aria-labelledby="plants-heading">
-      <header><div><span className="plant-section-icon is-energy"><Icon name="solarPanel" /></span><h2 id="plants-heading">نیروگاه‌های ثبت‌شده <small>{state.data.plants.count.toLocaleString("fa-IR")}</small></h2></div><Button variant="secondary" onClick={reload}>تازه‌سازی وضعیت</Button></header>
-      {!state.data.plants.results.length ? <div className="plant-empty"><Icon name="solarPanel" /><h3>هنوز نیروگاهی ثبت نشده است</h3><p>ثبت انشعاب و نیروگاه، مراحل ابتدایی مسیر قرارداد هستند.</p><ButtonLink href="/panel/contracts" variant="secondary" className="mt-4">رفتن به قراردادها</ButtonLink></div> : <div className="plant-inventory">{state.data.plants.results.map((plant) => <article key={plant.uuid}><div className="plant-card-title"><h3>{plant.name}</h3><Status value={plant.status} /></div><p>ظرفیت: <bdi dir="ltr">{plant.capacity_kwp.replace(/\d/g, (digit) => "۰۱۲۳۴۵۶۷۸۹"[Number(digit)] ?? digit)} kWp</bdi></p><p>{plant.address}</p>{state.data.branches.results.find((branch) => branch.uuid === plant.branch_uuid) ? <p>انشعاب: {state.data.branches.results.find((branch) => branch.uuid === plant.branch_uuid)?.name}</p> : null}{plant.review_note ? <p className="plant-warning">نتیجهٔ بررسی: {plant.review_note}</p> : null}</article>)}</div>}
-      {state.data.plants.next || state.data.plants.previous ? <div className="plant-pagination"><Button variant="ghost" disabled={!state.data.plants.previous} onClick={() => setPage((current) => Math.max(1, current - 1))}>نیروگاه‌های قبلی</Button><span>صفحهٔ {page.toLocaleString("fa-IR")}</span><Button variant="ghost" disabled={!state.data.plants.next} onClick={() => setPage((current) => current + 1)}>نیروگاه‌های بعدی</Button></div> : null}
-    </section>}
-  </WorkspacePage></div>;
+
+  return (
+    <div className="mx-auto max-w-5xl space-y-6">
+      <header className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h2 className="text-h2">نیروگاه من</h2>
+          <p className="mt-2 text-body text-foreground-muted">
+            ظرفیت، نشانی و وضعیت بررسی — فقط دادهٔ واقعی حساب شما.
+          </p>
+        </div>
+        <Button variant="secondary" onClick={reload}>
+          تازه‌سازی
+        </Button>
+      </header>
+
+      {state.status === "loading" ? (
+        <div className="grid gap-3 md:grid-cols-2">
+          <Skeleton className="h-40" />
+          <Skeleton className="h-40" />
+        </div>
+      ) : state.status === "error" ? (
+        <Alert tone="danger" title="دریافت نیروگاه‌ها ممکن نشد">
+          <p>{state.message}</p>
+          <Button variant="secondary" className="mt-3" onClick={reload}>
+            تلاش دوباره
+          </Button>
+        </Alert>
+      ) : !state.data.plants.results.length ? (
+        <EmptyState
+          title="هنوز نیروگاهی ثبت نشده است"
+          description="ثبت انشعاب و نیروگاه در مسیر قرارداد جدید انجام می‌شود."
+          icon="solarPanel"
+          action={<ButtonLink href="/panel/contracts/new">شروع قرارداد</ButtonLink>}
+        />
+      ) : (
+        <>
+          <p className="text-caption text-foreground-muted">
+            {faNumber(state.data.plants.count)} نیروگاه ثبت‌شده
+          </p>
+          <ul className="grid gap-4 md:grid-cols-2">
+            {state.data.plants.results.map((plant) => {
+              const meta = plantStatusMeta(plant.status);
+              const branch = state.data.branches.results.find((item) => item.uuid === plant.branch_uuid);
+              return (
+                <li key={plant.uuid}>
+                  <Card className="h-full">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex gap-3">
+                        <span className="grid size-11 place-items-center rounded-md bg-grad-energy text-secondary-foreground">
+                          <Icon name="solarPanel" className="size-5" />
+                        </span>
+                        <div>
+                          <h3 className="text-h4">{plant.name}</h3>
+                          <p className="mt-1 text-sm tabular-nums text-foreground-muted">
+                            ظرفیت · <bdi dir="ltr">{formatDecimal(plant.capacity_kwp)}</bdi> kWp
+                          </p>
+                        </div>
+                      </div>
+                      <StatusPill status={meta.tone} label={meta.label} />
+                    </div>
+                    <p className="mt-4 text-sm leading-7 text-foreground-muted">{plant.address}</p>
+                    {branch ? (
+                      <p className="mt-2 text-caption text-foreground-muted">انشعاب: {branch.name}</p>
+                    ) : null}
+                    {plant.review_note ? (
+                      <p className="mt-3 rounded-md bg-status-pending-bg px-3 py-2 text-sm text-status-pending">
+                        نتیجهٔ بررسی: {plant.review_note}
+                      </p>
+                    ) : null}
+                  </Card>
+                </li>
+              );
+            })}
+          </ul>
+          {state.data.plants.next || state.data.plants.previous ? (
+            <div className="flex items-center justify-between gap-3">
+              <Button
+                variant="ghost"
+                disabled={!state.data.plants.previous}
+                onClick={() => setPage((current) => Math.max(1, current - 1))}
+              >
+                قبلی
+              </Button>
+              <span className="text-caption">صفحهٔ {faNumber(page)}</span>
+              <Button
+                variant="ghost"
+                disabled={!state.data.plants.next}
+                onClick={() => setPage((current) => current + 1)}
+              >
+                بعدی
+              </Button>
+            </div>
+          ) : null}
+        </>
+      )}
+    </div>
+  );
 }

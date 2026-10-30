@@ -30,8 +30,8 @@ export const TextField = forwardRef<HTMLInputElement, TextFieldProps>(function T
         aria-invalid={error ? true : undefined}
         aria-describedby={describedBy}
         className={cx(
-          "min-h-12 w-full rounded-2xl border border-border bg-card px-3.5 text-base text-foreground transition-colors duration-200 placeholder:text-muted-foreground",
-          error && "border-danger",
+          "min-h-12 w-full rounded-xl border border-border bg-card px-3.5 text-base text-foreground shadow-soft transition-colors duration-fast ease-out placeholder:text-foreground-muted focus-visible:border-accent focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/30",
+          error && "border-danger aria-invalid:ring-2 aria-invalid:ring-danger/20",
           className,
         )}
         {...props}

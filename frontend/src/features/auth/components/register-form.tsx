@@ -9,7 +9,7 @@ import { isCompanyNationalId, isNationalId } from "@/features/auth/lib/identity"
 import { digitsOnly, formatIranMobile, isIranMobile, normalizeIranMobile } from "@/features/auth/lib/phone";
 import { userFromApi, type Session } from "@/features/auth/lib/session";
 import { destinationFor, useAuth } from "@/features/auth/session-provider";
-import { faDigits } from "@/shared/lib/fa";
+import { faNumber } from "@/shared/lib/fa";
 import { cx } from "@/shared/lib/cx";
 import { Button } from "@/shared/ui/button";
 import { Icon, type IconName } from "@/shared/ui/icon";
@@ -114,7 +114,7 @@ export function RegisterForm({ initialPath }: { initialPath: Path }) {
       return;
     }
     if (secondsLeft > 0 && sentPayload && sentPayload !== JSON.stringify(payload.body)) {
-      setFormError(`کد قبلی هنوز معتبر است. تا ${faDigits(secondsLeft)} ثانیه دیگر اطلاعات تازه جایگزین نمی‌شود.`);
+      setFormError(`کد قبلی هنوز معتبر است. تا ${faNumber(secondsLeft)} ثانیه دیگر اطلاعات تازه جایگزین نمی‌شود.`);
       return;
     }
     setPending(true);
@@ -177,7 +177,7 @@ export function RegisterForm({ initialPath }: { initialPath: Path }) {
             disabled={pending || secondsLeft > 0}
             onClick={() => void start()}
           >
-            {secondsLeft > 0 ? `ارسال دوباره تا ${faDigits(secondsLeft)} ثانیه` : "ارسال دوباره کد"}
+            {secondsLeft > 0 ? `ارسال دوباره تا ${faNumber(secondsLeft)} ثانیه` : "ارسال دوباره کد"}
           </button>
           <button
             type="button"
@@ -276,7 +276,7 @@ function AccountType({ value, onChange }: { value: AccountType; onChange: (value
   return (
     <fieldset>
       <legend className="mb-2 text-sm font-medium text-muted-foreground">نوع حساب</legend>
-      <div className="grid grid-cols-2 rounded-full bg-white/55 p-1 ring-1 ring-white/80">
+      <div className="grid grid-cols-2 rounded-pill bg-card/70 p-1 ring-1 ring-border">
         {options.map(([option, label]) => (
           <label key={option} className="cursor-pointer">
             <input
@@ -287,7 +287,7 @@ function AccountType({ value, onChange }: { value: AccountType; onChange: (value
               onChange={() => onChange(option)}
               className="peer sr-only"
             />
-            <span className="flex min-h-11 items-center justify-center rounded-full text-sm transition-colors peer-checked:bg-primary peer-checked:font-semibold peer-checked:text-white peer-focus-visible:ring-2 peer-focus-visible:ring-primary">
+            <span className="flex min-h-11 items-center justify-center rounded-pill text-sm transition-colors peer-checked:bg-primary peer-checked:font-semibold peer-checked:text-primary-foreground peer-focus-visible:ring-2 peer-focus-visible:ring-ring">
               {label}
             </span>
           </label>
@@ -316,13 +316,13 @@ function Intent({ value, onChange }: { value: Path; onChange: (value: Path) => v
               onChange={() => onChange(option.value)}
               className="sr-only"
             />
-            <span className="flex items-center gap-3 rounded-2xl border border-white/70 bg-white/40 px-3 py-2.5 transition-colors group-has-[:checked]:border-primary/30 group-has-[:checked]:bg-white group-has-[:focus-visible]:ring-2 group-has-[:focus-visible]:ring-primary">
-              <span className="size-4 shrink-0 rounded-full border-2 border-border bg-white group-has-[:checked]:border-primary group-has-[:checked]:bg-primary group-has-[:checked]:shadow-[inset_0_0_0_3px_white]" />
+            <span className="flex items-center gap-3 rounded-xl border border-border bg-card/60 px-3 py-2.5 transition-colors group-has-[:checked]:border-primary/40 group-has-[:checked]:bg-card group-has-[:focus-visible]:ring-2 group-has-[:focus-visible]:ring-ring">
+              <span className="size-4 shrink-0 rounded-pill border-2 border-border bg-card group-has-[:checked]:border-primary group-has-[:checked]:bg-primary group-has-[:checked]:shadow-[inset_0_0_0_3px_var(--card)]" />
               <span className="min-w-0 flex-1 text-start">
                 <span className="block text-sm font-semibold text-foreground">{option.title}</span>
-                <span className="block text-xs leading-5 text-muted-foreground">{option.hint}</span>
+                <span className="block text-xs leading-5 text-foreground-muted">{option.hint}</span>
               </span>
-              <span className="grid size-9 shrink-0 place-items-center rounded-full bg-mint text-primary">
+              <span className="grid size-9 shrink-0 place-items-center rounded-pill bg-mint text-primary">
                 <Icon name={option.icon} className="size-4" />
               </span>
             </span>

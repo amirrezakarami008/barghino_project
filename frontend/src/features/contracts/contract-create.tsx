@@ -3,88 +3,57 @@
 import { useCallback, useRef, useState, type ReactElement } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
-import { WorkspacePage } from "@/features/workspace/workspace-page";
-import { Button, ButtonLink } from "@/shared/ui/button";
+import {
+  Alert,
+  Button,
+  ButtonLink,
+  Card,
+  PlanCard,
+  Skeleton,
+  Stepper,
+  type StepItem,
+  type StepState,
+} from "@/components/ui";
 import { Icon } from "@/shared/ui/icon";
-import { LoadingCards } from "@/shared/ui/loading-cards";
+import { faNumber } from "@/shared/lib/fa";
 import { contractError, createDraft, getContracts, getPlanChoices, mutationMayHaveSucceeded } from "./contracts-api";
 import { eligibility, formatDecimal, type Contract, type Plan, type PlantOption } from "./contract-model";
 import { ContractEmpty, ContractError, ContractPagination } from "./contract-ui";
 import { IdentityNotice } from "./identity-notice";
 import { useContractResource } from "./use-contract-resource";
 import { ContractSiteStage, type SitePhase } from "./contract-site-stage";
-import "./contracts.css";
 
+type WizardStep = 1 | 2 | 3 | 4 | 5 | 6;
 type Submission =
   | { readonly status: "idle" }
   | { readonly status: "submitting" }
   | { readonly status: "error"; readonly message: string }
   | { readonly status: "uncertain"; readonly matches: readonly Contract[] };
 
-const STEPS = ["انشعاب", "نیروگاه", "تأیید شرکت", "پلن فروش", "پیش‌نویس"] as const;
+const LABELS = [
+  "انشعاب",
+  "نیروگاه",
+  "وضعیت بررسی",
+  "انتخاب پلن",
+  "مرور نهایی",
+  "ساخت پیش‌نویس",
+] as const;
 
-function stageTitle(step: 1 | 2 | 3, sitePhase: SitePhase): string {
-  if (step === 1) {
-    if (sitePhase === 1) return "انشعاب این قرارداد را ثبت یا انتخاب کنید";
-    if (sitePhase === 2) return "نیروگاه متصل به انشعاب را معرفی کنید";
-    return "تأیید انشعاب و نیروگاه را همین‌جا پیگیری کنید";
-  }
-  if (step === 2) return "شرایط فروش مناسب خود را انتخاب کنید";
-  return "یک بار دیگر، پیش از ساخت پیش‌نویس";
-}
-
-function PlanTile({ plan, selected, onSelect }: { readonly plan: Plan; readonly selected: boolean; readonly onSelect: () => void }): ReactElement {
-  return (
-    <label className="contract-plan-tile" data-selected={selected} data-featured={plan.recommended}>
-      <input type="radio" name="contract-plan" checked={selected} onChange={onSelect} />
-      <div className="contract-plan-tile-top">
-        {plan.recommended ? (
-          <small>
-            <Icon name="star" className="size-3" />
-            پیشنهاد شرکت
-          </small>
-        ) : (
-          <small>پلن فعال</small>
-        )}
-        <h3>{plan.name}</h3>
-        <p>{plan.description}</p>
-      </div>
-      <dl className="contract-plan-tile-metrics">
-        <div>
-          <dt>نرخ خرید هر kWh</dt>
-          <dd>
-            <bdi dir="ltr">{formatDecimal(plan.rate)}</bdi>
-            <small>تومان</small>
-          </dd>
-        </div>
-        <div>
-          <dt>تعهد انرژی</dt>
-          <dd>
-            <bdi dir="ltr">{formatDecimal(plan.commitment)}</bdi>
-            <small>
-              <bdi dir="ltr">kWh</bdi>
-            </small>
-          </dd>
-        </div>
-      </dl>
-      <ul className="contract-plan-tile-benefits">
-        {plan.benefits.map((benefit, index) => (
-          <li key={`${index}-${benefit}`}>
-            <Icon name="check" className="size-4" />
-            {benefit}
-          </li>
-        ))}
-      </ul>
-      <span className="contract-plan-select-label">{selected ? "انتخاب شده" : "انتخاب این پلن"}</span>
-    </label>
-  );
+function stepState(index: number, current: WizardStep): StepState {
+  if (index + 1 < current) return "done";
+  if (index + 1 === current) return "current";
+  return "blocked";
 }
 
 export function ContractCreate(): ReactElement {
   const router = useRouter();
   const search = useSearchParams();
-  const [sitePhase, setSitePhase] = useState<SitePhase>(() => (search.get("plant") ? 3 : search.get("branch") ? 2 : 1));
-  const [step, setStep] = useState<1 | 2 | 3>(1);
+  const [sitePhase, setSitePhase] = useState<SitePhase>(() =>
+    search.get("plant") ? 3 : search.get("branch") ? 2 : 1,
+  );
+  const [step, setStep] = useState<WizardStep>(() =>
+    search.get("plant") ? 3 : search.get("branch") ? 2 : 1,
+  );
   const [planPage, setPlanPage] = useState(1);
   const [selectedPlant, setSelectedPlant] = useState<PlantOption>();
   const [selectedPlan, setSelectedPlan] = useState<Plan>();
@@ -93,17 +62,32 @@ export function ContractCreate(): ReactElement {
   const heading = useRef<HTMLHeadingElement>(null);
   const loadPlans = useCallback((signal: AbortSignal) => getPlanChoices(planPage, signal), [planPage]);
   const plans = useContractResource(`plans:${planPage}`, loadPlans);
-  const currentStage = step === 1 ? sitePhase : step + 2;
   const pending = submission.status === "submitting";
 
-  function go(value: 1 | 2 | 3): void {
+  const stepperSteps: StepItem[] = LABELS.map((label, index) => ({
+    id: String(index + 1),
+    label,
+    state: stepState(index, step),
+  }));
+
+  function go(value: WizardStep): void {
     setStep(value);
+    if (value <= 3) setSitePhase(value as SitePhase);
     setSubmission({ status: "idle" });
     heading.current?.focus();
   }
 
   async function submit(): Promise<void> {
-    if (inFlight.current || !selectedPlant || !selectedPlan || eligibility(selectedPlant) || !selectedPlan.active || submission.status === "uncertain") return;
+    if (
+      inFlight.current ||
+      !selectedPlant ||
+      !selectedPlan ||
+      eligibility(selectedPlant) ||
+      !selectedPlan.active ||
+      submission.status === "uncertain"
+    ) {
+      return;
+    }
     inFlight.current = true;
     setSubmission({ status: "submitting" });
     try {
@@ -114,185 +98,213 @@ export function ContractCreate(): ReactElement {
         let matches: readonly Contract[] = [];
         try {
           matches = (await getContracts(1)).results.filter(
-            (contract) => contract.plantUuid === selectedPlant.plant.uuid && contract.planUuid === selectedPlan.uuid,
+            (contract) =>
+              contract.plantUuid === selectedPlant.plant.uuid && contract.planUuid === selectedPlan.uuid,
           );
         } catch {
-          /* An uncertain mutation must never be retried automatically. */
+          /* never auto-retry uncertain mutation */
         }
         setSubmission({ status: "uncertain", matches });
-      } else setSubmission({ status: "error", message: contractError(error) });
+      } else {
+        setSubmission({ status: "error", message: contractError(error) });
+      }
     } finally {
       inFlight.current = false;
     }
   }
 
   return (
-    <div className="contracts-feature">
-      <WorkspacePage
-        title="قرارداد جدید"
-        icon="file"
-        lede="ثبت انشعاب، معرفی نیروگاه و پیگیری تأیید شرکت؛ همه در مسیر همین قرارداد، تا انتخاب پلن و بررسی پیش‌نویس."
-      >
-        <Link href="/panel/contracts" className="contract-back">
+    <div className="mx-auto max-w-5xl space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <Link href="/panel/contracts" className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-foreground-muted hover:text-foreground">
           <Icon name="arrow" className="size-4" />
           بازگشت به قراردادها
         </Link>
-        <IdentityNotice />
+      </div>
 
-        <div className="contract-create-layout">
-          <ol className="contract-stepper" aria-label="مراحل ایجاد پیش‌نویس">
-            {STEPS.map((label, index) => (
-              <li key={label} aria-current={currentStage === index + 1 ? "step" : undefined} data-complete={currentStage > index + 1}>
-                <span>{index < currentStage - 1 ? <Icon name="check" /> : (index + 1).toLocaleString("fa-IR")}</span>
-                <em>{label}</em>
-              </li>
-            ))}
-          </ol>
-
-          <section className="contract-create-stage" aria-busy={pending}>
-            <header className="contract-stage-header">
-              <p className="contract-stage-kicker">مرحلهٔ {currentStage.toLocaleString("fa-IR")} از ۵</p>
-              <h2 ref={heading} tabIndex={-1}>
-                {stageTitle(step, sitePhase)}
-              </h2>
-            </header>
-
-            {step === 1 ? (
-              <ContractSiteStage
-                phase={sitePhase}
-                onPhaseChange={(phase) => {
-                  if (phase !== sitePhase) {
-                    setSitePhase(phase);
-                    heading.current?.focus();
-                  }
-                }}
-                onReady={(option) => {
-                  setSelectedPlant(option);
-                  go(2);
-                }}
-              />
-            ) : null}
-
-            {step === 2 ? (
-              plans.state.status === "loading" ? (
-                <LoadingCards label="دریافت پلن‌های فعال…" />
-              ) : plans.state.status === "error" ? (
-                <ContractError message={plans.state.message} retry={plans.reload} />
-              ) : !plans.state.data.results.some((plan) => plan.active) ? (
-                <ContractEmpty title="در حال حاضر پلن فعالی در این صفحه وجود ندارد">
-                  <p>کمی بعد دوباره بررسی کنید یا با پشتیبانی در ارتباط باشید.</p>
-                  <Button variant="secondary" onClick={plans.reload}>
-                    دریافت دوباره
-                  </Button>
-                </ContractEmpty>
-              ) : (
-                <>
-                  <fieldset className="contract-plan-board">
-                    <legend className="sr-only">انتخاب پلن فروش</legend>
-                    {plans.state.data.results
-                      .filter((plan) => plan.active)
-                      .map((plan) => (
-                        <PlanTile key={plan.uuid} plan={plan} selected={selectedPlan?.uuid === plan.uuid} onSelect={() => setSelectedPlan(plan)} />
-                      ))}
-                  </fieldset>
-                  <ContractPagination page={planPage} {...plans.state.data} onChange={setPlanPage} />
-                  <Button variant="ghost" onClick={() => { setSelectedPlan(undefined); plans.reload(); }}>
-                    تازه‌سازی پلن‌های فعال
-                  </Button>
-                </>
-              )
-            ) : null}
-
-            {step === 3 && selectedPlant && selectedPlan ? (
-              <div className="contract-final-review">
-                <div className="contract-final-review-head">
-                  <span className="contract-review-label">
-                    <Icon name="eye" />
-                    مرور اطلاعات پیش‌نویس
-                  </span>
-                  <h3>{selectedPlant.plant.name}</h3>
-                </div>
-                <dl className="contract-spec-board">
-                  <div>
-                    <dt>پلن انتخابی</dt>
-                    <dd>{selectedPlan.name}</dd>
-                  </div>
-                  <div>
-                    <dt>شماره کنتور</dt>
-                    <dd>
-                      <bdi dir="ltr">{selectedPlant.branch?.meter}</bdi>
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>نرخ خرید هر kWh</dt>
-                    <dd>
-                      <bdi dir="ltr">{formatDecimal(selectedPlan.rate)}</bdi> تومان
-                    </dd>
-                  </div>
-                  <div>
-                    <dt>تعهد انرژی</dt>
-                    <dd>
-                      <bdi dir="ltr">{formatDecimal(selectedPlan.commitment)}</bdi> <bdi dir="ltr">kWh</bdi>
-                    </dd>
-                  </div>
-                  <div className="contract-spec-wide">
-                    <dt>نشانی انشعاب تأییدشده</dt>
-                    <dd>{selectedPlant.branch?.address}</dd>
-                  </div>
-                </dl>
-                <p className="contract-note">
-                  با ساخت پیش‌نویس، نرخ و تعهد انتخابی در قرارداد ذخیره می‌شوند. این اقدام امضا یا ارسال به شرکت نیست. تغییر پلن پیش‌نویس از طریق API فعلی ممکن نیست.
-                </p>
-                <div className="contract-feedback contract-feedback-warning">
-                  <Icon name="lock" className="size-5" />
-                  <p>سند نهاییِ نسخه‌بندی‌شده هنوز ارائه نشده؛ پیش‌نویس را می‌توانید بسازید، اما ارسال امضا فعلاً فعال نیست.</p>
-                </div>
-              </div>
-            ) : null}
-
-            {submission.status === "error" ? <ContractError message={submission.message} /> : null}
-            {submission.status === "uncertain" ? (
-              <div className="contract-feedback contract-feedback-warning" role="alert">
-                <Icon name="clock" className="size-5 shrink-0" />
-                <div>
-                  <strong>نتیجهٔ درخواست ساخت مشخص نیست</strong>
-                  <p>
-                    برای جلوگیری از ساخت تکراری، درخواست خودکار دیگری نفرستادیم. ابتدا فهرست را بررسی کنید؛ موارد زیر فقط قراردادهای مشابه‌اند، نه تأیید موفقیت همین درخواست.
-                  </p>
-                  {submission.matches.map((contract) => (
-                    <Link key={contract.uuid} href={`/panel/contracts/${encodeURIComponent(contract.uuid)}`}>
-                      بررسی قرارداد مشابه · <bdi dir="ltr">{contract.uuid.slice(0, 8)}</bdi>
-                    </Link>
-                  ))}
-                  <ButtonLink href="/panel/contracts" variant="secondary" className="mt-3">
-                    بررسی فهرست قراردادها
-                  </ButtonLink>
-                </div>
-              </div>
-            ) : null}
-
-            {step > 1 ? (
-              <footer className="contract-stage-actions">
-                <Button variant="secondary" disabled={pending || submission.status === "uncertain"} onClick={() => go(step === 3 ? 2 : 1)}>
-                  مرحلهٔ قبل
-                </Button>
-                <span role="status">{pending ? "در حال ساخت پیش‌نویس…" : `مرحلهٔ ${currentStage.toLocaleString("fa-IR")} از ۵`}</span>
-                {step < 3 ? (
-                  <Button disabled={step === 1 ? !selectedPlant || Boolean(eligibility(selectedPlant)) : !selectedPlan} onClick={() => go(step === 1 ? 2 : 3)}>
-                    ادامه
-                    <Icon name="chevron" className="size-4" />
-                  </Button>
-                ) : (
-                  <Button disabled={pending || submission.status === "uncertain"} onClick={() => { void submit(); }}>
-                    <Icon name="plus" className="size-4" />
-                    {pending ? "در حال ثبت…" : "ساخت پیش‌نویس"}
-                  </Button>
-                )}
-              </footer>
-            ) : null}
-          </section>
+      <header className="glass-strong rounded-xl border border-border p-5 shadow-soft sm:p-6">
+        <p className="text-caption text-accent">مسیر ساخت پیش‌نویس</p>
+        <h2 ref={heading} tabIndex={-1} className="mt-2 text-h2 outline-none">
+          {LABELS[step - 1]}
+        </h2>
+        <p className="mt-2 max-w-2xl text-sm leading-7 text-foreground-muted">
+          ساخت پیش‌نویس به‌معنی امضای قرارداد یا آغاز خرید برق نیست. نرخ و تعهد فقط در متن پیش‌نویس ذخیره می‌شوند.
+        </p>
+        <div className="mt-6">
+          <Stepper steps={stepperSteps} />
         </div>
-      </WorkspacePage>
+      </header>
+
+      <IdentityNotice />
+
+      <section className="space-y-5" aria-busy={pending}>
+        {step <= 3 ? (
+          <ContractSiteStage
+            phase={sitePhase}
+            onPhaseChange={(phase) => {
+              setSitePhase(phase);
+              setStep(phase);
+              heading.current?.focus();
+            }}
+            onReady={(option) => {
+              setSelectedPlant(option);
+              go(4);
+            }}
+          />
+        ) : null}
+
+        {step === 4 ? (
+          plans.state.status === "loading" ? (
+            <div className="grid gap-3 md:grid-cols-3">
+              <Skeleton className="h-64" />
+              <Skeleton className="h-64" />
+              <Skeleton className="h-64" />
+            </div>
+          ) : plans.state.status === "error" ? (
+            <ContractError message={plans.state.message} retry={plans.reload} />
+          ) : !plans.state.data.results.some((plan) => plan.active) ? (
+            <ContractEmpty title="پلن فعالی در دسترس نیست">
+              <p>کمی بعد دوباره بررسی کنید.</p>
+              <Button variant="secondary" onClick={plans.reload}>
+                دریافت دوباره
+              </Button>
+            </ContractEmpty>
+          ) : (
+            <>
+              <p className="text-sm text-foreground-muted">
+                پلن‌ها برای مقایسه هم‌ارتفاع‌اند. نرخ‌ها شرایط فعلی کاتالوگ‌اند و هنگام ساخت پیش‌نویس در قرارداد قفل می‌شوند.
+              </p>
+              <div className="grid gap-4 md:grid-cols-3">
+                {plans.state.data.results
+                  .filter((plan) => plan.active)
+                  .map((plan) => (
+                    <PlanCard
+                      key={plan.uuid}
+                      name={plan.name}
+                      buyRate={Number(plan.rate)}
+                      energyCommitment={`${formatDecimal(plan.commitment)} kWh`}
+                      benefits={[...plan.benefits]}
+                      recommended={plan.recommended}
+                      sample={false}
+                      selected={selectedPlan?.uuid === plan.uuid}
+                      actionLabel="انتخاب این پلن"
+                      onSelect={() => setSelectedPlan(plan)}
+                    />
+                  ))}
+              </div>
+              <ContractPagination page={planPage} {...plans.state.data} onChange={setPlanPage} />
+            </>
+          )
+        ) : null}
+
+        {step === 5 && selectedPlant && selectedPlan ? (
+          <Card>
+            <h3 className="text-h3">مرور نهایی پیش‌نویس</h3>
+            <dl className="mt-4 grid gap-3 sm:grid-cols-2">
+              <div className="rounded-md bg-surface p-3">
+                <dt className="text-caption text-foreground-muted">نیروگاه</dt>
+                <dd className="mt-1 font-semibold">{selectedPlant.plant.name}</dd>
+              </div>
+              <div className="rounded-md bg-surface p-3">
+                <dt className="text-caption text-foreground-muted">انشعاب / کنتور</dt>
+                <dd className="mt-1 font-semibold">
+                  {selectedPlant.branch?.name} · <bdi dir="ltr">{selectedPlant.branch?.meter}</bdi>
+                </dd>
+              </div>
+              <div className="rounded-md bg-surface p-3">
+                <dt className="text-caption text-foreground-muted">پلن</dt>
+                <dd className="mt-1 font-semibold">{selectedPlan.name}</dd>
+              </div>
+              <div className="rounded-md bg-surface p-3">
+                <dt className="text-caption text-foreground-muted">نرخ و تعهد</dt>
+                <dd className="mt-1 font-semibold tabular-nums">
+                  <bdi dir="ltr">{formatDecimal(selectedPlan.rate)}</bdi> تومان/kWh ·{" "}
+                  <bdi dir="ltr">{formatDecimal(selectedPlan.commitment)}</bdi> kWh
+                </dd>
+              </div>
+              <div className="rounded-md bg-surface p-3 sm:col-span-2">
+                <dt className="text-caption text-foreground-muted">نشانی انشعاب</dt>
+                <dd className="mt-1 font-semibold">{selectedPlant.branch?.address}</dd>
+              </div>
+            </dl>
+            <Alert tone="info" className="mt-4" title="این مرحله امضا نیست">
+              با ادامه، فقط پیش‌نویس ساخته می‌شود. خرید برق و تعهدات نهایی فقط پس از سند رسمی و امضای فعال آغاز می‌شود.
+            </Alert>
+          </Card>
+        ) : null}
+
+        {step === 6 && selectedPlant && selectedPlan ? (
+          <Card>
+            <h3 className="text-h3">ساخت پیش‌نویس</h3>
+            <p className="mt-2 text-sm leading-7 text-foreground-muted">
+              با تأیید، پلن «{selectedPlan.name}» روی نیروگاه «{selectedPlant.plant.name}» به‌صورت پیش‌نویس ذخیره می‌شود.
+            </p>
+            <Alert tone="warning" className="mt-4" title="ساخت پیش‌نویس ≠ امضا و ≠ شروع خرید برق">
+              پس از ساخت می‌توانید جزئیات را ببینید؛ دکمهٔ امضا تا آماده‌شدن سند رسمی غیرفعال می‌ماند.
+            </Alert>
+          </Card>
+        ) : null}
+
+        {submission.status === "error" ? <ContractError message={submission.message} /> : null}
+        {submission.status === "uncertain" ? (
+          <Alert tone="warning" title="نتیجهٔ درخواست ساخت مشخص نیست">
+            <p>
+              برای جلوگیری از ساخت تکراری، درخواست خودکار دیگری نفرستادیم. فهرست را بررسی کنید.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {submission.matches.map((contract) => (
+                <ButtonLink
+                  key={contract.uuid}
+                  href={`/panel/contracts/${encodeURIComponent(contract.uuid)}`}
+                  variant="secondary"
+                  size="sm"
+                >
+                  قرارداد مشابه
+                </ButtonLink>
+              ))}
+              <ButtonLink href="/panel/contracts" variant="ghost" size="sm">
+                فهرست قراردادها
+              </ButtonLink>
+            </div>
+          </Alert>
+        ) : null}
+
+        {step >= 4 ? (
+          <footer className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card p-4">
+            <Button
+              variant="secondary"
+              disabled={pending || submission.status === "uncertain"}
+              onClick={() => go((step - 1) as WizardStep)}
+            >
+              مرحلهٔ قبل
+            </Button>
+            <span className="text-caption text-foreground-muted" role="status">
+              {pending ? "در حال ساخت پیش‌نویس…" : `مرحلهٔ ${faNumber(step)} از ${faNumber(6)}`}
+            </span>
+            {step < 6 ? (
+              <Button
+                disabled={
+                  (step === 4 && !selectedPlan) ||
+                  (step === 5 && (!selectedPlant || !selectedPlan))
+                }
+                onClick={() => go((step + 1) as WizardStep)}
+              >
+                ادامه
+              </Button>
+            ) : (
+              <Button
+                disabled={pending || submission.status === "uncertain"}
+                onClick={() => {
+                  void submit();
+                }}
+              >
+                <Icon name="plus" className="size-4" />
+                {pending ? "در حال ثبت…" : "ساخت پیش‌نویس"}
+              </Button>
+            )}
+          </footer>
+        ) : null}
+      </section>
     </div>
   );
 }

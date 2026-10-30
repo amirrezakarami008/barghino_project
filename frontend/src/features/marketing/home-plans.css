@@ -1,0 +1,66 @@
+.home-plans {
+  margin-inline: auto;
+  width: 100%;
+  max-width: var(--container-max);
+  padding-inline: 1rem;
+  padding-block: var(--section-y);
+}
+
+@media (min-width: 640px) {
+  .home-plans {
+    padding-inline: 1.5rem;
+  }
+}
+
+@media (min-width: 768px) {
+  .home-plans {
+    padding-block: var(--section-y-md);
+  }
+}
+
+@media (min-width: 1024px) {
+  .home-plans {
+    padding-inline: 2rem;
+  }
+}
+
+.home-plans__grid {
+  display: grid;
+  gap: 1.25rem;
+  margin-block-start: 2.5rem;
+  align-items: stretch;
+}
+
+@media (min-width: 768px) {
+  .home-plans__grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 1rem;
+    padding-block: 0.75rem;
+  }
+}
+
+.home-plans__note {
+  margin-block-start: 1.5rem;
+  text-align: center;
+  font-size: max(0.8125rem, var(--text-caption));
+  line-height: var(--leading-caption);
+  color: var(--foreground-muted);
+}
+
+.home-plans__cta-primary {
+  background-image: var(--grad-sun);
+  color: var(--primary-foreground);
+  box-shadow: var(--shadow-sun);
+}
+
+.home-plans__cta-outline {
+  border: 1px solid var(--border);
+  background-image: none;
+  background-color: transparent;
+  color: var(--foreground);
+  box-shadow: none;
+}
+
+.home-plans__cta-outline:hover {
+  background-color: color-mix(in srgb, var(--foreground) 4%, var(--surface));
+}
