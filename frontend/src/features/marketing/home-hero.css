@@ -215,12 +215,12 @@
 .home-hero__visual {
   position: relative;
   width: 100%;
-  min-height: 22rem;
+  min-height: 16rem;
 }
 
 @media (min-width: 1024px) {
   .home-hero__visual {
-    min-height: 28rem;
+    min-height: 22rem;
   }
 }
 
@@ -228,7 +228,7 @@
   position: relative;
   overflow: hidden;
   width: 100%;
-  aspect-ratio: 4 / 5;
+  aspect-ratio: 16 / 10;
   border-radius: var(--radius-3xl);
   box-shadow: var(--shadow-lifted), var(--shadow-sun);
   isolation: isolate;
@@ -236,8 +236,8 @@
 
 @media (min-width: 1024px) {
   .home-hero__media {
-    aspect-ratio: 5 / 6;
-    max-height: 36rem;
+    aspect-ratio: 16 / 10;
+    max-height: 32rem;
   }
 }
 

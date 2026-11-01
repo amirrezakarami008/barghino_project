@@ -5,10 +5,12 @@ import { useTheme } from "./theme-provider";
 
 type ThemeToggleProps = {
   className?: string;
+  /** Show text label beside the icon (auth page pills). */
+  showLabel?: boolean;
 };
 
 /** Animated sun ↔ moon morph toggle for header placement. */
-export function ThemeToggle({ className }: ThemeToggleProps) {
+export function ThemeToggle({ className, showLabel = false }: ThemeToggleProps) {
   const { resolvedTheme, toggleTheme } = useTheme();
   const isDark = resolvedTheme === "dark";
 
@@ -17,17 +19,20 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
       type="button"
       onClick={toggleTheme}
       className={cn(
-        "relative inline-flex size-11 items-center justify-center overflow-hidden rounded-pill border border-border bg-card text-foreground shadow-soft transition-[background-color,box-shadow,transform] duration-standard ease-out hover:bg-surface hover:shadow-volt focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        "relative inline-flex items-center justify-center overflow-hidden rounded-pill transition-[background-color,box-shadow,transform] duration-standard ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        showLabel
+          ? "h-10 gap-2 px-3.5 text-sm font-semibold"
+          : "size-11 border border-border bg-card text-foreground shadow-soft hover:bg-surface hover:shadow-volt",
         className,
       )}
       aria-label={isDark ? "فعال‌سازی حالت روشن" : "فعال‌سازی حالت تاریک"}
       title={isDark ? "حالت روشن" : "حالت تاریک"}
       aria-pressed={isDark}
     >
-      <span className="sr-only">{isDark ? "تاریک" : "روشن"}</span>
+      {showLabel ? null : <span className="sr-only">{isDark ? "تاریک" : "روشن"}</span>}
       <svg
         viewBox="0 0 24 24"
-        className="size-5"
+        className="size-5 shrink-0"
         aria-hidden="true"
         fill="none"
         stroke="currentColor"
@@ -69,6 +74,7 @@ export function ThemeToggle({ className }: ThemeToggleProps) {
           <path d="M17.51 6.49l1.56-1.56" />
         </g>
       </svg>
+      {showLabel ? <span>{isDark ? "حالت روشن" : "حالت تاریک"}</span> : null}
     </button>
   );
 }

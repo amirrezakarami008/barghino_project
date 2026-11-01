@@ -31,14 +31,18 @@ export function ButtonLink({
   variant = "primary",
   className,
   children,
+  scroll,
+  prefetch,
 }: {
   href: string;
   variant?: ButtonVariant;
   className?: string;
   children: ReactNode;
+  scroll?: boolean;
+  prefetch?: boolean;
 }) {
   return (
-    <Link href={href} className={buttonClass(variant, className)}>
+    <Link href={href} scroll={scroll} prefetch={prefetch} className={buttonClass(variant, className)}>
       {children}
     </Link>
   );

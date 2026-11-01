@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useId, useState, type FormEvent, type ReactNode } from "react";
 import { OtpInput } from "@/features/auth/components/otp-input";
@@ -9,18 +10,26 @@ import { formatIranMobile, isIranMobile, normalizeIranMobile } from "@/features/
 import { userFromApi, type Session } from "@/features/auth/lib/session";
 import { destinationFor, useAuth } from "@/features/auth/session-provider";
 import { faNumber } from "@/shared/lib/fa";
-import { Button, ButtonLink } from "@/shared/ui/button";
 import { Icon, type IconName } from "@/shared/ui/icon";
 import { Logo } from "@/shared/ui/logo";
+import "./auth-face.css";
 
 const codeLifetimeSeconds = 120;
 
 type Step = "phone" | "code";
 
-export function LoginForm() {
+type LoginFormProps = {
+  /** Hide page chrome (logo) when rendered inside the flip card. */
+  embedded?: boolean;
+  /** Switch-face link target; preserves query when provided by AuthShell. */
+  switchHref?: string;
+};
+
+export function LoginForm({ embedded = false, switchHref = "/register" }: LoginFormProps) {
   const router = useRouter();
   const next = useSearchParams().get("next");
   const { session, ready, signIn } = useAuth();
+  const reduceMotion = useReducedMotion();
   const [step, setStep] = useState<Step>("phone");
   const [phone, setPhone] = useState("");
   const [phoneError, setPhoneError] = useState("");
@@ -30,6 +39,9 @@ export function LoginForm() {
   const [resendAt, setResendAt] = useState(0);
   const phoneId = useId();
   const secondsLeft = resendAt > now ? Math.ceil((resendAt - now) / 1000) : 0;
+  const stepTransition = reduceMotion
+    ? { duration: 0.01 }
+    : { duration: 0.28, ease: [0.22, 1, 0.36, 1] as const };
 
   useEffect(() => {
     if (ready && session) router.replace(destinationFor(session.user, next));
@@ -38,9 +50,9 @@ export function LoginForm() {
   useEffect(() => {
     if (resendAt === 0) return;
     const timer = window.setInterval(() => {
-      const next = Date.now();
-      setNow(next);
-      if (next >= resendAt) window.clearInterval(timer);
+      const nextTick = Date.now();
+      setNow(nextTick);
+      if (nextTick >= resendAt) window.clearInterval(timer);
     }, 1000);
     return () => window.clearInterval(timer);
   }, [resendAt]);
@@ -79,71 +91,75 @@ export function LoginForm() {
     return { access: result.access, refresh: result.refresh, user: userFromApi(result.user) };
   }
 
-  if (step === "code") {
-    return (
-      <div className="grid gap-4">
-        <div className="text-center">
-          <Logo href="/" caption={false} className="justify-center" />
-          <h1 className="mt-6 text-xl font-bold text-foreground">کد تأیید</h1>
-          <p className="mt-2 text-sm leading-7 text-muted-foreground">
-            اگر شماره {formatIranMobile(phone)} امکان دریافت پیامک داشته باشد، کد شش‌رقمی ارسال شده است.
-          </p>
-        </div>
-        <OtpInput
-          key={resendAt}
-          disabled={pending}
-          onVerify={verifyCode}
-          onBusyChange={setPending}
-          onVerified={(nextSession) => {
-            signIn(nextSession);
-            router.replace(destinationFor(nextSession.user, next));
-          }}
-        />
-        {formError ? <p className="text-sm leading-7 text-danger">{formError}</p> : null}
-        <div className="flex items-center justify-between gap-3 text-sm">
-          <button
-            type="button"
-            className="cursor-pointer font-semibold text-primary disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={pending || secondsLeft > 0}
-            onClick={() => void requestCode()}
-          >
-            {secondsLeft > 0 ? `ارسال دوباره تا ${faNumber(secondsLeft)} ثانیه` : "ارسال دوباره کد"}
-          </button>
-          <button
-            type="button"
-            className="cursor-pointer text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={pending}
-            onClick={() => {
-              setStep("phone");
-              setFormError("");
-            }}
-          >
-            اصلاح شماره
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <form onSubmit={requestCode} noValidate className="grid gap-4">
-      <div className="text-center">
+  const header = (title: string, subtitle: string) => (
+    <div className="auth-face__header">
+      {embedded ? (
+        <span className="auth-face__logo" aria-hidden>
+          <Icon name="bolt" className="size-7" />
+        </span>
+      ) : (
         <Logo href="/" caption={false} className="justify-center" />
-        <p className="mt-3 text-xs text-muted-foreground">پلتفرم فروش برق خانگی و نیروگاه خورشیدی</p>
-        <h1 className="mt-5 text-xl font-bold text-foreground">ورود به حساب کاربری</h1>
-        <p className="mt-1 text-sm leading-7 text-muted-foreground">شماره موبایل حساب را وارد کنید تا کد ورود برایتان پیامک شود.</p>
+      )}
+      <h1 className="auth-face__title">{title}</h1>
+      <p className="auth-face__subtitle">{subtitle}</p>
+    </div>
+  );
+
+  const codeStep = (
+    <div className="auth-face grid gap-4">
+      {header(
+        "کد تأیید",
+        `اگر شماره ${formatIranMobile(phone)} امکان دریافت پیامک داشته باشد، کد شش‌رقمی ارسال شده است.`,
+      )}
+      <OtpInput
+        key={resendAt}
+        disabled={pending}
+        onVerify={verifyCode}
+        onBusyChange={setPending}
+        onVerified={(nextSession) => {
+          signIn(nextSession);
+          router.replace(destinationFor(nextSession.user, next));
+        }}
+      />
+      {formError ? <p className="auth-face__error">{formError}</p> : null}
+      <div className="auth-face__meta-row">
+        <button
+          type="button"
+          className="auth-face__link-violet"
+          disabled={pending || secondsLeft > 0}
+          onClick={() => void requestCode()}
+        >
+          {secondsLeft > 0 ? `ارسال دوباره تا ${faNumber(secondsLeft)} ثانیه` : "ارسال دوباره کد"}
+        </button>
+        <button
+          type="button"
+          className="auth-face__back"
+          disabled={pending}
+          onClick={() => {
+            setStep("phone");
+            setFormError("");
+          }}
+        >
+          اصلاح شماره
+        </button>
       </div>
-      <Field id={phoneId} label="شماره موبایل" icon="user" error={phoneError} hideLabel>
+    </div>
+  );
+
+  const phoneStep = (
+    <form onSubmit={requestCode} noValidate className="auth-face grid gap-4">
+      {header("ورود به حساب کاربری", "شماره موبایل حساب را وارد کنید تا کد ورود برایتان پیامک شود.")}
+      <Field id={phoneId} label="شماره موبایل" icon="phone" error={phoneError}>
         <input
           id={phoneId}
           name="phone"
           inputMode="tel"
           autoComplete="tel"
           dir="ltr"
-          placeholder="شماره موبایل"
+          placeholder="۰۹۱۲۳۴۵۶۷۸۹"
           value={phone}
           aria-invalid={phoneError ? true : undefined}
-          className="w-full bg-transparent py-1 text-end text-base outline-none focus-visible:outline-none placeholder:text-foreground-muted/70"
+          className="text-end"
           onChange={(event) => {
             setPhone(event.target.value);
             setPhoneError("");
@@ -151,31 +167,35 @@ export function LoginForm() {
           }}
         />
       </Field>
-      {formError ? <p className="text-sm leading-7 text-danger">{formError}</p> : null}
-      <Button type="submit" className="w-full" disabled={pending}>
-        {pending ? "در حال ارسال…" : "دریافت کد"}
-      </Button>
-      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-        <span className="h-px flex-1 bg-border" />
-        یا
-        <span className="h-px flex-1 bg-border" />
-      </div>
-      <ButtonLink href="/register" variant="secondary" className="w-full">
-        <Icon name="user" className="size-4" />
-        ثبت‌نام در برقینو
-      </ButtonLink>
-      <p className="text-center text-xs leading-6 text-muted-foreground">
-        با ورود، شما با{" "}
-        <Link href="/terms" className="font-semibold text-primary">
-          شرایط
-        </Link>{" "}
-        و{" "}
-        <Link href="/privacy" className="font-semibold text-primary">
-          قوانین
-        </Link>{" "}
-        موافقت می‌کنید.
+      {formError ? <p className="auth-face__error">{formError}</p> : null}
+      <button type="submit" className="auth-face__cta" disabled={pending}>
+        {pending ? <span className="auth-face__cta-spinner" aria-hidden /> : null}
+        {pending ? "در حال ارسال…" : "دریافت کد تأیید"}
+        {pending ? null : <Icon name="arrow" className="size-4 rotate-180" />}
+      </button>
+      <p className="auth-face__footer">
+        حساب ندارید؟{" "}
+        <Link href={switchHref} scroll={false}>
+          ثبت‌نام
+        </Link>
       </p>
     </form>
+  );
+
+  return (
+    <div className="relative overflow-hidden">
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={step}
+          initial={reduceMotion ? false : { opacity: 0, x: step === "code" ? 16 : -16 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={reduceMotion ? undefined : { opacity: 0, x: step === "code" ? -16 : 16 }}
+          transition={stepTransition}
+        >
+          {step === "code" ? codeStep : phoneStep}
+        </motion.div>
+      </AnimatePresence>
+    </div>
   );
 }
 
@@ -184,33 +204,27 @@ function Field({
   label,
   icon,
   error,
-  hideLabel = false,
   children,
 }: {
   id: string;
   label: string;
   icon: IconName;
   error?: string;
-  hideLabel?: boolean;
   children: ReactNode;
 }) {
   return (
-    <div className="grid gap-1.5">
-      <div
-        className={`rounded-xl border bg-card px-3.5 py-2.5 shadow-soft transition-colors focus-within:border-primary focus-within:ring-2 focus-within:ring-ring/30 ${error ? "border-danger" : "border-border"}`}
-      >
-        <div className="flex items-center gap-3">
-          <Icon name={icon} className="size-4 shrink-0 text-muted-foreground" />
-          <div className="grid min-w-0 flex-1">
-            <label htmlFor={id} className={hideLabel ? "sr-only" : "text-xs font-medium text-muted-foreground"}>
-              {label}
-            </label>
-            {children}
-          </div>
+    <div className="auth-face__field">
+      <div className={`auth-face__control${error ? " is-invalid auth-field-shake" : ""}`}>
+        <Icon name={icon} className="auth-face__control-icon size-4" />
+        <div className="grid min-w-0 flex-1">
+          <label htmlFor={id} className="sr-only">
+            {label}
+          </label>
+          {children}
         </div>
       </div>
       {error ? (
-        <p role="alert" className="text-sm leading-6 text-danger">
+        <p role="alert" className="auth-face__error">
           {error}
         </p>
       ) : null}

@@ -1,14 +1,19 @@
 "use client";
 
-import { useState, type ReactNode } from "react";
+import { useMemo, useRef, useState, type ReactNode } from "react";
 import {
   Alert,
+  AlertBanner,
+  AlertBannerProvider,
+  AlertSlot,
   Badge,
   Button,
   Card,
+  ConfirmDialog,
   DataTable,
   Drawer,
   EmptyState,
+  InfoPopover,
   Input,
   LockedFeature,
   Modal,
@@ -26,7 +31,13 @@ import {
   Textarea,
   Timeline,
   ToastProvider,
+  createAlertSelector,
+  dedupeAlerts,
+  useAlertBanner,
   useToast,
+  type AlertDescriptor,
+  type AlertHandle,
+  type AlertVariant,
   type StatusTone,
 } from "@/components/ui";
 import { Icon } from "@/shared/ui/icon";
@@ -77,12 +88,78 @@ const sampleRows: SampleRow[] = [
   { id: "3", plant: "نیروگاه نمونه غرب", kwh: 420, status: "approved" },
 ];
 
+type DemoFormState = {
+  phoneMissing: boolean;
+  termsMissing: boolean;
+  networkError: boolean;
+  tipVisible: boolean;
+};
+
+const selectDemoAlerts = createAlertSelector((state: DemoFormState): AlertDescriptor[] => {
+  const alerts: AlertDescriptor[] = [];
+  if (state.networkError) {
+    alerts.push({
+      id: "net",
+      variant: "danger",
+      placement: "form-summary",
+      priority: 2,
+      title: "ارسال انجام نشد",
+      description: "اتصال برقرار نشد. دوباره تلاش کنید.",
+      consequenceKey: "submit-blocked",
+      actions: [{ label: "تلاش دوباره", variant: "primary" }],
+    });
+  }
+  if (state.phoneMissing) {
+    alerts.push({
+      id: "phone",
+      variant: "danger",
+      placement: "field-phone",
+      title: "شماره موبایل لازم است",
+      description: "شماره را به شکل ۰۹۱۲۳۴۵۶۷۸۹ وارد کنید.",
+      items: [{ label: "رفتن به فیلد موبایل", href: "#design-alert-phone" }],
+      consequenceKey: "submit-blocked",
+    });
+  }
+  if (state.termsMissing) {
+    alerts.push({
+      id: "terms",
+      variant: "warning",
+      placement: "field-terms",
+      title: "پذیرش شرایط لازم است",
+      description: "برای ادامه، شرایط و قوانین را بپذیرید.",
+    });
+  }
+  if (state.tipVisible) {
+    alerts.push({
+      id: "tip",
+      variant: "info",
+      placement: "form-summary",
+      title: "راهنمای یک‌بارمصرف",
+      description: "این نکته را می‌توانید ببندید؛ دفعه بعد نشان داده نمی‌شود.",
+      dismissible: true,
+      dismissKey: "design.alert.tip",
+    });
+  }
+  return alerts;
+});
+
 function InteractiveDemo() {
   const { push } = useToast();
+  const { push: pushBanner } = useAlertBanner();
   const [modalOpen, setModalOpen] = useState(false);
   const [drawerOpen, setDrawerOpen] = useState(false);
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState("standard");
   const [tableLoading, setTableLoading] = useState(false);
+  const [demoState, setDemoState] = useState<DemoFormState>({
+    phoneMissing: true,
+    termsMissing: true,
+    networkError: false,
+    tipVisible: true,
+  });
+  const summaryRef = useRef<AlertHandle>(null);
+  const derivedAlerts = useMemo(() => selectDemoAlerts(demoState), [demoState]);
+  const variants: AlertVariant[] = ["info", "success", "warning", "danger", "neutral"];
 
   return (
     <div className="space-y-16">
@@ -261,33 +338,214 @@ function InteractiveDemo() {
         </Drawer>
       </Section>
 
-      <Section id="feedback" title="Alert / Skeleton / Empty / Locked" lede="حالت‌های بازخورد و قفل به‌زودی.">
-        <div className="grid gap-4">
-          <Alert tone="info" title="اطلاع">
-            نرخ‌های صفحه نمونه هستند.
-          </Alert>
-          <Alert tone="warning" title="هشدار">
-            مدارک ناقص است.
-          </Alert>
-          <Alert tone="success" title="موفق">
-            درخواست ثبت شد.
-          </Alert>
-          <Alert tone="danger" title="خطا">
-            اتصال برقرار نشد.
-          </Alert>
+      <Section
+        id="alerts"
+        title="سیستم هشدار"
+        lede="پنج کانال: Inline، Banner، Toast، Confirm، InfoPopover — مشتق از state، نه پاراگراف ثابت."
+      >
+        <AlertBanner />
+        <div className="grid gap-6">
+          <Card className="space-y-3">
+            <h3 className="text-h4">Variantها</h3>
+            <div className="grid gap-3">
+              {variants.map((variant) => (
+                <Alert
+                  key={variant}
+                  variant={variant}
+                  title={
+                    variant === "info"
+                      ? "اطلاع"
+                      : variant === "success"
+                        ? "موفق"
+                        : variant === "warning"
+                          ? "هشدار"
+                          : variant === "danger"
+                            ? "خطا"
+                            : "خنثی"
+                  }
+                  description={
+                    variant === "danger"
+                      ? "این پیام خطرناک با لرزش کوتاه ظاهر می‌شود و role=alert دارد."
+                      : "پس‌زمینه توپر از توکن وضعیت؛ نوار رنگی در سمت شروع."
+                  }
+                  compact={variant === "neutral"}
+                />
+              ))}
+            </div>
+          </Card>
+
+          <Card className="space-y-3">
+            <h3 className="text-h4">با اکشن، لیست، جزئیات جمع‌شو و متن بلند</h3>
+            <Alert
+              variant="warning"
+              title="مدارک ناقص است"
+              description="برای ادامه بررسی شرکت، این موارد را کامل کنید. توضیح طولانی برای سنجش شکست خط در RTL و حالت روشن/تاریک."
+              items={[
+                { label: "کارت ملی", href: "#design-alert-phone" },
+                { label: "عکس انشعاب" },
+              ]}
+              actions={[
+                { label: "تکمیل مدارک", variant: "primary", href: "#alerts" },
+                { label: "بعداً", variant: "ghost" },
+              ]}
+              details="مدارک بارگذاری‌شده تا ۷ روز نگه داشته می‌شوند و پس از تأیید قابل ویرایش نیستند."
+              dismissible
+              dismissKey="design.alert.docs"
+            />
+          </Card>
+
+          <Card className="space-y-4">
+            <div className="flex flex-wrap items-center gap-2">
+              <h3 className="text-h4">کانال Inline + مشتق از state</h3>
+              <InfoPopover title="چرا هشدار شرطی؟">
+                پاراگراف‌های توضیحی ثابت حذف می‌شوند؛ یا هشدار شرطی می‌شوند، یا داخل InfoPopover می‌روند.
+              </InfoPopover>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() =>
+                  setDemoState((s) => ({ ...s, phoneMissing: !s.phoneMissing }))
+                }
+              >
+                تاگل خطای موبایل
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() =>
+                  setDemoState((s) => ({ ...s, termsMissing: !s.termsMissing }))
+                }
+              >
+                تاگل هشدار شرایط
+              </Button>
+              <Button
+                size="sm"
+                variant="danger"
+                onClick={() => {
+                  setDemoState((s) => ({ ...s, networkError: true }));
+                  queueMicrotask(() => summaryRef.current?.focus());
+                }}
+              >
+                خطای شبکه + فوکوس خلاصه
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() => setDemoState((s) => ({ ...s, networkError: false }))}
+              >
+                پاک کردن خطای شبکه
+              </Button>
+            </div>
+            <Alert
+              ref={summaryRef}
+              variant="danger"
+              title="خلاصه خطاهای فرم"
+              description={`پس از حذف تکراری‌ها: ${faNumber(dedupeAlerts(derivedAlerts).length)} مورد.`}
+              open={demoState.networkError || demoState.phoneMissing}
+              actions={[{ label: "مرور فیلدها", variant: "secondary", href: "#design-alert-phone" }]}
+            />
+            <AlertSlot placement="form-summary" alerts={derivedAlerts} />
+            <div id="design-alert-phone">
+              <Input label="شماره موبایل" placeholder="۰۹۱۲۳۴۵۶۷۸۹" />
+            </div>
+            <AlertSlot placement="field-phone" alerts={derivedAlerts} />
+            <AlertSlot placement="field-terms" alerts={derivedAlerts} />
+          </Card>
+
+          <Card className="space-y-3">
+            <h3 className="text-h4">کانال Banner / Toast / Confirm</h3>
+            <div className="flex flex-wrap gap-2">
+              <Button
+                size="sm"
+                onClick={() =>
+                  pushBanner({
+                    id: `b-warn-${Date.now()}`,
+                    variant: "warning",
+                    placement: "banner",
+                    title: "بازدید سایت به‌تعویق افتاد",
+                    description: "زمان جدید از پنل اعلام می‌شود.",
+                  })
+                }
+              >
+                Banner هشدار
+              </Button>
+              <Button
+                size="sm"
+                variant="danger"
+                onClick={() =>
+                  pushBanner({
+                    id: `b-danger-${Date.now()}`,
+                    variant: "danger",
+                    placement: "banner",
+                    title: "خطای بحرانی صف",
+                    description: "این بنر بر هشدار قبلی اولویت دارد؛ بقیه در صف می‌مانند.",
+                    consequenceKey: "banner-outage",
+                  })
+                }
+              >
+                Banner خطر (اولویت بالاتر)
+              </Button>
+              <Button
+                size="sm"
+                variant="secondary"
+                onClick={() =>
+                  push({
+                    tone: "success",
+                    title: "ذخیره شد",
+                    description: "پس از ۵ ثانیه بسته می‌شود.",
+                  })
+                }
+              >
+                Toast موفقیت
+              </Button>
+              <Button
+                size="sm"
+                variant="ghost"
+                onClick={() =>
+                  push({
+                    tone: "warning",
+                    title: "حذف شد",
+                    description: "می‌توانید بازگردانی کنید.",
+                    action: { label: "بازگردانی", variant: "secondary" },
+                  })
+                }
+              >
+                Toast با اکشن
+              </Button>
+              <Button size="sm" variant="danger" onClick={() => setConfirmOpen(true)}>
+                Confirm مخرب
+              </Button>
+            </div>
+            <ConfirmDialog
+              open={confirmOpen}
+              onClose={() => setConfirmOpen(false)}
+              onConfirm={() => setConfirmOpen(false)}
+              variant="danger"
+              title="حذف نیروگاه؟"
+              description="این عمل قابل بازگشت نیست."
+              confirmLabel="حذف"
+              consequences={[
+                "قراردادهای پیش‌نویس مرتبط بسته می‌شوند.",
+                "تاریخچه بازدید برای این رکورد بایگانی می‌شود.",
+              ]}
+            />
+          </Card>
+
           <Card className="space-y-3">
             <Skeleton className="h-8 w-1/3" />
             <SkeletonText lines={3} />
+            <EmptyState
+              title="قراردادی نیست"
+              description="هنوز قراردادی برای این حساب ثبت نشده است."
+              action={<Button size="sm">شروع قرارداد</Button>}
+            />
+            <LockedFeature
+              title="گزارش تولید پیشرفته"
+              description="نمودارهای مقایسه‌ای به‌زودی در پنل فعال می‌شوند."
+            />
           </Card>
-          <EmptyState
-            title="قراردادی نیست"
-            description="هنوز قراردادی برای این حساب ثبت نشده است."
-            action={<Button size="sm">شروع قرارداد</Button>}
-          />
-          <LockedFeature
-            title="گزارش تولید پیشرفته"
-            description="نمودارهای مقایسه‌ای به‌زودی در پنل فعال می‌شوند."
-          />
         </div>
       </Section>
 
@@ -387,7 +645,9 @@ function InteractiveDemo() {
 export function ComponentsPreview() {
   return (
     <ToastProvider>
-      <InteractiveDemo />
+      <AlertBannerProvider>
+        <InteractiveDemo />
+      </AlertBannerProvider>
     </ToastProvider>
   );
 }

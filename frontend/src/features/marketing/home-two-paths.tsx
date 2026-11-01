@@ -7,13 +7,9 @@ import { Reveal } from "@/features/marketing/reveal";
 import { Icon, type IconName } from "@/shared/ui/icon";
 import "./home-two-paths.css";
 
-/**
- * TODO: add `public/images/path-sell.webp` and `public/images/path-install.webp`.
- * Until then each card uses a gradient placeholder with the same frame.
- */
 const PATH_IMAGES = {
-  sell: null as string | null,
-  install: null as string | null,
+  sell: "/images/path-sell.webp",
+  install: "/images/path-install.webp",
 };
 
 type PathBullet = { icon: IconName; text: string };
@@ -27,7 +23,7 @@ type PathCardData = {
   bullets: PathBullet[];
   primary: boolean;
   badge?: string;
-  imageSrc: string | null;
+  imageSrc: string;
 };
 
 const paths: PathCardData[] = [
@@ -80,19 +76,13 @@ function PathCard({ path }: { path: PathCardData }) {
         <div className="home-path-card__spot" aria-hidden />
 
         <div className="home-path-card__media">
-          {path.imageSrc ? (
-            <Image
-              src={path.imageSrc}
-              alt={path.title}
-              fill
-              sizes="(max-width: 768px) 100vw, 40vw"
-              className="object-cover"
-            />
-          ) : (
-            <div className="home-path-card__placeholder" aria-hidden>
-              {/* TODO: add public/images/path-{sell|install}.webp */}
-            </div>
-          )}
+          <Image
+            src={path.imageSrc}
+            alt={path.title}
+            fill
+            sizes="(max-width: 768px) 100vw, 40vw"
+            className="object-cover"
+          />
         </div>
 
         <div className="home-path-card__body">

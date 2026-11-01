@@ -7,11 +7,7 @@ import { formatFa } from "@/shared/lib/fa";
 import { Icon } from "@/shared/ui/icon";
 import "./home-hero.css";
 
-/**
- * TODO: add `public/images/hero-solar.webp` (house rooftop with solar panels).
- * Until then the hero uses a gradient placeholder with the same frame dimensions.
- */
-const HERO_IMAGE_SRC: string | null = null;
+const HERO_IMAGE_SRC = "/images/hero-solar.webp";
 
 const trustChips = ["بررسی شفاف", "دلیل رد قابل مشاهده", "سوابق قرارداد"] as const;
 
@@ -120,23 +116,14 @@ export function HomeHero() {
         >
           <div className="home-hero__media">
             <span className="home-hero__media-frame" aria-hidden />
-            {HERO_IMAGE_SRC ? (
-              <Image
-                src={HERO_IMAGE_SRC}
-                alt="خانه با پنل‌های خورشیدی روی بام"
-                fill
-                priority
-                sizes="(max-width: 1024px) 100vw, 42vw"
-                className="object-cover"
-              />
-            ) : (
-              <div className="home-hero__media-placeholder" aria-hidden>
-                {/* TODO: add public/images/hero-solar.webp */}
-                <span className="home-hero__media-placeholder-label">
-                  تصویر قهرمان · در انتظار فایل
-                </span>
-              </div>
-            )}
+            <Image
+              src={HERO_IMAGE_SRC}
+              alt="خانه با پنل‌های خورشیدی روی بام در غروب"
+              fill
+              priority
+              sizes="(max-width: 1024px) 100vw, 42vw"
+              className="object-cover object-left"
+            />
             <div className="home-hero__media-overlay" aria-hidden />
           </div>
 

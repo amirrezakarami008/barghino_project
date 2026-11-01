@@ -151,9 +151,17 @@
   z-index: 1;
 }
 
+.site-header-actions {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  gap: 0.5rem;
+}
+
 .site-header-cta-shine {
   position: relative;
   overflow: hidden;
+  flex-shrink: 0;
   background-image: var(--grad-sun);
   color: var(--primary-foreground);
   box-shadow: var(--shadow-sun);

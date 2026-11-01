@@ -1,7 +1,34 @@
 import { ApiError, apiRequest } from "@/features/auth/lib/api";
 
-export type Branch = { readonly uuid: string; readonly name: string; readonly meter_number: string; readonly address: string; readonly status: string; readonly review_note: string; readonly owner_phone: string };
-export type Plant = { readonly uuid: string; readonly name: string; readonly branch_uuid: string; readonly address: string; readonly capacity_kwp: string; readonly status: string; readonly review_note: string; readonly owner_phone: string };
+export type Branch = {
+  readonly uuid: string;
+  readonly name: string;
+  readonly meter_number: string;
+  readonly address: string;
+  readonly status: string;
+  readonly review_note: string;
+  readonly owner_phone: string;
+  readonly created_at: string;
+  readonly updated_at: string;
+  readonly reviewed_at: string;
+  readonly review_decision: string;
+  readonly reviewed_by_uuid: string;
+};
+export type Plant = {
+  readonly uuid: string;
+  readonly name: string;
+  readonly branch_uuid: string;
+  readonly address: string;
+  readonly capacity_kwp: string;
+  readonly status: string;
+  readonly review_note: string;
+  readonly owner_phone: string;
+  readonly created_at: string;
+  readonly updated_at: string;
+  readonly reviewed_at: string;
+  readonly review_decision: string;
+  readonly reviewed_by_uuid: string;
+};
 export type Page<T> = { readonly count: number; readonly next: boolean; readonly previous: boolean; readonly results: readonly T[] };
 export type BranchInput = Pick<Branch, "name" | "meter_number" | "address">;
 export type PlantInput = Pick<Plant, "name" | "branch_uuid" | "address" | "capacity_kwp">;
@@ -14,7 +41,20 @@ function text(value: unknown): string { return typeof value === "string" ? value
 function base(value: unknown): Branch {
   const raw = record(value);
   if (!text(raw.uuid) || !text(raw.name) || !text(raw.status)) throw new Error("اطلاعات دریافتی ناقص است.");
-  return { uuid: text(raw.uuid), name: text(raw.name), status: text(raw.status), address: text(raw.address), meter_number: text(raw.meter_number), review_note: text(raw.review_note), owner_phone: text(raw.owner_phone) };
+  return {
+    uuid: text(raw.uuid),
+    name: text(raw.name),
+    status: text(raw.status),
+    address: text(raw.address),
+    meter_number: text(raw.meter_number),
+    review_note: text(raw.review_note),
+    owner_phone: text(raw.owner_phone),
+    created_at: text(raw.created_at),
+    updated_at: text(raw.updated_at),
+    reviewed_at: text(raw.reviewed_at),
+    review_decision: text(raw.review_decision),
+    reviewed_by_uuid: text(raw.reviewed_by_uuid),
+  };
 }
 export function parseBranch(value: unknown): Branch { return base(value); }
 export function parsePlant(value: unknown): Plant {

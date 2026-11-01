@@ -145,6 +145,7 @@
   --text-nav--line-height: var(--leading-nav);
 
   --background-image-grad-sun: var(--grad-sun);
+  --background-image-grad-cta: var(--grad-cta);
   --background-image-grad-energy: var(--grad-energy);
   --background-image-grad-volt: var(--grad-volt);
   --background-image-grad-aurora: var(--grad-aurora);

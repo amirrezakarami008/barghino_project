@@ -1,0 +1,329 @@
+/* Solid status alerts — readable in light + dark; no glass */
+
+.ui-alert {
+  --alert-accent: var(--volt-500);
+  --alert-fg: var(--info-foreground);
+  --alert-bg: var(--info);
+  --alert-icon-bg: color-mix(in srgb, var(--alert-accent) 18%, transparent);
+  position: relative;
+  display: flex;
+  gap: 0.75rem;
+  align-items: flex-start;
+  padding: 0.85rem 1rem;
+  padding-inline-start: calc(1rem + 4px);
+  border-radius: var(--radius-md, 0.75rem);
+  border: 1px solid color-mix(in srgb, var(--alert-accent) 28%, var(--border));
+  background: var(--alert-bg);
+  color: var(--alert-fg);
+  box-shadow: var(--shadow-soft);
+  outline: none;
+}
+
+.ui-alert::before {
+  content: "";
+  position: absolute;
+  inset-block: 0;
+  inset-inline-start: 0;
+  width: 4px;
+  border-radius: var(--radius-md, 0.75rem) 0 0 var(--radius-md, 0.75rem);
+  background: var(--alert-accent);
+}
+
+[dir="rtl"] .ui-alert::before {
+  border-radius: 0 var(--radius-md, 0.75rem) var(--radius-md, 0.75rem) 0;
+}
+
+.ui-alert--info {
+  --alert-accent: var(--volt-500);
+  --alert-fg: var(--info-foreground);
+  --alert-bg: var(--info);
+}
+
+.ui-alert--success {
+  --alert-accent: var(--energy-500);
+  --alert-fg: var(--status-approved-fg);
+  --alert-bg: var(--status-approved-bg);
+}
+
+.ui-alert--warning {
+  --alert-accent: var(--sun-500);
+  --alert-fg: var(--status-pending-fg);
+  --alert-bg: var(--status-pending-bg);
+}
+
+.ui-alert--danger {
+  --alert-accent: var(--danger);
+  --alert-fg: var(--status-rejected-fg);
+  --alert-bg: var(--status-rejected-bg);
+}
+
+.ui-alert--neutral {
+  --alert-accent: var(--ink-400);
+  --alert-fg: var(--status-draft-fg);
+  --alert-bg: var(--status-draft-bg);
+}
+
+.ui-alert--compact {
+  padding-block: 0.55rem;
+  gap: 0.55rem;
+}
+
+.ui-alert__icon {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  flex-shrink: 0;
+  border-radius: 9999px;
+  background: var(--alert-icon-bg);
+  color: var(--alert-accent);
+}
+
+.ui-alert--compact .ui-alert__icon {
+  width: 1.75rem;
+  height: 1.75rem;
+}
+
+.ui-alert__body {
+  min-width: 0;
+  flex: 1;
+  display: grid;
+  gap: 0.35rem;
+}
+
+.ui-alert__title {
+  margin: 0;
+  font-size: 0.9375rem;
+  font-weight: 700;
+  line-height: 1.45;
+  color: inherit;
+}
+
+.ui-alert__description {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.7;
+  opacity: 0.95;
+}
+
+.ui-alert__list {
+  margin: 0.15rem 0 0;
+  padding-inline-start: 1.1rem;
+  display: grid;
+  gap: 0.25rem;
+  font-size: 0.875rem;
+  line-height: 1.6;
+}
+
+.ui-alert__list a {
+  color: inherit;
+  font-weight: 600;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.ui-alert__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  margin-block-start: 0.35rem;
+}
+
+.ui-alert__dismiss {
+  flex-shrink: 0;
+  margin-inline-start: auto;
+}
+
+.ui-alert__details {
+  margin-block-start: 0.15rem;
+}
+
+.ui-alert__details > summary {
+  cursor: pointer;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  list-style: none;
+}
+
+.ui-alert__details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.ui-alert__details[open] > summary {
+  margin-block-end: 0.35rem;
+}
+
+.ui-alert__details-body {
+  font-size: 0.8125rem;
+  line-height: 1.7;
+  opacity: 0.95;
+}
+
+.ui-alert--shake {
+  animation: ui-alert-shake 420ms var(--ease-out, cubic-bezier(0.22, 1, 0.36, 1));
+}
+
+@keyframes ui-alert-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20% {
+    transform: translateX(-3px);
+  }
+  40% {
+    transform: translateX(3px);
+  }
+  60% {
+    transform: translateX(-2px);
+  }
+  80% {
+    transform: translateX(2px);
+  }
+}
+
+.ui-alert-banner {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 40;
+  padding: 0.75rem 1rem 0;
+}
+
+.ui-alert-slot {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.ui-toast-stack {
+  pointer-events: none;
+  position: fixed;
+  inset-inline: 0;
+  inset-block-end: calc(1rem + env(safe-area-inset-bottom, 0px) + var(--toast-mobile-offset, 0px));
+  z-index: 60;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  padding-inline: 1rem;
+}
+
+@media (min-width: 640px) {
+  .ui-toast-stack {
+    --toast-mobile-offset: 0px;
+    inset-inline-end: 1rem;
+    inset-inline-start: auto;
+    align-items: flex-end;
+  }
+}
+
+.ui-toast {
+  pointer-events: auto;
+  width: min(100%, 22rem);
+}
+
+.ui-info-popover {
+  position: relative;
+  display: inline-flex;
+  vertical-align: middle;
+}
+
+.ui-info-popover__trigger {
+  display: inline-grid;
+  place-items: center;
+  width: 1.5rem;
+  height: 1.5rem;
+  border-radius: 9999px;
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--foreground-muted);
+  font-size: 0.75rem;
+  font-weight: 700;
+  font-style: italic;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.ui-info-popover__trigger:hover,
+.ui-info-popover__trigger[aria-expanded="true"] {
+  color: var(--info-foreground);
+  border-color: color-mix(in srgb, var(--volt-500) 45%, var(--border));
+  background: var(--info);
+}
+
+.ui-info-popover__trigger:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.ui-info-popover__panel {
+  position: absolute;
+  inset-block-start: calc(100% + 0.4rem);
+  inset-inline-end: 0;
+  z-index: 30;
+  width: min(18rem, calc(100vw - 2rem));
+  padding: 0.85rem 1rem;
+  border-radius: var(--radius-md, 0.75rem);
+  border: 1px solid var(--border);
+  background: var(--card);
+  color: var(--foreground);
+  box-shadow: var(--shadow-lifted);
+  font-size: 0.8125rem;
+  line-height: 1.7;
+}
+
+.ui-info-popover__panel-title {
+  margin: 0 0 0.35rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+}
+
+.ui-confirm-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+}
+
+.ui-confirm-header__icon {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  flex-shrink: 0;
+  border-radius: 9999px;
+}
+
+.ui-confirm-header__icon--danger {
+  background: var(--status-rejected-bg);
+  color: var(--status-rejected-fg);
+}
+
+.ui-confirm-header__icon--warning {
+  background: var(--status-pending-bg);
+  color: var(--status-pending-fg);
+}
+
+.ui-confirm-header__icon--info {
+  background: var(--info);
+  color: var(--info-foreground);
+}
+
+.ui-confirm-header__icon--success {
+  background: var(--status-approved-bg);
+  color: var(--status-approved-fg);
+}
+
+.ui-confirm-consequences {
+  margin: 0.75rem 0 0;
+  padding-inline-start: 1.1rem;
+  display: grid;
+  gap: 0.35rem;
+  font-size: 0.875rem;
+  line-height: 1.65;
+  color: var(--foreground-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-alert--shake {
+    animation: none;
+  }
+}

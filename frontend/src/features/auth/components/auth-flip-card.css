@@ -1,0 +1,247 @@
+/* Auth flip card — glass blur on static layer; faces rotate without backdrop-filter */
+
+.auth-flip {
+  --auth-hue-shift: 0deg;
+  --auth-radius: 32px;
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+}
+
+.auth-flip--register {
+  --auth-hue-shift: 22deg;
+}
+
+.auth-flip__glow {
+  position: absolute;
+  inset: -14% -10%;
+  z-index: 0;
+  pointer-events: none;
+  border-radius: calc(var(--auth-radius) + 12px);
+  background:
+    radial-gradient(
+      55% 48% at 85% 8%,
+      color-mix(in srgb, var(--sun-400) 40%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      50% 45% at 12% 92%,
+      color-mix(in srgb, var(--volt-500) 32%, transparent),
+      transparent 65%
+    );
+  filter: hue-rotate(var(--auth-hue-shift));
+  transition: filter 750ms var(--ease-out);
+  opacity: 0.95;
+}
+
+.auth-flip--register .auth-flip__glow {
+  background:
+    radial-gradient(
+      55% 48% at 18% 12%,
+      color-mix(in srgb, var(--energy-400) 36%, transparent),
+      transparent 70%
+    ),
+    radial-gradient(
+      52% 45% at 88% 88%,
+      color-mix(in srgb, var(--volt-500) 34%, transparent),
+      transparent 65%
+    );
+}
+
+.auth-flip__perspective {
+  position: relative;
+  z-index: 1;
+  perspective: 1600px;
+  perspective-origin: 50% 50%;
+}
+
+/* Static glass plate — blur never on the rotating stage */
+.auth-flip__glass {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  border-radius: var(--auth-radius);
+  background: var(--glass-auth-solid-fallback);
+  box-shadow: var(--glass-auth-shadow);
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.auth-flip__glass::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    180deg,
+    var(--glass-auth-border-top),
+    var(--glass-auth-border-bottom)
+  );
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
+.auth-flip__glass::after {
+  content: "";
+  position: absolute;
+  inset-block-start: 0;
+  inset-inline-end: 0;
+  width: 7rem;
+  height: 7rem;
+  border-radius: 0 var(--auth-radius) 0 100%;
+  background: radial-gradient(
+    circle at 100% 0%,
+    rgb(255 255 255 / 0.35),
+    transparent 68%
+  );
+  pointer-events: none;
+}
+
+@supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
+  .auth-flip__glass {
+    background: var(--glass-auth-bg);
+    -webkit-backdrop-filter: blur(var(--glass-auth-blur)) saturate(1.4);
+    backdrop-filter: blur(var(--glass-auth-blur)) saturate(1.4);
+  }
+
+  .auth-flip__glass-inner {
+    position: absolute;
+    inset: 1px;
+    border-radius: calc(var(--auth-radius) - 1px);
+    background: linear-gradient(
+      165deg,
+      rgb(255 255 255 / 0.14) 0%,
+      transparent 42%
+    );
+    pointer-events: none;
+  }
+}
+
+.auth-flip__stage {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  transform-style: preserve-3d;
+}
+
+.auth-flip__shine {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  pointer-events: none;
+  border-radius: var(--auth-radius);
+  overflow: hidden;
+  opacity: 0;
+}
+
+.auth-flip__shine-sweep {
+  position: absolute;
+  inset-block: -20%;
+  inset-inline-start: -40%;
+  width: 45%;
+  background: linear-gradient(
+    105deg,
+    transparent 30%,
+    color-mix(in srgb, var(--ink-0) 28%, transparent) 50%,
+    transparent 70%
+  );
+  transform: translateX(0) rotate(12deg);
+}
+
+.auth-flip--animating .auth-flip__shine {
+  opacity: 1;
+}
+
+.auth-flip--animating .auth-flip__shine-sweep {
+  animation: auth-flip-shine 750ms var(--ease-out) both;
+}
+
+.auth-flip__face {
+  position: absolute;
+  inset-inline: 0;
+  inset-block-start: 0;
+  width: 100%;
+  border-radius: var(--auth-radius);
+  background: transparent;
+  color: var(--glass-auth-foreground);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform-style: preserve-3d;
+  /* No backdrop-filter on rotating faces */
+}
+
+.auth-flip__face-inner {
+  padding: 1.75rem 1.5rem 1.85rem;
+}
+
+@media (min-width: 640px) {
+  .auth-flip__face-inner {
+    padding: 2.5rem 2.5rem 2.35rem;
+  }
+}
+
+.auth-flip__face--front {
+  transform: rotateY(0deg);
+}
+
+.auth-flip__face--back {
+  transform: rotateY(180deg);
+}
+
+.auth-flip__face--fade {
+  transform: none !important;
+  backface-visibility: visible;
+  -webkit-backface-visibility: visible;
+}
+
+.auth-flip__face .text-foreground-muted,
+.auth-flip__face .text-muted-foreground {
+  color: var(--glass-auth-foreground-muted);
+}
+
+@keyframes auth-flip-shine {
+  from {
+    transform: translateX(0) rotate(12deg);
+  }
+  to {
+    transform: translateX(280%) rotate(12deg);
+  }
+}
+
+@keyframes auth-field-shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  25% {
+    transform: translateX(-3px);
+  }
+  75% {
+    transform: translateX(3px);
+  }
+}
+
+.auth-field-shake {
+  animation: auth-field-shake 280ms var(--ease-out);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .auth-flip__shine,
+  .auth-flip__shine-sweep,
+  .auth-field-shake {
+    display: none !important;
+    animation: none !important;
+  }
+
+  .auth-flip__glow {
+    transition: none;
+  }
+}

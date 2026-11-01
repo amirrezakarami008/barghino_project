@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useRouter } from "next/navigation";
-import { useEffect, useState, type ComponentProps, type FormEvent } from "react";
+import { useEffect, useId, useState, type FormEvent, type ReactNode } from "react";
 import { OtpInput } from "@/features/auth/components/otp-input";
 import { ApiError, apiRequest } from "@/features/auth/lib/api";
 import { isCompanyNationalId, isNationalId } from "@/features/auth/lib/identity";
@@ -10,16 +11,16 @@ import { digitsOnly, formatIranMobile, isIranMobile, normalizeIranMobile } from 
 import { userFromApi, type Session } from "@/features/auth/lib/session";
 import { destinationFor, useAuth } from "@/features/auth/session-provider";
 import { faNumber } from "@/shared/lib/fa";
-import { cx } from "@/shared/lib/cx";
-import { Button } from "@/shared/ui/button";
+import { cn } from "@/shared/lib/cn";
 import { Icon, type IconName } from "@/shared/ui/icon";
-import { TextField as BaseTextField } from "@/shared/ui/text-field";
+import "./auth-face.css";
 
 const codeLifetimeSeconds = 120;
 
 type AccountType = "individual" | "legal";
 type Path = "sell" | "install";
-type Step = "details" | "code";
+type ApiStep = "details" | "code";
+type WizardStep = 1 | 2 | 3;
 
 type Draft = {
   accountType: AccountType;
@@ -70,22 +71,38 @@ const emptyDraft = (path: Path): Draft => ({
   terms: false,
 });
 
-export function RegisterForm({ initialPath }: { initialPath: Path }) {
+export function RegisterForm({
+  initialPath,
+  embedded: _embedded = false,
+  switchHref = "/login",
+}: {
+  initialPath: Path;
+  embedded?: boolean;
+  switchHref?: string;
+}) {
+  void _embedded;
   const router = useRouter();
   const { session, ready, signIn } = useAuth();
+  const reduceMotion = useReducedMotion();
   const [draft, setDraft] = useState<Draft>(() => emptyDraft(initialPath));
-  const [step, setStep] = useState<Step>("details");
+  const [wizardStep, setWizardStep] = useState<WizardStep>(1);
+  const [apiStep, setApiStep] = useState<ApiStep>("details");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState("");
   const [pending, setPending] = useState(false);
   const [now, setNow] = useState(0);
   const [resendAt, setResendAt] = useState(0);
   const [sentPayload, setSentPayload] = useState<string>("");
+  const [showSuccess, setShowSuccess] = useState(false);
   const secondsLeft = resendAt > now ? Math.ceil((resendAt - now) / 1000) : 0;
+  const stepTransition = reduceMotion
+    ? { duration: 0.01 }
+    : { duration: 0.28, ease: [0.22, 1, 0.36, 1] as const };
+  const phoneId = useId();
 
   useEffect(() => {
-    if (ready && session) router.replace(destinationFor(session.user, null));
-  }, [ready, router, session]);
+    if (ready && session && !showSuccess) router.replace(destinationFor(session.user, null));
+  }, [ready, router, session, showSuccess]);
 
   useEffect(() => {
     if (resendAt === 0) return;
@@ -102,6 +119,27 @@ export function RegisterForm({ initialPath }: { initialPath: Path }) {
     const apiKey = fieldErrorKeys[key];
     setErrors((current) => ({ ...current, [key]: "", ...(apiKey ? { [apiKey]: "" } : {}) }));
     setFormError("");
+  }
+
+  function validateIdentity(): Record<string, string> {
+    const next: Record<string, string> = {};
+    if (draft.accountType === "individual") {
+      if (!draft.firstName.trim() || !draft.lastName.trim()) {
+        next.first_name = "نام و نام خانوادگی را وارد کنید.";
+      }
+      if (!isNationalId(draft.nationalId)) next.national_id = "کد ملی معتبر نیست.";
+    } else {
+      if (!draft.companyName.trim() || !draft.representativeFirstName.trim() || !draft.representativeLastName.trim()) {
+        next.company_name = "نام شرکت و نام نماینده را وارد کنید.";
+      }
+      if (!isCompanyNationalId(draft.companyNationalId)) {
+        next.company_national_id = "شناسه ملی شرکت معتبر نیست.";
+      }
+      if (!isNationalId(draft.representativeNationalId)) {
+        next.representative_national_id = "کد ملی نماینده معتبر نیست.";
+      }
+    }
+    return next;
   }
 
   async function start(event?: FormEvent<HTMLFormElement>) {
@@ -127,7 +165,7 @@ export function RegisterForm({ initialPath }: { initialPath: Path }) {
       const started = Date.now();
       setNow(started);
       setResendAt(started + codeLifetimeSeconds * 1000);
-      setStep("code");
+      setApiStep("code");
     } catch (error) {
       if (error instanceof ApiError) {
         setErrors(error.fields);
@@ -150,121 +188,387 @@ export function RegisterForm({ initialPath }: { initialPath: Path }) {
     return { access: result.access, refresh: result.refresh, user: userFromApi(result.user) };
   }
 
-  if (step === "code") {
-    return (
-      <div className="grid gap-5">
-        <div>
-          <h1 className="text-3xl font-bold text-primary">کد تأیید</h1>
-          <p className="mt-2 leading-7 text-muted-foreground">
-            کد شش‌رقمی برای {formatIranMobile(draft.phone)} را وارد کنید. حساب پس از تأیید این کد ساخته می‌شود.
-          </p>
-        </div>
-        <OtpInput
-          key={resendAt}
-          disabled={pending}
-          onVerify={verify}
-          onBusyChange={setPending}
-          onVerified={(nextSession) => {
-            signIn(nextSession);
-            router.replace(destinationFor(nextSession.user, null));
-          }}
-        />
-        {formError ? <p className="text-sm leading-7 text-danger">{formError}</p> : null}
-        <div className="flex items-center justify-between gap-3 text-sm">
-          <button
-            type="button"
-            className="cursor-pointer font-semibold text-primary disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={pending || secondsLeft > 0}
-            onClick={() => void start()}
-          >
-            {secondsLeft > 0 ? `ارسال دوباره تا ${faNumber(secondsLeft)} ثانیه` : "ارسال دوباره کد"}
-          </button>
-          <button
-            type="button"
-            className="cursor-pointer text-muted-foreground disabled:cursor-not-allowed disabled:opacity-50"
-            disabled={pending}
-            onClick={() => setStep("details")}
-          >
-            اصلاح اطلاعات
-          </button>
-        </div>
-      </div>
-    );
+  function goNextFromPath() {
+    setWizardStep(2);
   }
 
+  function goNextFromIdentity(event: FormEvent) {
+    event.preventDefault();
+    const next = validateIdentity();
+    if (Object.keys(next).length > 0) {
+      setErrors(next);
+      return;
+    }
+    setErrors({});
+    setWizardStep(3);
+  }
+
+  const panelKey =
+    apiStep === "code" ? "code" : showSuccess ? "success" : `wiz-${wizardStep}`;
+
   return (
-    <form onSubmit={start} noValidate className="grid gap-5">
-      <div>
-        <h1 className="text-3xl font-bold text-primary">ثبت‌نام</h1>
-        <p className="mt-2 leading-7 text-muted-foreground">حساب حقیقی یا حقوقی بسازید. کد تأیید پیامک می‌شود و حساب بعد از آن ساخته می‌شود.</p>
-      </div>
-      <AccountType value={draft.accountType} onChange={(value) => update("accountType", value)} />
-      <Intent value={draft.path} onChange={(value) => update("path", value)} />
-      <TextField
-        name="phone"
-        label="شماره موبایل"
-        inputMode="tel"
-        autoComplete="tel"
-        dir="ltr"
-        value={draft.phone}
-        error={errors.phone}
-        onChange={(event) => update("phone", event.target.value)}
-      />
-      {draft.accountType === "individual" ? (
-        <>
-          <TextField name="first_name" label="نام" autoComplete="given-name" value={draft.firstName} error={errors.first_name ?? errors.firstName} onChange={(event) => update("firstName", event.target.value)} />
-          <TextField name="last_name" label="نام خانوادگی" autoComplete="family-name" value={draft.lastName} error={errors.last_name ?? errors.lastName} onChange={(event) => update("lastName", event.target.value)} />
-          <TextField name="national_id" label="کد ملی" inputMode="numeric" dir="ltr" maxLength={10} value={draft.nationalId} error={errors.national_id ?? errors.nationalId} onChange={(event) => update("nationalId", event.target.value)} />
-        </>
-      ) : (
-        <>
-          <TextField name="company_name" label="نام شرکت" value={draft.companyName} error={errors.company_name ?? errors.companyName} onChange={(event) => update("companyName", event.target.value)} />
-          <TextField name="company_national_id" label="شناسه ملی شرکت" inputMode="numeric" dir="ltr" maxLength={11} value={draft.companyNationalId} error={errors.company_national_id ?? errors.companyNationalId} onChange={(event) => update("companyNationalId", event.target.value)} />
-          <TextField name="representative_first_name" label="نام نماینده" autoComplete="given-name" value={draft.representativeFirstName} error={errors.representative_first_name} onChange={(event) => update("representativeFirstName", event.target.value)} />
-          <TextField name="representative_last_name" label="نام خانوادگی نماینده" autoComplete="family-name" value={draft.representativeLastName} error={errors.representative_last_name} onChange={(event) => update("representativeLastName", event.target.value)} />
-          <TextField name="representative_national_id" label="کد ملی نماینده" inputMode="numeric" dir="ltr" maxLength={10} value={draft.representativeNationalId} error={errors.representative_national_id} onChange={(event) => update("representativeNationalId", event.target.value)} />
-          <TextField name="registration_number" label="شماره ثبت" hint="اختیاری" dir="ltr" maxLength={20} value={draft.registrationNumber} error={errors.registration_number} onChange={(event) => update("registrationNumber", event.target.value)} />
-          <TextField name="economic_code" label="کد اقتصادی" hint="اختیاری" inputMode="numeric" dir="ltr" maxLength={14} value={draft.economicCode} error={errors.economic_code} onChange={(event) => update("economicCode", event.target.value)} />
-        </>
-      )}
-      <label className="flex items-start gap-2 text-sm leading-7">
-        <input
-          type="checkbox"
-          name="terms_accepted"
-          checked={draft.terms}
-          onChange={(event) => update("terms", event.target.checked)}
-          className="mt-1.5 size-4 accent-primary"
-        />
-        <span>
-          <Link href="/terms" className="font-semibold text-primary">
-            شرایط و قوانین
-          </Link>{" "}
-          را می‌پذیرم.
+    <div className="auth-face relative overflow-hidden">
+      <div className="auth-face__header">
+        <span className="auth-face__logo" aria-hidden>
+          <Icon name="bolt" className="size-7" />
         </span>
-      </label>
-      {errors.terms_accepted ? <p className="text-sm leading-6 text-danger">{errors.terms_accepted}</p> : null}
-      {formError ? <p className="text-sm leading-7 text-danger">{formError}</p> : null}
-      <Button type="submit" disabled={pending}>
-        {pending ? "در حال ارسال کد…" : "دریافت کد تأیید"}
-      </Button>
-      <p className="text-sm text-muted-foreground">
-        حساب دارید؟{" "}
-        <Link href="/login" className="font-semibold text-primary">
-          ورود
-        </Link>
-      </p>
-    </form>
+        <h1 className="auth-face__title">ثبت‌نام</h1>
+        <p className="auth-face__subtitle">
+          {wizardStep === 1
+            ? "نوع حساب و مسیر خود را انتخاب کنید."
+            : wizardStep === 2
+              ? "اطلاعات هویتی را وارد کنید."
+              : apiStep === "code"
+                ? `کد شش‌رقمی برای ${formatIranMobile(draft.phone)} را وارد کنید.`
+                : "شماره موبایل را تأیید کنید تا حساب ساخته شود."}
+        </p>
+      </div>
+
+      {apiStep === "details" && !showSuccess ? (
+        <div className="auth-face__progress" aria-hidden>
+          {[1, 2, 3].map((seg) => (
+            <span
+              key={seg}
+              className={cn(
+                "auth-face__progress-seg",
+                wizardStep > seg && "is-done",
+                wizardStep === seg && "is-active",
+              )}
+            />
+          ))}
+        </div>
+      ) : null}
+
+      <AnimatePresence mode="wait" initial={false}>
+        <motion.div
+          key={panelKey}
+          initial={reduceMotion ? false : { opacity: 0, x: 16 }}
+          animate={{ opacity: 1, x: 0 }}
+          exit={reduceMotion ? undefined : { opacity: 0, x: -16 }}
+          transition={stepTransition}
+        >
+          {showSuccess ? (
+            <div className="auth-face__success">
+              <span className="auth-face__success-mark" aria-hidden>
+                <Icon name="check" className="size-7" />
+              </span>
+              <p className="auth-face__subtitle">حساب شما آماده است؛ در حال انتقال…</p>
+            </div>
+          ) : apiStep === "code" ? (
+            <div className="grid gap-4">
+              <OtpInput
+                key={resendAt}
+                disabled={pending}
+                onVerify={verify}
+                onBusyChange={setPending}
+                onVerified={(nextSession) => {
+                  setShowSuccess(true);
+                  signIn(nextSession);
+                  window.setTimeout(() => {
+                    router.replace(destinationFor(nextSession.user, null));
+                  }, reduceMotion ? 200 : 900);
+                }}
+              />
+              {formError ? <p className="auth-face__error">{formError}</p> : null}
+              <div className="auth-face__meta-row">
+                <button
+                  type="button"
+                  className="auth-face__link-violet"
+                  disabled={pending || secondsLeft > 0}
+                  onClick={() => void start()}
+                >
+                  {secondsLeft > 0
+                    ? `ارسال دوباره تا ${faNumber(secondsLeft)} ثانیه`
+                    : "ارسال دوباره کد"}
+                </button>
+                <button
+                  type="button"
+                  className="auth-face__back"
+                  disabled={pending}
+                  onClick={() => setApiStep("details")}
+                >
+                  اصلاح اطلاعات
+                </button>
+              </div>
+            </div>
+          ) : wizardStep === 1 ? (
+            <div className="grid gap-4">
+              <AccountType value={draft.accountType} onChange={(value) => update("accountType", value)} />
+              <Intent value={draft.path} onChange={(value) => update("path", value)} />
+              <button type="button" className="auth-face__cta" onClick={goNextFromPath}>
+                ادامه
+                <Icon name="arrow" className="size-4 rotate-180" />
+              </button>
+              <p className="auth-face__footer">
+                حساب دارید؟{" "}
+                <Link href={switchHref} scroll={false}>
+                  ورود
+                </Link>
+              </p>
+            </div>
+          ) : wizardStep === 2 ? (
+            <form onSubmit={goNextFromIdentity} noValidate className="grid gap-4">
+              <button type="button" className="auth-face__back" onClick={() => setWizardStep(1)}>
+                <Icon name="arrow" className="size-3.5" />
+                بازگشت
+              </button>
+              {draft.accountType === "individual" ? (
+                <>
+                  <FaceField
+                    id="first_name"
+                    label="نام"
+                    icon="user"
+                    error={errors.first_name ?? errors.firstName}
+                  >
+                    <input
+                      id="first_name"
+                      name="first_name"
+                      autoComplete="given-name"
+                      placeholder="نام"
+                      value={draft.firstName}
+                      onChange={(event) => update("firstName", event.target.value)}
+                    />
+                  </FaceField>
+                  <FaceField
+                    id="last_name"
+                    label="نام خانوادگی"
+                    icon="user"
+                    error={errors.last_name ?? errors.lastName}
+                  >
+                    <input
+                      id="last_name"
+                      name="last_name"
+                      autoComplete="family-name"
+                      placeholder="نام خانوادگی"
+                      value={draft.lastName}
+                      onChange={(event) => update("lastName", event.target.value)}
+                    />
+                  </FaceField>
+                  <FaceField
+                    id="national_id"
+                    label="کد ملی"
+                    icon="card"
+                    error={errors.national_id ?? errors.nationalId}
+                  >
+                    <input
+                      id="national_id"
+                      name="national_id"
+                      inputMode="numeric"
+                      dir="ltr"
+                      maxLength={10}
+                      placeholder="کد ملی"
+                      className="text-end"
+                      value={draft.nationalId}
+                      onChange={(event) => update("nationalId", event.target.value)}
+                    />
+                  </FaceField>
+                </>
+              ) : (
+                <>
+                  <FaceField
+                    id="company_name"
+                    label="نام شرکت"
+                    icon="home"
+                    error={errors.company_name ?? errors.companyName}
+                  >
+                    <input
+                      id="company_name"
+                      name="company_name"
+                      placeholder="نام شرکت"
+                      value={draft.companyName}
+                      onChange={(event) => update("companyName", event.target.value)}
+                    />
+                  </FaceField>
+                  <FaceField
+                    id="company_national_id"
+                    label="شناسه ملی شرکت"
+                    icon="card"
+                    error={errors.company_national_id ?? errors.companyNationalId}
+                  >
+                    <input
+                      id="company_national_id"
+                      name="company_national_id"
+                      inputMode="numeric"
+                      dir="ltr"
+                      maxLength={11}
+                      placeholder="شناسه ملی شرکت"
+                      className="text-end"
+                      value={draft.companyNationalId}
+                      onChange={(event) => update("companyNationalId", event.target.value)}
+                    />
+                  </FaceField>
+                  <FaceField
+                    id="representative_first_name"
+                    label="نام نماینده"
+                    icon="user"
+                    error={errors.representative_first_name}
+                  >
+                    <input
+                      id="representative_first_name"
+                      name="representative_first_name"
+                      autoComplete="given-name"
+                      placeholder="نام نماینده"
+                      value={draft.representativeFirstName}
+                      onChange={(event) => update("representativeFirstName", event.target.value)}
+                    />
+                  </FaceField>
+                  <FaceField
+                    id="representative_last_name"
+                    label="نام خانوادگی نماینده"
+                    icon="user"
+                    error={errors.representative_last_name}
+                  >
+                    <input
+                      id="representative_last_name"
+                      name="representative_last_name"
+                      autoComplete="family-name"
+                      placeholder="نام خانوادگی نماینده"
+                      value={draft.representativeLastName}
+                      onChange={(event) => update("representativeLastName", event.target.value)}
+                    />
+                  </FaceField>
+                  <FaceField
+                    id="representative_national_id"
+                    label="کد ملی نماینده"
+                    icon="card"
+                    error={errors.representative_national_id}
+                  >
+                    <input
+                      id="representative_national_id"
+                      name="representative_national_id"
+                      inputMode="numeric"
+                      dir="ltr"
+                      maxLength={10}
+                      placeholder="کد ملی نماینده"
+                      className="text-end"
+                      value={draft.representativeNationalId}
+                      onChange={(event) => update("representativeNationalId", event.target.value)}
+                    />
+                  </FaceField>
+                  <FaceField
+                    id="registration_number"
+                    label="شماره ثبت"
+                    icon="file"
+                    error={errors.registration_number}
+                  >
+                    <input
+                      id="registration_number"
+                      name="registration_number"
+                      dir="ltr"
+                      maxLength={20}
+                      placeholder="شماره ثبت (اختیاری)"
+                      className="text-end"
+                      value={draft.registrationNumber}
+                      onChange={(event) => update("registrationNumber", event.target.value)}
+                    />
+                  </FaceField>
+                  <FaceField id="economic_code" label="کد اقتصادی" icon="file" error={errors.economic_code}>
+                    <input
+                      id="economic_code"
+                      name="economic_code"
+                      inputMode="numeric"
+                      dir="ltr"
+                      maxLength={14}
+                      placeholder="کد اقتصادی (اختیاری)"
+                      className="text-end"
+                      value={draft.economicCode}
+                      onChange={(event) => update("economicCode", event.target.value)}
+                    />
+                  </FaceField>
+                </>
+              )}
+              <button type="submit" className="auth-face__cta">
+                ادامه
+                <Icon name="arrow" className="size-4 rotate-180" />
+              </button>
+            </form>
+          ) : (
+            <form onSubmit={start} noValidate className="grid gap-4">
+              <button type="button" className="auth-face__back" onClick={() => setWizardStep(2)}>
+                <Icon name="arrow" className="size-3.5" />
+                بازگشت
+              </button>
+              <FaceField id={phoneId} label="شماره موبایل" icon="phone" error={errors.phone}>
+                <input
+                  id={phoneId}
+                  name="phone"
+                  inputMode="tel"
+                  autoComplete="tel"
+                  dir="ltr"
+                  placeholder="۰۹۱۲۳۴۵۶۷۸۹"
+                  className="text-end"
+                  value={draft.phone}
+                  onChange={(event) => update("phone", event.target.value)}
+                />
+              </FaceField>
+              <label className="auth-face__terms">
+                <input
+                  type="checkbox"
+                  name="terms_accepted"
+                  checked={draft.terms}
+                  onChange={(event) => update("terms", event.target.checked)}
+                />
+                <span className={cn("auth-face__check", draft.terms && "is-checked")} aria-hidden>
+                  <Icon name="check" />
+                </span>
+                <span>
+                  <Link href="/terms" className="auth-face__link-amber">
+                    شرایط و قوانین
+                  </Link>{" "}
+                  را می‌پذیرم.
+                </span>
+              </label>
+              {errors.terms_accepted ? <p className="auth-face__error">{errors.terms_accepted}</p> : null}
+              {formError ? <p className="auth-face__error">{formError}</p> : null}
+              <button type="submit" className="auth-face__cta" disabled={pending}>
+                {pending ? <span className="auth-face__cta-spinner" aria-hidden /> : null}
+                {pending ? "در حال ارسال کد…" : "دریافت کد تأیید"}
+                {pending ? null : <Icon name="arrow" className="size-4 rotate-180" />}
+              </button>
+              <p className="auth-face__footer">
+                حساب دارید؟{" "}
+                <Link href={switchHref} scroll={false}>
+                  ورود
+                </Link>
+              </p>
+            </form>
+          )}
+        </motion.div>
+      </AnimatePresence>
+    </div>
   );
 }
 
-function TextField({ dir, className, ...props }: ComponentProps<typeof BaseTextField>) {
+function FaceField({
+  id,
+  label,
+  icon,
+  error,
+  children,
+}: {
+  id: string;
+  label: string;
+  icon: IconName;
+  error?: string;
+  children: ReactNode;
+}) {
   return (
-    <BaseTextField
-      labelMode="placeholder"
-      dir={dir}
-      className={cx(dir === "ltr" && !String(className ?? "").includes("text-center") && "text-end", className)}
-      {...props}
-    />
+    <div className="auth-face__field">
+      <div className={cn("auth-face__control", error && "is-invalid auth-field-shake")}>
+        <Icon name={icon} className="auth-face__control-icon size-4" />
+        <div className="grid min-w-0 flex-1">
+          <label htmlFor={id} className="sr-only">
+            {label}
+          </label>
+          {children}
+        </div>
+      </div>
+      {error ? (
+        <p role="alert" className="auth-face__error">
+          {error}
+        </p>
+      ) : null}
+    </div>
   );
 }
 
@@ -274,22 +578,28 @@ function AccountType({ value, onChange }: { value: AccountType; onChange: (value
     ["legal", "حقوقی"],
   ];
   return (
-    <fieldset>
-      <legend className="mb-2 text-sm font-medium text-muted-foreground">نوع حساب</legend>
-      <div className="grid grid-cols-2 rounded-pill bg-card/70 p-1 ring-1 ring-border">
+    <fieldset className="grid gap-2">
+      <legend className="sr-only">نوع حساب</legend>
+      <div className="auth-face__segment">
+        <motion.span
+          layoutId="auth-account-type-pill"
+          className="auth-face__segment-thumb"
+          style={{
+            insetInlineStart: value === "individual" ? "0.25rem" : "calc(50% + 0.05rem)",
+          }}
+          transition={{ type: "spring", stiffness: 380, damping: 32 }}
+          aria-hidden
+        />
         {options.map(([option, label]) => (
-          <label key={option} className="cursor-pointer">
+          <label key={option} className={cn(value === option && "is-active")}>
             <input
               type="radio"
               name="account_type"
               value={option}
               checked={value === option}
               onChange={() => onChange(option)}
-              className="peer sr-only"
             />
-            <span className="flex min-h-11 items-center justify-center rounded-pill text-sm transition-colors peer-checked:bg-primary peer-checked:font-semibold peer-checked:text-primary-foreground peer-focus-visible:ring-2 peer-focus-visible:ring-ring">
-              {label}
-            </span>
+            {label}
           </label>
         ))}
       </div>
@@ -299,36 +609,33 @@ function AccountType({ value, onChange }: { value: AccountType; onChange: (value
 
 function Intent({ value, onChange }: { value: Path; onChange: (value: Path) => void }) {
   const options: readonly { value: Path; title: string; hint: string; icon: IconName }[] = [
-    { value: "sell", title: "فروش برق", hint: "نیروگاه دارم و می‌خواهم بفروشم", icon: "bolt" },
-    { value: "install", title: "نصب نیروگاه", hint: "هنوز نیروگاه ندارم", icon: "plant" },
+    { value: "sell", title: "نیروگاه دارم", hint: "فروش برق نیروگاه موجود", icon: "bolt" },
+    { value: "install", title: "نیروگاه ندارم", hint: "شروع مسیر نصب نیروگاه", icon: "plant" },
   ];
   return (
-    <fieldset className="grid gap-2">
-      <legend className="text-sm font-medium text-muted-foreground">قصد شما</legend>
-      <div className="grid gap-2">
-        {options.map((option) => (
-          <label key={option.value} className="group cursor-pointer">
-            <input
-              type="radio"
-              name="path"
-              value={option.value}
-              checked={value === option.value}
-              onChange={() => onChange(option.value)}
-              className="sr-only"
-            />
-            <span className="flex items-center gap-3 rounded-xl border border-border bg-card/60 px-3 py-2.5 transition-colors group-has-[:checked]:border-primary/40 group-has-[:checked]:bg-card group-has-[:focus-visible]:ring-2 group-has-[:focus-visible]:ring-ring">
-              <span className="size-4 shrink-0 rounded-pill border-2 border-border bg-card group-has-[:checked]:border-primary group-has-[:checked]:bg-primary group-has-[:checked]:shadow-[inset_0_0_0_3px_var(--card)]" />
-              <span className="min-w-0 flex-1 text-start">
-                <span className="block text-sm font-semibold text-foreground">{option.title}</span>
-                <span className="block text-xs leading-5 text-foreground-muted">{option.hint}</span>
-              </span>
-              <span className="grid size-9 shrink-0 place-items-center rounded-pill bg-mint text-primary">
-                <Icon name={option.icon} className="size-4" />
-              </span>
-            </span>
-          </label>
-        ))}
-      </div>
+    <fieldset className="auth-face__path-grid">
+      <legend className="sr-only">مسیر</legend>
+      {options.map((option) => (
+        <label
+          key={option.value}
+          className={cn("auth-face__path-card", value === option.value && "is-selected")}
+        >
+          <input
+            type="radio"
+            name="path"
+            value={option.value}
+            checked={value === option.value}
+            onChange={() => onChange(option.value)}
+          />
+          <span className="auth-face__path-icon" aria-hidden>
+            <Icon name={option.icon} className="size-5" />
+          </span>
+          <span className="min-w-0 flex-1 text-start">
+            <span className="auth-face__path-title">{option.title}</span>
+            <span className="auth-face__path-hint">{option.hint}</span>
+          </span>
+        </label>
+      ))}
     </fieldset>
   );
 }

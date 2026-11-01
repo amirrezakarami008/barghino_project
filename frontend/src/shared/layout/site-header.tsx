@@ -429,12 +429,9 @@ function MobileDrawer({
               </ul>
             </nav>
 
-            <div className="grid gap-2 border-t border-border p-4">
-              <ButtonLink href="/login" variant="ghost" className="w-full">
-                ورود
-              </ButtonLink>
-              <ButtonLink href="/register" className="site-header-cta-shine w-full">
-                ثبت‌نام
+            <div className="border-t border-border p-4">
+              <ButtonLink href="/login" size="sm" className="site-header-cta-shine w-full justify-center">
+                ورود / ثبت‌نام
               </ButtonLink>
             </div>
           </motion.div>
@@ -470,14 +467,11 @@ export function SiteHeader() {
                 servicesOpen={servicesOpen}
                 setServicesOpen={setServicesOpen}
               />
-              <div className="flex items-center gap-2">
-                <ButtonLink href="/login" variant="ghost" size="sm">
-                  ورود
+              <div className="site-header-actions">
+                <ButtonLink href="/login" size="sm" className="site-header-cta-shine whitespace-nowrap px-4">
+                  ورود / ثبت‌نام
                 </ButtonLink>
                 <ThemeToggle />
-                <ButtonLink href="/register" size="sm" className="site-header-cta-shine">
-                  ثبت‌نام
-                </ButtonLink>
               </div>
             </div>
 
@@ -498,8 +492,8 @@ export function SiteHeader() {
       <MobileDrawer open={mobileOpen} onClose={() => setMobileOpen(false)} pathname={pathname} />
 
       <div className="site-header-mobile-cta lg:hidden">
-        <ButtonLink href="/register" className="site-header-cta-shine w-full">
-          ثبت‌نام
+        <ButtonLink href="/login" size="sm" className="site-header-cta-shine w-full justify-center">
+          ورود / ثبت‌نام
         </ButtonLink>
       </div>
     </>

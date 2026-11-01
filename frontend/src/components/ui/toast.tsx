@@ -4,43 +4,37 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
+  useRef,
   useState,
+  type CSSProperties,
   type ReactNode,
 } from "react";
-import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/shared/lib/cn";
-import { Icon } from "@/shared/ui/icon";
-import { Button } from "./button";
+import { Alert } from "./alert";
+import { isAutoDismissAllowed } from "./alert-logic";
+import type { AlertAction, AlertVariant } from "./alert-types";
+import "./alert.css";
 
-const toastVariants = cva(
-  "pointer-events-auto flex w-[min(100%,22rem)] items-start gap-3 rounded-lg border px-4 py-3 shadow-lifted",
-  {
-    variants: {
-      tone: {
-        info: "border-volt-200 bg-info text-info-foreground",
-        success: "border-status-approved-border bg-status-approved-bg text-status-approved",
-        warning: "border-status-pending-border bg-status-pending-bg text-status-pending",
-        danger: "border-status-rejected-border bg-status-rejected-bg text-status-rejected",
-      },
-    },
-    defaultVariants: {
-      tone: "info",
-    },
-  },
-);
+const MAX_TOASTS = 3;
+const DEFAULT_TTL_MS = 5000;
+const EXIT_MS = 220;
 
-export type ToastTone = NonNullable<VariantProps<typeof toastVariants>["tone"]>;
+export type ToastTone = AlertVariant;
 
 export type ToastItem = {
   id: string;
   title: string;
   description?: string;
   tone?: ToastTone;
+  variant?: AlertVariant;
+  action?: AlertAction;
+  durationMs?: number;
 };
 
 type ToastContextValue = {
-  push: (toast: Omit<ToastItem, "id"> & { id?: string }) => void;
+  push: (toast: Omit<ToastItem, "id"> & { id?: string }) => string;
   dismiss: (id: string) => void;
 };
 
@@ -52,21 +46,28 @@ export function useToast() {
   return ctx;
 }
 
-export function ToastProvider({ children }: { children: ReactNode }) {
+export function ToastProvider({
+  children,
+  mobileOffsetClassName,
+}: {
+  children: ReactNode;
+  /** Extra class for sticky mobile action bars offset. */
+  mobileOffsetClassName?: string;
+}) {
   const [items, setItems] = useState<ToastItem[]>([]);
 
   const dismiss = useCallback((id: string) => {
     setItems((prev) => prev.filter((item) => item.id !== id));
   }, []);
 
-  const push = useCallback(
-    (toast: Omit<ToastItem, "id"> & { id?: string }) => {
-      const id = toast.id ?? `toast-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-      setItems((prev) => [...prev, { ...toast, id }]);
-      window.setTimeout(() => dismiss(id), 4200);
-    },
-    [dismiss],
-  );
+  const push = useCallback((toast: Omit<ToastItem, "id"> & { id?: string }) => {
+    const id = toast.id ?? `toast-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    setItems((prev) => {
+      const next = [...prev.filter((item) => item.id !== id), { ...toast, id }];
+      return next.slice(-MAX_TOASTS);
+    });
+    return id;
+  }, []);
 
   const value = useMemo(() => ({ push, dismiss }), [push, dismiss]);
 
@@ -74,7 +75,8 @@ export function ToastProvider({ children }: { children: ReactNode }) {
     <ToastContext value={value}>
       {children}
       <div
-        className="pointer-events-none fixed inset-x-0 bottom-4 z-[60] flex flex-col items-center gap-2 px-4"
+        className={cn("ui-toast-stack", mobileOffsetClassName)}
+        style={{ ["--toast-mobile-offset" as string]: "4.5rem" } as CSSProperties}
         aria-live="polite"
       >
         {items.map((item) => (
@@ -90,19 +92,86 @@ export type ToastProps = ToastItem & {
   className?: string;
 };
 
-export function Toast({ title, description, tone = "info", onDismiss, className }: ToastProps) {
+export function Toast({
+  id,
+  title,
+  description,
+  tone = "info",
+  variant,
+  action,
+  durationMs = DEFAULT_TTL_MS,
+  onDismiss,
+  className,
+}: ToastProps) {
+  const resolved = variant ?? tone ?? "info";
+  const [open, setOpen] = useState(true);
+  const paused = useRef(false);
+  const remaining = useRef(durationMs);
+  const started = useRef(0);
+  const timer = useRef<number | null>(null);
+  const actions = action ? [action] : undefined;
+  const canAutoDismiss = isAutoDismissAllowed(resolved, Boolean(action));
+
+  const clearTimer = () => {
+    if (timer.current != null) {
+      window.clearTimeout(timer.current);
+      timer.current = null;
+    }
+  };
+
+  const requestClose = useCallback(() => {
+    setOpen(false);
+    window.setTimeout(() => onDismiss?.(), EXIT_MS);
+  }, [onDismiss]);
+
+  const armTimer = useCallback(() => {
+    if (!canAutoDismiss) return;
+    clearTimer();
+    started.current = Date.now();
+    timer.current = window.setTimeout(() => {
+      requestClose();
+    }, remaining.current);
+  }, [canAutoDismiss, requestClose]);
+
+  useEffect(() => {
+    armTimer();
+    return clearTimer;
+  }, [armTimer]);
+
+  function pause() {
+    if (!canAutoDismiss || paused.current) return;
+    paused.current = true;
+    remaining.current = Math.max(0, remaining.current - (Date.now() - started.current));
+    clearTimer();
+  }
+
+  function resume() {
+    if (!canAutoDismiss || !paused.current) return;
+    paused.current = false;
+    armTimer();
+  }
+
   return (
-    <div className={cn(toastVariants({ tone }), className)} role="status">
-      <div className="min-w-0 flex-1 space-y-0.5">
-        <p className="text-sm font-semibold">{title}</p>
-        {description ? <p className="text-caption opacity-90">{description}</p> : null}
-      </div>
-      {onDismiss ? (
-        <Button variant="ghost" size="icon" className="size-9 min-h-9" onClick={onDismiss} aria-label="بستن">
-          <Icon name="close" className="size-4" />
-          بستن
-        </Button>
-      ) : null}
+    <div
+      className={cn("ui-toast", className)}
+      onMouseEnter={pause}
+      onMouseLeave={resume}
+      onFocusCapture={pause}
+      onBlurCapture={(event) => {
+        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) resume();
+      }}
+    >
+      <Alert
+        variant={resolved}
+        title={title}
+        description={description}
+        actions={actions}
+        dismissible
+        open={open}
+        onDismiss={requestClose}
+        compact
+        data-toast-id={id}
+      />
     </div>
   );
 }

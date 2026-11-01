@@ -117,6 +117,8 @@
 
   /* Gradients — fills only; amber UI text uses --sun-text */
   --grad-sun: linear-gradient(135deg, #ffb800 0%, #ff7a18 52%, #ff3d77 100%);
+  /* Auth CTA: amber → orange → fuchsia (physical LTR matches reference). */
+  --grad-cta: linear-gradient(90deg, #ffb020 0%, #ff8a3d 48%, #e94bd0 100%);
   --grad-energy: linear-gradient(135deg, #19e3b1 0%, #22d3ee 100%);
   --grad-volt: linear-gradient(135deg, #7c5cff 0%, #b06bff 100%);
   --grad-aurora:
@@ -177,6 +179,21 @@
   --glass-foreground: var(--foreground);
   /* Stronger than body muted so AA holds on translucent glass. */
   --glass-foreground-muted: var(--ink-600);
+
+  /* Auth glass card (light) */
+  --glass-auth-bg: rgb(255 255 255 / 0.55);
+  --glass-auth-bg-strong: rgb(255 255 255 / 0.72);
+  --glass-auth-border-top: rgb(255 255 255 / 0.7);
+  --glass-auth-border-bottom: rgb(255 255 255 / 0.35);
+  --glass-auth-solid-fallback: rgb(255 255 255 / 0.92);
+  --glass-auth-blur: 28px;
+  --glass-auth-foreground: #0b1020;
+  --glass-auth-foreground-muted: #55607a;
+  --glass-auth-input-bg: rgb(255 255 255 / 0.7);
+  --glass-auth-input-border: rgb(11 16 32 / 0.12);
+  --glass-auth-shadow: 0 24px 64px rgb(11 16 32 / 0.18), 0 0 48px rgb(124 92 255 / 0.12);
+  --auth-cta-foreground: #0b1020;
+  --auth-brand-scrim: rgb(255 255 255 / 0.55);
 
   --motion-fast: 160ms;
   --motion-header: 200ms;
@@ -284,6 +301,7 @@
   --sidebar-muted: #a3accb;
 
   --grad-sun: linear-gradient(135deg, #ffb800 0%, #ff7a18 52%, #ff3d77 100%);
+  --grad-cta: linear-gradient(90deg, #ffb020 0%, #ff8a3d 48%, #e94bd0 100%);
   --grad-energy: linear-gradient(135deg, #19e3b1 0%, #22d3ee 100%);
   --grad-volt: linear-gradient(135deg, #7c5cff 0%, #b06bff 100%);
   --grad-aurora:
@@ -323,6 +341,29 @@
   --glass-solid-fallback: rgb(14 20 48 / 0.96);
   --glass-foreground: var(--foreground);
   --glass-foreground-muted: #c5d0e4;
+
+  /* Auth glass card (dark / violet-blue tint) */
+  --glass-auth-bg: linear-gradient(
+    165deg,
+    rgb(120 100 255 / 0.22) 0%,
+    rgb(255 255 255 / 0.06) 100%
+  );
+  --glass-auth-bg-strong: linear-gradient(
+    165deg,
+    rgb(120 100 255 / 0.28) 0%,
+    rgb(255 255 255 / 0.08) 100%
+  );
+  --glass-auth-border-top: rgb(255 255 255 / 0.35);
+  --glass-auth-border-bottom: rgb(255 255 255 / 0.08);
+  --glass-auth-solid-fallback: rgb(22 18 48 / 0.92);
+  --glass-auth-blur: 28px;
+  --glass-auth-foreground: #f4f6ff;
+  --glass-auth-foreground-muted: #c5d0e4;
+  --glass-auth-input-bg: rgb(255 255 255 / 0.06);
+  --glass-auth-input-border: rgb(255 255 255 / 0.14);
+  --glass-auth-shadow: 0 28px 70px rgb(0 0 0 / 0.45), 0 0 56px rgb(124 92 255 / 0.22);
+  --auth-cta-foreground: #0b1020;
+  --auth-brand-scrim: transparent;
 
   --motion-fast: 160ms;
   --motion-header: 200ms;

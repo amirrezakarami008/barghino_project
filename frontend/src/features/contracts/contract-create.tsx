@@ -11,6 +11,7 @@ import {
   PlanCard,
   Skeleton,
   Stepper,
+  ToastProvider,
   type StepItem,
   type StepState,
 } from "@/components/ui";
@@ -23,7 +24,7 @@ import { IdentityNotice } from "./identity-notice";
 import { useContractResource } from "./use-contract-resource";
 import { ContractSiteStage, type SitePhase } from "./contract-site-stage";
 
-type WizardStep = 1 | 2 | 3 | 4 | 5 | 6;
+type WizardStep = 1 | 2 | 3 | 4 | 5;
 type Submission =
   | { readonly status: "idle" }
   | { readonly status: "submitting" }
@@ -31,8 +32,7 @@ type Submission =
   | { readonly status: "uncertain"; readonly matches: readonly Contract[] };
 
 const LABELS = [
-  "انشعاب",
-  "نیروگاه",
+  "انشعاب و نیروگاه",
   "وضعیت بررسی",
   "انتخاب پلن",
   "مرور نهایی",
@@ -45,15 +45,16 @@ function stepState(index: number, current: WizardStep): StepState {
   return "blocked";
 }
 
-export function ContractCreate(): ReactElement {
+function initialStep(search: URLSearchParams): WizardStep {
+  if (search.get("plant")) return 2;
+  return 1;
+}
+
+function ContractCreateInner(): ReactElement {
   const router = useRouter();
   const search = useSearchParams();
-  const [sitePhase, setSitePhase] = useState<SitePhase>(() =>
-    search.get("plant") ? 3 : search.get("branch") ? 2 : 1,
-  );
-  const [step, setStep] = useState<WizardStep>(() =>
-    search.get("plant") ? 3 : search.get("branch") ? 2 : 1,
-  );
+  const [sitePhase, setSitePhase] = useState<SitePhase>(() => (search.get("plant") ? 2 : 1));
+  const [step, setStep] = useState<WizardStep>(() => initialStep(search));
   const [planPage, setPlanPage] = useState(1);
   const [selectedPlant, setSelectedPlant] = useState<PlantOption>();
   const [selectedPlan, setSelectedPlan] = useState<Plan>();
@@ -72,7 +73,7 @@ export function ContractCreate(): ReactElement {
 
   function go(value: WizardStep): void {
     setStep(value);
-    if (value <= 3) setSitePhase(value as SitePhase);
+    if (value <= 2) setSitePhase(value as SitePhase);
     setSubmission({ status: "idle" });
     heading.current?.focus();
   }
@@ -114,9 +115,12 @@ export function ContractCreate(): ReactElement {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
+    <div className="mx-auto max-w-6xl space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <Link href="/panel/contracts" className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-foreground-muted hover:text-foreground">
+        <Link
+          href="/panel/contracts"
+          className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-foreground-muted hover:text-foreground"
+        >
           <Icon name="arrow" className="size-4" />
           بازگشت به قراردادها
         </Link>
@@ -138,7 +142,7 @@ export function ContractCreate(): ReactElement {
       <IdentityNotice />
 
       <section className="space-y-5" aria-busy={pending}>
-        {step <= 3 ? (
+        {step <= 2 ? (
           <ContractSiteStage
             phase={sitePhase}
             onPhaseChange={(phase) => {
@@ -148,12 +152,16 @@ export function ContractCreate(): ReactElement {
             }}
             onReady={(option) => {
               setSelectedPlant(option);
-              go(4);
+              go(3);
+            }}
+            onSkipReview={(option) => {
+              setSelectedPlant(option);
+              go(3);
             }}
           />
         ) : null}
 
-        {step === 4 ? (
+        {step === 3 ? (
           plans.state.status === "loading" ? (
             <div className="grid gap-3 md:grid-cols-3">
               <Skeleton className="h-64" />
@@ -172,7 +180,8 @@ export function ContractCreate(): ReactElement {
           ) : (
             <>
               <p className="text-sm text-foreground-muted">
-                پلن‌ها برای مقایسه هم‌ارتفاع‌اند. نرخ‌ها شرایط فعلی کاتالوگ‌اند و هنگام ساخت پیش‌نویس در قرارداد قفل می‌شوند.
+                پلن‌ها برای مقایسه هم‌ارتفاع‌اند. نرخ‌ها شرایط فعلی کاتالوگ‌اند و هنگام ساخت پیش‌نویس در قرارداد قفل
+                می‌شوند.
               </p>
               <div className="grid gap-4 md:grid-cols-3">
                 {plans.state.data.results
@@ -197,7 +206,7 @@ export function ContractCreate(): ReactElement {
           )
         ) : null}
 
-        {step === 5 && selectedPlant && selectedPlan ? (
+        {step === 4 && selectedPlant && selectedPlan ? (
           <Card>
             <h3 className="text-h3">مرور نهایی پیش‌نویس</h3>
             <dl className="mt-4 grid gap-3 sm:grid-cols-2">
@@ -233,11 +242,12 @@ export function ContractCreate(): ReactElement {
           </Card>
         ) : null}
 
-        {step === 6 && selectedPlant && selectedPlan ? (
+        {step === 5 && selectedPlant && selectedPlan ? (
           <Card>
             <h3 className="text-h3">ساخت پیش‌نویس</h3>
             <p className="mt-2 text-sm leading-7 text-foreground-muted">
-              با تأیید، پلن «{selectedPlan.name}» روی نیروگاه «{selectedPlant.plant.name}» به‌صورت پیش‌نویس ذخیره می‌شود.
+              با تأیید، پلن «{selectedPlan.name}» روی نیروگاه «{selectedPlant.plant.name}» به‌صورت پیش‌نویس ذخیره
+              می‌شود.
             </p>
             <Alert tone="warning" className="mt-4" title="ساخت پیش‌نویس ≠ امضا و ≠ شروع خرید برق">
               پس از ساخت می‌توانید جزئیات را ببینید؛ دکمهٔ امضا تا آماده‌شدن سند رسمی غیرفعال می‌ماند.
@@ -248,9 +258,7 @@ export function ContractCreate(): ReactElement {
         {submission.status === "error" ? <ContractError message={submission.message} /> : null}
         {submission.status === "uncertain" ? (
           <Alert tone="warning" title="نتیجهٔ درخواست ساخت مشخص نیست">
-            <p>
-              برای جلوگیری از ساخت تکراری، درخواست خودکار دیگری نفرستادیم. فهرست را بررسی کنید.
-            </p>
+            <p>برای جلوگیری از ساخت تکراری، درخواست خودکار دیگری نفرستادیم. فهرست را بررسی کنید.</p>
             <div className="mt-3 flex flex-wrap gap-2">
               {submission.matches.map((contract) => (
                 <ButtonLink
@@ -269,7 +277,7 @@ export function ContractCreate(): ReactElement {
           </Alert>
         ) : null}
 
-        {step >= 4 ? (
+        {step >= 3 ? (
           <footer className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card p-4">
             <Button
               variant="secondary"
@@ -279,13 +287,12 @@ export function ContractCreate(): ReactElement {
               مرحلهٔ قبل
             </Button>
             <span className="text-caption text-foreground-muted" role="status">
-              {pending ? "در حال ساخت پیش‌نویس…" : `مرحلهٔ ${faNumber(step)} از ${faNumber(6)}`}
+              {pending ? "در حال ساخت پیش‌نویس…" : `مرحلهٔ ${faNumber(step)} از ${faNumber(5)}`}
             </span>
-            {step < 6 ? (
+            {step < 5 ? (
               <Button
                 disabled={
-                  (step === 4 && !selectedPlan) ||
-                  (step === 5 && (!selectedPlant || !selectedPlan))
+                  (step === 3 && !selectedPlan) || (step === 4 && (!selectedPlant || !selectedPlan))
                 }
                 onClick={() => go((step + 1) as WizardStep)}
               >
@@ -306,5 +313,13 @@ export function ContractCreate(): ReactElement {
         ) : null}
       </section>
     </div>
+  );
+}
+
+export function ContractCreate(): ReactElement {
+  return (
+    <ToastProvider mobileOffsetClassName="ui-toast-stack--above-actions">
+      <ContractCreateInner />
+    </ToastProvider>
   );
 }

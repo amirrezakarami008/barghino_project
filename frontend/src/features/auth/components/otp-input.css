@@ -23,15 +23,15 @@
 .otp-input__slot input {
   width: 100%;
   height: 100%;
-  border: 1.5px solid var(--border);
-  border-radius: var(--radius-input);
-  background: color-mix(in srgb, var(--card) 88%, transparent);
-  color: var(--foreground);
+  border: 1.5px solid var(--glass-auth-input-border, var(--border));
+  border-radius: 0.9rem;
+  background: var(--glass-auth-input-bg, color-mix(in srgb, var(--card) 88%, transparent));
+  color: var(--glass-auth-foreground, var(--foreground));
   box-shadow: var(--shadow-input);
   text-align: center;
   font-size: 23px;
   font-weight: 600;
-  caret-color: var(--primary);
+  caret-color: var(--sun-400);
   outline: none;
   transition: border-color 200ms, background 200ms, box-shadow 200ms, color 200ms;
 }
@@ -46,8 +46,13 @@
 }
 
 .otp-input__slot input:focus-visible {
-  border-color: var(--primary);
-  box-shadow: var(--shadow-focus-ring), var(--shadow-input);
+  border-color: transparent;
+  background:
+    linear-gradient(var(--glass-auth-input-bg, var(--card)), var(--glass-auth-input-bg, var(--card)))
+      padding-box,
+    linear-gradient(90deg, #ffb020, #e94bd0) border-box;
+  border: 1.5px solid transparent;
+  box-shadow: 0 0 0 3px color-mix(in srgb, #e94bd0 22%, transparent);
   outline: none;
 }
 

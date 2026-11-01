@@ -106,7 +106,7 @@
   margin: 0.75rem;
   margin-block-end: 0;
   overflow: hidden;
-  aspect-ratio: 16 / 10;
+  aspect-ratio: 4 / 3;
   border-radius: var(--radius-2xl);
   background: var(--surface-2);
 }

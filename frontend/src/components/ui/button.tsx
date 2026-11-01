@@ -1,5 +1,5 @@
 import Link from "next/link";
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import type { ButtonHTMLAttributes, ReactNode, Ref } from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/shared/lib/cn";
 
@@ -35,6 +35,7 @@ export type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> &
     loading?: boolean;
     startIcon?: ReactNode;
     endIcon?: ReactNode;
+    ref?: Ref<HTMLButtonElement>;
   };
 
 export function Button({
@@ -47,12 +48,14 @@ export function Button({
   endIcon,
   children,
   type = "button",
+  ref,
   ...props
 }: ButtonProps) {
   const isIconOnly = size === "icon";
 
   return (
     <button
+      ref={ref}
       type={type}
       className={cn(buttonVariants({ variant, size }), className)}
       disabled={disabled || loading}
