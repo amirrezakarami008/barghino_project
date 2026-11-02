@@ -54,9 +54,9 @@ export function ProfileDetails() {
   const completeness = [mobileVerified, identityComplete, companyApproval === "approved"].filter(Boolean).length;
 
   return (
-    <div className="mx-auto max-w-4xl space-y-6">
-      <header>
-        <h2 className="text-h2">پروفایل</h2>
+    <div className="panel-page mx-auto max-w-4xl space-y-6">
+      <header className="panel-page-header">
+        <h2 className="text-h2 tracking-tight">پروفایل</h2>
         <p className="mt-2 text-body text-foreground-muted">
           فعلاً فقط خواندنی است. سه نشانگر زیر جدا از هم‌اند و با هم ادغام نمی‌شوند.
         </p>

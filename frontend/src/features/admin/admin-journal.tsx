@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState, type ReactElement } from "react";
 import { Button, DataTable, EmptyState, Input, type DataTableColumn } from "@/components/ui";
 import { faNumber } from "@/shared/lib/fa";
-import { AdminAuditLine, AdminPage, AdminSolidSurface } from "./admin-page";
+import { AdminPage, AdminSolidSurface } from "./admin-page";
 
 type JournalArticle = {
   readonly slug: string;
@@ -41,17 +41,12 @@ export function AdminJournal({
     {
       id: "status",
       header: "وضعیت",
-      cell: () => <span className="text-sm">منتشرشده · فقط‌خواندنی</span>,
+      cell: () => <span className="text-sm">فقط‌خواندنی · نمونه</span>,
     },
     {
       id: "minutes",
       header: "مطالعه",
       cell: (row) => <span>{faNumber(row.minutes)} دقیقه</span>,
-    },
-    {
-      id: "audit",
-      header: "آخرین اقدام",
-      cell: () => <AdminAuditLine text="آخرین اقدام: انتشار در مجلهٔ عمومی سایت" />,
     },
   ];
 

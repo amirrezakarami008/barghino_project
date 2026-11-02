@@ -97,32 +97,34 @@ export function SiteReviewEditDrawer({
   useEffect(() => {
     if (!registration?.item || !kind) return;
     const current = registration.item;
-    setName(current.name);
-    setAddress(current.address);
-    setError("");
-    setUncertain(false);
-    setConfirmOpen(false);
-    if (kind === "branch") {
-      const snap: BranchSnapshot = {
-        name: current.name,
-        meter: (current as Branch).meter_number,
-        address: current.address,
-      };
-      setMeter(snap.meter);
-      setBaseline(snap);
-    } else {
-      const plant = current as Plant;
-      const snap: PlantSnapshot = {
-        name: plant.name,
-        address: plant.address,
-        capacity: plant.capacity_kwp,
-        branchUuid: plant.branch_uuid,
-      };
-      setCapacity(snap.capacity);
-      setBranchUuid(snap.branchUuid);
-      setBaseline(snap);
-    }
-    queueMicrotask(() => firstField.current?.focus());
+    queueMicrotask(() => {
+      setName(current.name);
+      setAddress(current.address);
+      setError("");
+      setUncertain(false);
+      setConfirmOpen(false);
+      if (kind === "branch") {
+        const snap: BranchSnapshot = {
+          name: current.name,
+          meter: (current as Branch).meter_number,
+          address: current.address,
+        };
+        setMeter(snap.meter);
+        setBaseline(snap);
+      } else {
+        const plant = current as Plant;
+        const snap: PlantSnapshot = {
+          name: plant.name,
+          address: plant.address,
+          capacity: plant.capacity_kwp,
+          branchUuid: plant.branch_uuid,
+        };
+        setCapacity(snap.capacity);
+        setBranchUuid(snap.branchUuid);
+        setBaseline(snap);
+      }
+      firstField.current?.focus();
+    });
   }, [registration, kind]);
 
   const changes: string[] = [];

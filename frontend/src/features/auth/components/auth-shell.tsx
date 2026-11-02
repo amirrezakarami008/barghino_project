@@ -127,7 +127,7 @@ function AuthShellInner() {
           </motion.div>
         </aside>
 
-        <div className="auth-shell__card-col">
+        <div id="content" tabIndex={-1} className="auth-shell__card-col outline-none focus:outline-none">
           <motion.div
             className="auth-shell__mobile-brand"
             initial={reduceMotion ? false : { opacity: 0, y: 8 }}

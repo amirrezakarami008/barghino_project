@@ -20,7 +20,7 @@ export function Reveal({
 
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (reduce) {
-      setVisible(true);
+      queueMicrotask(() => setVisible(true));
       return;
     }
 

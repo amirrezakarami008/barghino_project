@@ -297,11 +297,12 @@ function MobileDrawer({
   const reduceMotion = useReducedMotion();
   const [servicesExpanded, setServicesExpanded] = useState(false);
 
+  if (!open && servicesExpanded) {
+    setServicesExpanded(false);
+  }
+
   useEffect(() => {
-    if (!open) {
-      setServicesExpanded(false);
-      return;
-    }
+    if (!open) return;
     const onKey = (event: KeyboardEvent) => {
       if (event.key === "Escape") onClose();
     };
@@ -446,11 +447,12 @@ export function SiteHeader() {
   const scrolled = useScrolledPast(SCROLL_SHRINK_AT);
   const [mobileOpen, setMobileOpen] = useState(false);
   const [servicesOpen, setServicesOpen] = useState(false);
-
-  useEffect(() => {
+  const [navPath, setNavPath] = useState(pathname);
+  if (pathname !== navPath) {
+    setNavPath(pathname);
     setServicesOpen(false);
     setMobileOpen(false);
-  }, [pathname]);
+  }
 
   return (
     <>

@@ -11,8 +11,8 @@ import {
   Skeleton,
   StatusPill,
 } from "@/components/ui";
+import { PanelArt } from "@/features/panel/panel-art";
 import { Icon } from "@/shared/ui/icon";
-import { faNumber } from "@/shared/lib/fa";
 import { getContracts } from "./contracts-api";
 import { formatDecimal, localDate, type Contract } from "./contract-model";
 import { contractStatusMeta } from "./status-map";
@@ -45,10 +45,10 @@ export function ContractsList(): ReactElement {
   }, [filter, state]);
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
-      <header className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+    <div className="panel-page space-y-6">
+      <header className="panel-page-header flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h2 className="text-h2">قراردادهای من</h2>
+          <h2 className="text-h2 tracking-tight">قراردادهای من</h2>
           <p className="mt-2 text-body text-foreground-muted">
             وضعیت واقعی هر پیش‌نویس و قرارداد — بدون عدد ساختگی.
           </p>
@@ -89,11 +89,21 @@ export function ContractsList(): ReactElement {
       ) : state.status === "error" ? (
         <ContractError message={state.message} retry={reload} />
       ) : !rows.length ? (
-        <EmptyState
-          title={filter === "all" ? "هنوز قراردادی ندارید" : "موردی با این فیلتر نیست"}
-          description="مسیر از ثبت انشعاب و نیروگاه تا ساخت پیش‌نویس ادامه دارد."
-          action={<ButtonLink href="/panel/contracts/new">شروع قرارداد</ButtonLink>}
-        />
+        <div className="panel-surface grid justify-items-center gap-3 py-8 text-center">
+          <PanelArt
+            name="empty-contracts"
+            width={160}
+            height={160}
+            className="size-36 rounded-[22px] object-cover shadow-[var(--panel-float)]"
+          />
+          <EmptyState
+            hideIcon
+            className="border-0 bg-transparent p-0 shadow-none"
+            title={filter === "all" ? "هنوز قراردادی ندارید" : "موردی با این فیلتر نیست"}
+            description="مسیر از ثبت انشعاب و نیروگاه تا ساخت پیش‌نویس ادامه دارد."
+            action={<ButtonLink href="/panel/contracts/new">شروع قرارداد</ButtonLink>}
+          />
+        </div>
       ) : (
         <ul className="grid gap-3">
           {rows.map((contract) => (
@@ -119,10 +129,10 @@ function ContractCard({ contract }: { contract: Contract }) {
   const meta = contractStatusMeta(contract.status);
   return (
     <li>
-      <Card variant="interactive" className="p-0">
+      <Card variant="interactive" className="overflow-hidden rounded-[22px] p-0 shadow-[var(--panel-card-glow)]">
         <Link
           href={`/panel/contracts/${encodeURIComponent(contract.uuid)}`}
-          className="block rounded-lg p-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+          className="block rounded-[22px] p-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div className="min-w-0 space-y-1">

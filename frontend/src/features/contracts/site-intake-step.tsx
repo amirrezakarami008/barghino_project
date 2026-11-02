@@ -185,7 +185,7 @@ export function SiteIntakeStep({
   const [dismissedBanners, setDismissedBanners] = useState<ReadonlySet<string>>(new Set());
   const summaryRef = useRef<AlertHandle>(null);
   const plantSectionRef = useRef<HTMLElement>(null);
-  const inFlight = useRef(false);
+  const [inFlight, setInFlight] = useState(false);
   const branchBecameValid = useRef(false);
   const plantBecameValid = useRef(false);
   const [branchPage, setBranchPage] = useState(1);
@@ -224,15 +224,17 @@ export function SiteIntakeStep({
 
   useEffect(() => {
     const saved = readIntakeDraft();
-    if (saved && intakeDraftIsDirty(saved)) {
-      setDraft((prev) => ({
-        ...saved,
-        branchId: saved.branchId || prev.branchId,
-        plantId: saved.plantId || prev.plantId,
-      }));
-      setDraftRestored(true);
-    }
-    setHydrated(true);
+    queueMicrotask(() => {
+      if (saved && intakeDraftIsDirty(saved)) {
+        setDraft((prev) => ({
+          ...saved,
+          branchId: saved.branchId || prev.branchId,
+          plantId: saved.plantId || prev.plantId,
+        }));
+        setDraftRestored(true);
+      }
+      setHydrated(true);
+    });
   }, []);
 
   useEffect(() => {
@@ -260,7 +262,7 @@ export function SiteIntakeStep({
     }
     window.addEventListener("online", onOnline);
     window.addEventListener("offline", onOffline);
-    setOnline(navigator.onLine);
+    queueMicrotask(() => setOnline(navigator.onLine));
     return () => {
       window.removeEventListener("online", onOnline);
       window.removeEventListener("offline", onOffline);
@@ -284,11 +286,13 @@ export function SiteIntakeStep({
     if (!branches || draft.branchId || draftRestored) return;
     if (branches.results.length === 1) {
       const only = branches.results[0]!;
-      setDraft((prev) => ({ ...prev, branchMode: "existing", branchId: only.uuid }));
+      queueMicrotask(() =>
+        setDraft((prev) => ({ ...prev, branchMode: "existing", branchId: only.uuid })),
+      );
       return;
     }
     if (branches.results.length > 0 && !initialBranchId && draft.branchMode === "new" && !draft.branchName) {
-      setDraft((prev) => ({ ...prev, branchMode: "existing" }));
+      queueMicrotask(() => setDraft((prev) => ({ ...prev, branchMode: "existing" })));
     }
   }, [
     branches,
@@ -427,7 +431,7 @@ export function SiteIntakeStep({
   }
 
   async function performSubmit(): Promise<void> {
-    if (inFlight.current) return;
+    if (inFlight) return;
     const invalid = collectInvalidFields(draft);
     if (invalid.length) {
       setSubmitIssue({ kind: "validation", fields: invalid });
@@ -454,7 +458,7 @@ export function SiteIntakeStep({
       return;
     }
 
-    inFlight.current = true;
+    setInFlight(true);
     setSubmitIssue({ kind: "none" });
     try {
       let branch = selectedBranch;
@@ -522,7 +526,7 @@ export function SiteIntakeStep({
       setConfirmOpen(false);
       queueMicrotask(() => summaryRef.current?.focus());
     } finally {
-      inFlight.current = false;
+      setInFlight(false);
     }
   }
 
@@ -1078,7 +1082,7 @@ export function SiteIntakeStep({
                 >
                   انصراف
                 </Button>
-                <Button type="submit" disabled={inFlight.current}>
+                <Button type="submit" disabled={inFlight}>
                   ادامه
                 </Button>
               </div>

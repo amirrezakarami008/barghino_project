@@ -53,9 +53,12 @@ export function AdminPlants(): ReactElement {
     return () => window.clearTimeout(timer);
   }, [query]);
 
-  useEffect(() => {
+  const filterKey = `${debounced}:${status}`;
+  const [pageFilter, setPageFilter] = useState(filterKey);
+  if (pageFilter !== filterKey) {
+    setPageFilter(filterKey);
     setPage(1);
-  }, [debounced, status]);
+  }
 
   useEffect(() => {
     const controller = new AbortController();

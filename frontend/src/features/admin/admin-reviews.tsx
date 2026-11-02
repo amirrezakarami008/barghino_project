@@ -59,9 +59,12 @@ export function AdminReviews(): ReactElement {
     return () => window.clearTimeout(timer);
   }, [search]);
 
-  useEffect(() => {
+  const filterKey = `${debounced}:${kind}`;
+  const [pageFilter, setPageFilter] = useState(filterKey);
+  if (pageFilter !== filterKey) {
+    setPageFilter(filterKey);
     setPage(1);
-  }, [debounced, kind]);
+  }
 
   useEffect(() => {
     const controller = new AbortController();
@@ -240,7 +243,7 @@ function ReviewDrawer({
 
   useEffect(() => {
     if (kind !== "plants" || !item.branchUuid) {
-      setBranchStatus(kind === "plants" ? "unknown" : "active");
+      queueMicrotask(() => setBranchStatus(kind === "plants" ? "unknown" : "active"));
       return;
     }
     const controller = new AbortController();

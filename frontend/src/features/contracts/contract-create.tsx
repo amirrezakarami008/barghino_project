@@ -115,7 +115,7 @@ function ContractCreateInner(): ReactElement {
   }
 
   return (
-    <div className="mx-auto max-w-6xl space-y-6">
+    <div className="panel-page mx-auto max-w-6xl space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Link
           href="/panel/contracts"

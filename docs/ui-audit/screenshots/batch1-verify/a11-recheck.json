@@ -1,0 +1,17 @@
+{
+  "tab1": {
+    "href": "#content",
+    "text": "رفتن به محتوا"
+  },
+  "tabOk": true,
+  "focusOk": true,
+  "ringOk": true,
+  "layout": {
+    "dx": 0,
+    "dy": 0,
+    "dw": 0,
+    "dh": 0,
+    "scrollDelta": 16
+  },
+  "afterOutline": "rgb(124, 92, 255) none 2px"
+}

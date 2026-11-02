@@ -23,7 +23,7 @@ export function AdminDashboard({ guides }: { readonly guides: readonly Guide[] }
 
   useEffect(() => {
     const controller = new AbortController();
-    setQueues({ status: "loading" });
+    queueMicrotask(() => setQueues({ status: "loading" }));
     void getQueueCounts(controller.signal)
       .then((counts) => {
         if (!controller.signal.aborted) setQueues({ status: "ready", ...counts });

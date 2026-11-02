@@ -126,7 +126,7 @@ export function Alert({
 
   useEffect(() => {
     if (!visible || resolved !== "danger" || reduceMotion) return;
-    setShake(true);
+    queueMicrotask(() => setShake(true));
     const timer = window.setTimeout(() => setShake(false), 450);
     return () => window.clearTimeout(timer);
   }, [visible, resolved, reduceMotion]);

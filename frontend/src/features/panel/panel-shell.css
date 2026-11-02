@@ -1,44 +1,13 @@
+/* Premium user panel chrome — scoped to .panel-app only (admin uses WorkspaceShell). */
+
 .panel-app {
   min-height: 100dvh;
-  background: var(--background);
+  background: var(--panel-canvas);
   color: var(--foreground);
 }
 
 .panel-app--dense {
   --panel-nav-min: 2.5rem;
-  background:
-    radial-gradient(ellipse 80% 40% at 100% 0%, color-mix(in srgb, var(--sun-200) 18%, transparent), transparent 55%),
-    radial-gradient(ellipse 60% 30% at 0% 100%, color-mix(in srgb, var(--energy-200) 12%, transparent), transparent 50%),
-    var(--background);
-}
-
-.panel-app--dense .panel-sidebar {
-  background: var(--surface);
-  border-inline-start-color: color-mix(in srgb, var(--border) 90%, transparent);
-}
-
-.panel-app--dense .panel-nav-link,
-.panel-app--dense .panel-nav-locked {
-  min-height: var(--panel-nav-min);
-  font-size: 0.8125rem;
-  font-weight: 500;
-}
-
-.panel-app--dense .panel-nav-link.is-active {
-  background: color-mix(in srgb, var(--foreground) 6%, var(--card));
-  color: var(--foreground);
-}
-
-.panel-app--dense .panel-content {
-  padding: var(--space-3);
-  padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
-}
-
-@media (min-width: 1024px) {
-  .panel-app--dense .panel-content {
-    padding: var(--space-4) var(--space-5);
-    padding-bottom: var(--space-6);
-  }
 }
 
 .panel-app-layout {
@@ -53,68 +22,178 @@
   z-index: 30;
   display: none;
   height: 100dvh;
-  width: 17.5rem;
+  width: 18rem;
   flex-direction: column;
   gap: var(--space-4);
-  border-inline-start: 1px solid var(--border);
-  background: var(--card);
+  border-inline-start: 1px solid var(--panel-sidebar-border);
+  background: var(--panel-sidebar-bg);
+  -webkit-backdrop-filter: blur(22px);
+  backdrop-filter: blur(22px);
   padding: var(--space-4);
+  box-shadow: -12px 0 40px rgb(14 36 72 / 0.04);
   transition: width var(--motion-standard) var(--ease-out);
 }
 
+.panel-sidebar::before {
+  content: "";
+  pointer-events: none;
+  position: absolute;
+  inset: 0 auto auto 0;
+  width: 100%;
+  height: 9rem;
+  background:
+    radial-gradient(ellipse 80% 100% at 100% 0%, rgb(255 184 0 / 0.16), transparent 70%),
+    radial-gradient(ellipse 60% 80% at 0% 0%, rgb(56 189 248 / 0.12), transparent 65%);
+  opacity: 0.9;
+}
+
+.panel-sidebar > * {
+  position: relative;
+  z-index: 1;
+}
+
 .panel-app[data-collapsed="true"] .panel-sidebar {
-  width: 5rem;
+  width: 5.25rem;
+}
+
+.panel-sidebar-brand {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.panel-collapse {
+  display: grid;
+  width: 2.75rem;
+  height: 2.75rem;
+  place-items: center;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--card) 80%, transparent);
+  color: var(--foreground-muted);
+  transition:
+    background var(--motion-fast) var(--ease-out),
+    color var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out);
+}
+
+.panel-collapse:hover {
+  background: var(--card);
+  color: var(--foreground);
+  box-shadow: var(--shadow-soft);
 }
 
 .panel-sidebar-nav {
   display: grid;
-  gap: var(--space-1);
+  gap: 0.35rem;
   overflow: auto;
   flex: 1;
+  padding-block: 0.25rem;
+  scrollbar-width: thin;
+}
+
+.panel-sidebar-group-label {
+  margin-bottom: 0.35rem;
+  padding-inline: 0.75rem;
+  letter-spacing: 0.02em;
 }
 
 .panel-nav-link,
 .panel-nav-locked {
   display: flex;
-  min-height: 2.75rem;
+  min-height: 2.85rem;
   align-items: center;
   gap: 0.75rem;
-  border-radius: var(--radius-md);
-  padding-inline: 0.75rem;
+  border-radius: 14px;
+  padding-inline: 0.55rem 0.75rem;
   font-size: 0.875rem;
   font-weight: 600;
   color: var(--foreground-muted);
-  transition: background var(--motion-fast) var(--ease-out), color var(--motion-fast) var(--ease-out);
+  transition:
+    background var(--motion-fast) var(--ease-out),
+    color var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out),
+    transform var(--motion-fast) var(--ease-out);
+}
+
+.panel-nav-icon {
+  display: grid;
+  width: 2.15rem;
+  height: 2.15rem;
+  place-items: center;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface-2) 88%, transparent);
+  color: inherit;
+  flex-shrink: 0;
+  transition: background var(--motion-fast) var(--ease-out), box-shadow var(--motion-fast) var(--ease-out);
 }
 
 .panel-nav-link:hover {
-  background: var(--surface);
+  background: color-mix(in srgb, var(--card) 70%, transparent);
   color: var(--foreground);
 }
 
-.panel-nav-link.is-active {
-  background: color-mix(in srgb, var(--sun-500) 14%, var(--card));
-  color: var(--sun-800);
+.panel-nav-link:hover .panel-nav-icon {
+  background: var(--panel-icon-sky);
+  color: #fff;
+  box-shadow: 0 8px 18px rgb(37 99 235 / 0.25);
 }
 
-.dark .panel-nav-link.is-active {
-  color: var(--sun-200);
+.panel-nav-link.is-active {
+  background: var(--panel-nav-active-bg);
+  color: var(--panel-nav-active-fg);
+  box-shadow: var(--panel-nav-active-glow);
+}
+
+.panel-nav-link.is-active .panel-nav-icon {
+  background: var(--grad-sun);
+  color: var(--primary-foreground);
+  box-shadow: var(--shadow-sun);
 }
 
 .panel-nav-locked {
   cursor: not-allowed;
-  opacity: 0.72;
+  opacity: 0.62;
+}
+
+.panel-nav-locked .panel-nav-icon {
+  background: color-mix(in srgb, var(--ink-200) 55%, transparent);
 }
 
 .panel-app[data-collapsed="true"] .panel-nav-label,
 .panel-app[data-collapsed="true"] .panel-sidebar-caption,
-.panel-app[data-collapsed="true"] .panel-sidebar-group-label {
+.panel-app[data-collapsed="true"] .panel-sidebar-group-label,
+.panel-app[data-collapsed="true"] .panel-sidebar-foot {
   position: absolute;
   width: 1px;
   height: 1px;
   overflow: hidden;
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
+}
+
+.panel-sidebar-foot {
+  margin-top: auto;
+  display: grid;
+  gap: 0.65rem;
+  padding-top: 0.5rem;
+  border-top: 1px solid var(--panel-sidebar-border);
+}
+
+.panel-sidebar-support {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  border-radius: 14px;
+  padding: 0.65rem 0.75rem;
+  background:
+    linear-gradient(135deg, rgb(124 92 255 / 0.1), rgb(56 189 248 / 0.08));
+  border: 1px solid color-mix(in srgb, var(--volt-400) 22%, transparent);
+}
+
+.panel-sidebar-caption {
+  padding-inline: 0.35rem;
 }
 
 .panel-main {
@@ -128,31 +207,37 @@
   top: 0;
   z-index: 20;
   display: flex;
-  min-height: 4rem;
+  min-height: 4.25rem;
   align-items: center;
   justify-content: space-between;
   gap: var(--space-3);
-  border-bottom: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  margin: 0.75rem 0.75rem 0;
   padding-inline: var(--space-4);
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--glass-bg-strong) 92%, transparent);
+  box-shadow: var(--shadow-soft);
 }
 
 .panel-content {
   flex: 1;
   padding: var(--space-4);
-  padding-bottom: calc(5.5rem + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(5.75rem + env(safe-area-inset-bottom, 0px));
 }
 
 .panel-bottom-tabs {
   position: fixed;
-  inset-inline: 0;
-  bottom: 0;
+  inset-inline: 0.65rem;
+  bottom: calc(0.55rem + env(safe-area-inset-bottom, 0px));
   z-index: 30;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 0.25rem;
-  border-top: 1px solid var(--border);
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  border-radius: 18px;
   background: var(--glass-solid-fallback);
-  padding: 0.4rem 0.5rem calc(0.4rem + env(safe-area-inset-bottom, 0px));
+  padding: 0.35rem;
+  box-shadow: var(--panel-float);
 }
 
 @supports ((-webkit-backdrop-filter: blur(1px)) or (backdrop-filter: blur(1px))) {
@@ -166,14 +251,15 @@
 
 .panel-tab {
   display: grid;
-  min-height: 3.25rem;
+  min-height: 3.35rem;
   min-width: 0;
   place-items: center;
   gap: 0.15rem;
-  border-radius: var(--radius-md);
+  border-radius: 14px;
   color: var(--foreground-muted);
   font-size: 0.7rem;
   font-weight: 600;
+  transition: background var(--motion-fast) var(--ease-out), color var(--motion-fast) var(--ease-out);
 }
 
 .panel-tab > span {
@@ -190,12 +276,9 @@
 }
 
 .panel-tab.is-active {
-  background: color-mix(in srgb, var(--sun-500) 12%, transparent);
-  color: var(--sun-800);
-}
-
-.dark .panel-tab.is-active {
-  color: var(--sun-200);
+  background: var(--panel-nav-active-bg);
+  color: var(--panel-nav-active-fg);
+  box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--sun-400) 30%, transparent);
 }
 
 .panel-user-menu {
@@ -203,12 +286,65 @@
   inset-inline-end: 0;
   top: calc(100% + 0.5rem);
   z-index: 40;
-  min-width: 12rem;
+  min-width: 13rem;
   border: 1px solid var(--border);
-  border-radius: var(--radius-md);
+  border-radius: 16px;
   background: var(--card);
+  box-shadow: var(--panel-card-glow);
+  padding: 0.4rem;
+  overflow: hidden;
+}
+
+.panel-user-trigger {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  gap: 0.55rem;
+  border-radius: 999px;
+  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--card) 88%, transparent);
+  padding-inline: 0.4rem 0.85rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  box-shadow: var(--shadow-soft);
+  transition: box-shadow var(--motion-fast) var(--ease-out), transform var(--motion-fast) var(--ease-out);
+}
+
+.panel-user-trigger:hover {
   box-shadow: var(--shadow-lifted);
-  padding: 0.35rem;
+}
+
+.panel-avatar {
+  display: grid;
+  width: 2.1rem;
+  height: 2.1rem;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--grad-sun);
+  color: var(--primary-foreground);
+  font-size: var(--text-caption);
+  font-weight: 800;
+  box-shadow: var(--shadow-sun);
+}
+
+/* Shared page chrome inside panel content */
+.panel-page {
+  margin-inline: auto;
+  max-width: 68rem;
+  display: grid;
+  gap: 1.35rem;
+}
+
+.panel-page-header h2 {
+  letter-spacing: -0.02em;
+}
+
+.panel-surface {
+  border: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--card) 92%, transparent);
+  box-shadow: var(--panel-card-glow);
+  padding: 1.25rem;
 }
 
 @media (min-width: 1024px) {
@@ -216,9 +352,12 @@
     display: flex;
   }
 
+  .panel-topbar {
+    margin: 1rem 1.25rem 0;
+  }
+
   .panel-content {
-    padding: var(--space-6);
-    padding-bottom: var(--space-8);
+    padding: var(--space-6) var(--space-6) var(--space-8);
   }
 
   .panel-bottom-tabs,
@@ -229,7 +368,10 @@
 
 @media (prefers-reduced-motion: reduce) {
   .panel-sidebar,
-  .panel-nav-link {
+  .panel-nav-link,
+  .panel-tab,
+  .panel-collapse,
+  .panel-user-trigger {
     transition: none;
   }
 }

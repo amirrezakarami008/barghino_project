@@ -1,0 +1,184 @@
+{
+  "origin": "http://127.0.0.1:3010",
+  "checks": [
+    {
+      "id": "A11-001/tab",
+      "result": "PASS",
+      "detail": "First Tab → {'href': '#content', 'text': 'رفتن به محتوا'} (no body-click)"
+    },
+    {
+      "id": "A11-001/enter",
+      "result": "PASS",
+      "detail": "Enter moves focus to #content"
+    },
+    {
+      "id": "A11-001/ring",
+      "result": "PASS",
+      "detail": "outline after fix: rgb(124, 92, 255) none 2px; outline-none on auth #content"
+    },
+    {
+      "id": "A11-001/cls",
+      "result": "PASS",
+      "detail": "Document-relative box unchanged; scrollDelta=16px from skip hash scroll (not layout shift)"
+    },
+    {
+      "id": "CPY-001/002",
+      "result": "PASS",
+      "detail": "After strings hedge with نمونه/قرارداد; no income promise; audit claim removed"
+    },
+    {
+      "id": "BRW-001",
+      "result": "PASS",
+      "detail": "All 6 visible text inputs ≥16px @360: code-1=23px; code-2=23px; code-3=23px; code-4=23px; code-5=23px; code-6=23px"
+    },
+    {
+      "id": "BRW-001/layout",
+      "result": "PASS",
+      "detail": "Input boxes have usable size; page rendered OTP/phone without collapse"
+    },
+    {
+      "id": "BRW-001/register",
+      "result": "PASS",
+      "detail": "Register text inputs ≥16px: phone=16px"
+    },
+    {
+      "id": "COL-001/light/start",
+      "result": "PASS",
+      "detail": "CTA fg #0b1020 on #ffb800 = 10.92:1 (cta=\"ورود / ثبت‌نام\")"
+    },
+    {
+      "id": "COL-001/light/mid",
+      "result": "PASS",
+      "detail": "CTA fg #0b1020 on #ff7a18 = 7.26:1 (cta=\"ورود / ثبت‌نام\")"
+    },
+    {
+      "id": "COL-001/light/end",
+      "result": "PASS",
+      "detail": "CTA fg #0b1020 on #ff3d77 = 5.58:1 (cta=\"ورود / ثبت‌نام\")"
+    },
+    {
+      "id": "COL-002/light/approved",
+      "result": "PASS",
+      "detail": "#0b766e/#e6faf2=5.04:1"
+    },
+    {
+      "id": "COL-002/light/active",
+      "result": "PASS",
+      "detail": "#0b766e/#e3faf8=5.04:1"
+    },
+    {
+      "id": "COL-003/light",
+      "result": "PASS",
+      "detail": "#fff on #5b21b6=8.98:1"
+    },
+    {
+      "id": "COL-001/dark/start",
+      "result": "PASS",
+      "detail": "CTA fg #070b1a on #ffb800 = 11.30:1 (cta=\"ورود / ثبت‌نام\")"
+    },
+    {
+      "id": "COL-001/dark/mid",
+      "result": "PASS",
+      "detail": "CTA fg #070b1a on #ff7a18 = 7.51:1 (cta=\"ورود / ثبت‌نام\")"
+    },
+    {
+      "id": "COL-001/dark/end",
+      "result": "PASS",
+      "detail": "CTA fg #070b1a on #ff3d77 = 5.77:1 (cta=\"ورود / ثبت‌نام\")"
+    },
+    {
+      "id": "COL-002/dark/approved",
+      "result": "PASS",
+      "detail": "#5eebd5/#0d2f2c=9.81:1"
+    },
+    {
+      "id": "COL-002/dark/active",
+      "result": "PASS",
+      "detail": "#67e8f9/#0d2a33=10.38:1"
+    },
+    {
+      "id": "COL-003/dark",
+      "result": "PASS",
+      "detail": "#070b1a on #9a7aff=6.16:1"
+    },
+    {
+      "id": "THM-001/css",
+      "result": "PASS",
+      "detail": "workspace-shell.css: 0 hex literals"
+    },
+    {
+      "id": "THM-001/light/360",
+      "result": "PASS",
+      "detail": "panel shell ok; --primary root=#ff7a18 panel=#ff7a18; no inline hex"
+    },
+    {
+      "id": "THM-001/light/1280",
+      "result": "PASS",
+      "detail": "panel shell ok; --primary root=#ff7a18 panel=#ff7a18; no inline hex"
+    },
+    {
+      "id": "THM-001/dark/360",
+      "result": "PASS",
+      "detail": "panel shell ok; --primary root=#ffb800 panel=#ffb800; no inline hex"
+    },
+    {
+      "id": "THM-001/dark/1280",
+      "result": "PASS",
+      "detail": "panel shell ok; --primary root=#ffb800 panel=#ffb800; no inline hex"
+    }
+  ],
+  "screenshots": [
+    "docs/ui-audit/screenshots/batch1-verify/home_light_360.png",
+    "docs/ui-audit/screenshots/batch1-verify/login_light_360.png",
+    "docs/ui-audit/screenshots/batch1-verify/register_light_360.png",
+    "docs/ui-audit/screenshots/batch1-verify/home_dark_360.png",
+    "docs/ui-audit/screenshots/batch1-verify/login_dark_360.png",
+    "docs/ui-audit/screenshots/batch1-verify/register_dark_360.png",
+    "docs/ui-audit/screenshots/batch1-verify/home_light_1280.png",
+    "docs/ui-audit/screenshots/batch1-verify/login_light_1280.png",
+    "docs/ui-audit/screenshots/batch1-verify/register_light_1280.png",
+    "docs/ui-audit/screenshots/batch1-verify/home_dark_1280.png",
+    "docs/ui-audit/screenshots/batch1-verify/login_dark_1280.png",
+    "docs/ui-audit/screenshots/batch1-verify/register_dark_1280.png",
+    "docs/ui-audit/screenshots/batch1-verify/panel_light_360.png",
+    "docs/ui-audit/screenshots/batch1-verify/panel_light_1280.png",
+    "docs/ui-audit/screenshots/batch1-verify/panel_dark_360.png",
+    "docs/ui-audit/screenshots/batch1-verify/panel_dark_1280.png"
+  ],
+  "notes": [
+    "Origin http://127.0.0.1:3010",
+    "Baseline compare home_light_360: verify=90386B vs baseline home_light_360.png=32829B (visual; no pixel-diff).",
+    "Baseline compare login_light_360: verify=292010B vs baseline login_light_360.png=321819B (visual; no pixel-diff).",
+    "Baseline compare home_light_1280: verify=362772B vs baseline home_light_390.png=221048B (visual; no pixel-diff).",
+    "Baseline compare login_light_1280: verify=816731B vs baseline login_light_390.png=392224B (visual; no pixel-diff).",
+    "BRW login phone inputs: [{\"type\":\"input\",\"name\":\"phone\",\"fontSize\":\"16px\",\"fontSizePx\":16,\"w\":218,\"h\":24,\"visible\":true},{\"type\":\"radio\",\"name\":\"account_type\",\"fontSize\":\"14px\",\"fontSizePx\":14,\"w\":13,\"h\":13,\"visible\":true},{\"type\":\"radio\",\"name\":\"account_type\",\"fontSize\":\"14px\",\"fontSizePx\":14,\"w\":13,\"h\":13,\"visible\":true},{\"type\":\"radio\",\"name\":\"path\",\"fontSize\":\"16px\",\"fontSizePx\":16,\"w\":13,\"h\":13,\"visible\":true},{\"type\":\"radio\",\"name\":\"path\",\"fontSize\":\"16px\",\"fontSizePx\":16,\"w\":13,\"h\":13,\"visible\":true}]",
+    "BRW login OTP-step inputs: [{\"type\":\"text\",\"name\":\"code-1\",\"fontSize\":\"23px\",\"fontSizePx\":23,\"w\":34,\"h\":34,\"visible\":true},{\"type\":\"text\",\"name\":\"code-2\",\"fontSize\":\"23px\",\"fontSizePx\":23,\"w\":34,\"h\":34,\"visible\":true},{\"type\":\"text\",\"name\":\"code-3\",\"fontSize\":\"23px\",\"fontSizePx\":23,\"w\":34,\"h\":34,\"visible\":true},{\"type\":\"text\",\"name\":\"code-4\",\"fontSize\":\"23px\",\"fontSizePx\":23,\"w\":34,\"h\":34,\"visible\":true},{\"type\":\"text\",\"name\":\"code-5\",\"fontSize\":\"23px\",\"fontSizePx\":23,\"w\":34,\"h\":34,\"visible\":true},{\"type\":\"text\",\"name\":\"code-6\",\"fontSize\":\"23px\",\"fontSizePx\":23,\"w\":34,\"h\":34,\"visible\":true},{\"type\":\"radio\",\"name\":\"account_type\",\"fontSize\":\"14px\",\"fontSizePx\":14,\"w\":13,\"h\":13,\"visible\":true},{\"type\":\"radio\",\"name\":\"account_type\",\"fontSize\":\"14px\",\"fontSizePx\":14,\"w\":13,\"h\":13,\"visible\":true},{\"type\":\"radio\",\"name\":\"path\",\"fontSize\":\"16px\",\"fontSizePx\":16,\"w\":13,\"h\":13,\"visible\":true},{\"type\":\"radio\",\"name\":\"path\",\"fontSize\":\"16px\",\"fontSizePx\":16,\"w\":13,\"h\":13,\"visible\":true}]",
+    "COL light tokens={\"primaryFg\":\"#0b1020\",\"accent\":\"#5b21b6\",\"accentFg\":\"#fff\",\"approvedFg\":\"#0b766e\",\"approvedBg\":\"#e6faf2\",\"activeFg\":\"#0b766e\",\"activeBg\":\"#e3faf8\",\"gradSun\":\"linear-gradient(135deg, #ffb800 0%, #ff7a18 52%, #ff3d77 100%)\"} cta={\"text\":\"ورود / ثبت‌نام\",\"color\":\"rgb(11, 16, 32)\",\"backgroundImage\":\"linear-gradient(135deg, rgb(255, 184, 0) 0%, rgb(255, 122, 24) 52%, rgb(255, 61, 119) 100%)\"}",
+    "COL dark tokens={\"primaryFg\":\"#070b1a\",\"accent\":\"#9a7aff\",\"accentFg\":\"#070b1a\",\"approvedFg\":\"#5eebd5\",\"approvedBg\":\"#0d2f2c\",\"activeFg\":\"#67e8f9\",\"activeBg\":\"#0d2a33\",\"gradSun\":\"linear-gradient(135deg, #ffb800 0%, #ff7a18 52%, #ff3d77 100%)\"} cta={\"text\":\"ورود / ثبت‌نام\",\"color\":\"rgb(7, 11, 26)\",\"backgroundImage\":\"linear-gradient(135deg, rgb(255, 184, 0) 0%, rgb(255, 122, 24) 52%, rgb(255, 61, 119) 100%)\"}",
+    "THM panel light@360: {\"url\":\"http://127.0.0.1:3010/panel\",\"hasPanel\":true,\"hasSidebar\":true,\"offenders\":[],\"rootPrimary\":\"#ff7a18\",\"panelPrimary\":\"#ff7a18\",\"title\":\"خانه پنل | برقینو\"}",
+    "THM panel light@1280: {\"url\":\"http://127.0.0.1:3010/panel\",\"hasPanel\":true,\"hasSidebar\":true,\"offenders\":[],\"rootPrimary\":\"#ff7a18\",\"panelPrimary\":\"#ff7a18\",\"title\":\"خانه پنل | برقینو\"}",
+    "THM panel dark@360: {\"url\":\"http://127.0.0.1:3010/panel\",\"hasPanel\":true,\"hasSidebar\":true,\"offenders\":[],\"rootPrimary\":\"#ffb800\",\"panelPrimary\":\"#ffb800\",\"title\":\"خانه پنل | برقینو\"}",
+    "THM panel dark@1280: {\"url\":\"http://127.0.0.1:3010/panel\",\"hasPanel\":true,\"hasSidebar\":true,\"offenders\":[],\"rootPrimary\":\"#ffb800\",\"panelPrimary\":\"#ffb800\",\"title\":\"خانه پنل | برقینو\"}"
+  ],
+  "cpy": {
+    "CPY-001 about settlement": {
+      "before": "تسویه سریع‌تر از مسیر طولانی دولتی، حداکثر دو ماه.",
+      "after": "نمونهٔ محصول حداکثر دو ماه را نشان می‌دهد؛ سررسید در قرارداد شماست."
+    },
+    "CPY-002 journal status": {
+      "before": "منتشرشده · فقط‌خواندنی",
+      "after": "فقط‌خواندنی · نمونه"
+    },
+    "CPY-002 journal audit column": {
+      "before": "header \"آخرین اقدام\" + AdminAuditLine \"آخرین اقدام: انتشار در مجلهٔ عمومی سایت\"",
+      "after": "(column removed)"
+    }
+  },
+  "regression_fixed": [
+    {
+      "id": "A11-001/ring",
+      "cause": "Batch 1 added tabIndex={-1} to auth #content without suppressing UA focus outline",
+      "fix": "auth-shell.tsx: className += outline-none focus:outline-none"
+    }
+  ]
+}

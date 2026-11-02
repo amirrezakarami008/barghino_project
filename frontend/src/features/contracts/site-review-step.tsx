@@ -141,7 +141,7 @@ export function SiteReviewStep({ branchId, plantId, onBack, onReady }: Props): R
 
   useEffect(() => {
     if (resource.state.status === "ready" && !resource.refreshing) {
-      setLastFetchedAt(Date.now());
+      queueMicrotask(() => setLastFetchedAt(Date.now()));
     }
   }, [resource.state, resource.refreshing]);
 
@@ -177,8 +177,10 @@ export function SiteReviewStep({ branchId, plantId, onBack, onReady }: Props): R
       nextFlash.add("plant");
     }
     if (nextFlash.size) {
-      setFlashKeys(nextFlash);
-      window.setTimeout(() => setFlashKeys(new Set()), 700);
+      queueMicrotask(() => {
+        setFlashKeys(nextFlash);
+        window.setTimeout(() => setFlashKeys(new Set()), 700);
+      });
     }
     prevStatuses.current = { branch: branch.status, plant: plant.status };
   }, [branch, plant, toast]);
@@ -186,7 +188,7 @@ export function SiteReviewStep({ branchId, plantId, onBack, onReady }: Props): R
   useEffect(() => {
     if (bothApproved && !celebrated.current) {
       celebrated.current = true;
-      setCelebrate(true);
+      queueMicrotask(() => setCelebrate(true));
       const timer = window.setTimeout(() => setCelebrate(false), 800);
       return () => window.clearTimeout(timer);
     }

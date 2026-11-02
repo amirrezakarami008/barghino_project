@@ -1,64 +1,20 @@
-@font-face {
-  font-family: "Workspace Kufi";
-  src: url("/fonts/workspace/noto-kufi-arabic-bold.ttf") format("truetype");
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-
-/* Workspace colors stay local, including when navigating back to the public site. */
+/* Inherit Solar Aurora from tokens.css — no local brand palette fork. */
 .workspace-shell {
-  --background: #eef2fa;
-  --foreground: #223b6b;
-  --primary: #4263f7;
-  --primary-hover: #3150d3;
-  --primary-foreground: #ffffff;
-  --card: #ffffff;
-  --muted-foreground: #64748f;
-  --border: #dce5f2;
-  --mint: #edf2ff;
-  --surface: #f6f8fd;
-  --solar: #ffce45;
-  --ring: #4263f7;
-  --shadow-soft: 0 12px 34px rgb(34 59 107 / 0.06);
-  --workspace-glass-top: rgb(255 255 255 / 0.82);
-  --workspace-glass-bottom: rgb(244 247 255 / 0.49);
-  --workspace-glass-border: rgb(255 255 255 / 0.94);
-  --workspace-glass-highlight: rgb(255 255 255 / 0.96);
-  --workspace-hover: rgb(255 255 255 / 0.5);
+  --muted-foreground: var(--foreground-muted);
+  --workspace-glass-top: var(--glass-bg);
+  --workspace-glass-bottom: var(--glass-bg);
+  --workspace-glass-border: var(--border);
+  --workspace-glass-highlight: var(--glass-bg-strong);
+  --workspace-hover: color-mix(in srgb, var(--foreground) 6%, transparent);
   min-height: 100dvh;
   color: var(--foreground);
   color-scheme: light;
-  background:
-    radial-gradient(ellipse at 100% 12%, rgb(190 210 251 / 0.6), transparent 36%),
-    radial-gradient(ellipse at 94% 86%, rgb(204 213 251 / 0.5), transparent 32%),
-    var(--background);
+  background: var(--grad-aurora);
 }
 
 .workspace-shell.dark {
-  --background: #111d32;
-  --foreground: #e4ecff;
-  --primary: #a9bdff;
-  --primary-hover: #c5d2ff;
-  --primary-foreground: #132144;
-  --card: #1a2944;
-  --muted-foreground: #b4c2de;
-  --border: #344764;
-  --mint: #263b60;
-  --surface: #16233c;
-  --solar: #ffcf58;
-  --ring: #b4c7ff;
-  --shadow-soft: 0 12px 34px rgb(0 0 0 / 0.14);
-  --workspace-glass-top: rgb(43 64 102 / 0.78);
-  --workspace-glass-bottom: rgb(26 42 70 / 0.65);
-  --workspace-glass-border: rgb(175 196 234 / 0.23);
-  --workspace-glass-highlight: rgb(204 222 255 / 0.23);
-  --workspace-hover: rgb(185 207 255 / 0.08);
   color-scheme: dark;
-  background:
-    radial-gradient(ellipse at 100% 12%, rgb(62 91 155 / 0.26), transparent 36%),
-    radial-gradient(ellipse at 94% 86%, rgb(60 69 147 / 0.17), transparent 32%),
-    var(--background);
+  background: var(--grad-aurora);
 }
 
 .workspace-shell :focus-visible {
@@ -174,7 +130,7 @@
 
 .workspace-wordmark strong {
   color: var(--foreground);
-  font-family: "Workspace Kufi", var(--font-sans);
+  font-family: var(--font-sans);
   font-size: 25px;
   font-weight: 700;
   line-height: 1.35;
@@ -251,10 +207,10 @@
 }
 
 .workspace-nav-link.is-active {
-  color: #3154b6;
-  border-color: var(--workspace-glass-border);
-  background: linear-gradient(145deg, rgb(255 255 255 / 0.94), rgb(202 219 255 / 0.66));
-  box-shadow: inset 0 1px 0 #fff, 0 4px 13px rgb(72 101 160 / 0.06);
+  color: var(--primary);
+  border-color: var(--border);
+  background: var(--surface-2);
+  box-shadow: var(--shadow-soft);
   font-weight: 700;
 }
 
@@ -266,13 +222,13 @@
   width: 3px;
   height: 18px;
   border-radius: 4px;
-  background: #4263f7;
+  background: var(--primary);
 }
 
 .workspace-shell.dark .workspace-nav-link.is-active {
   color: var(--primary);
-  background: linear-gradient(145deg, rgb(87 118 181 / 0.28), rgb(47 71 119 / 0.4));
-  box-shadow: inset 0 1px 0 var(--workspace-glass-highlight), 0 4px 13px rgb(0 0 0 / 0.05);
+  background: var(--surface-2);
+  box-shadow: inset 0 1px 0 var(--workspace-glass-highlight), var(--shadow-soft);
 }
 
 .workspace-sidebar-footer {
@@ -360,10 +316,10 @@
   place-items: center;
   width: 36px;
   height: 38px;
-  border: 1px solid rgb(255 255 255 / 0.7);
+  border: 1px solid var(--border);
   border-radius: 12px;
-  background: #ffdf81;
-  color: #655118;
+  background: var(--status-pending-bg);
+  color: var(--status-pending-fg);
   font-size: 11px;
   font-weight: 700;
   transform: rotate(-5deg);
@@ -505,24 +461,26 @@
   .workspace-shell *, .workspace-shell *::before, .workspace-shell *::after { transition: none; animation: none; }
 }
 
-/* Renewable-energy product palette: shared with public pages and admin. */
+/* Panel canvas uses the same Solar Aurora tokens as the rest of the app. */
 .workspace-shell.panel-canvas {
-  --background:#f5f8fc;--foreground:#10243a;--primary:#1762db;--primary-hover:#104fb8;
-  --primary-foreground:#fff;--card:#fff;--muted-foreground:#536b82;--border:#d7e2f0;
-  --mint:#e4f7f2;--surface:#edf3fc;--solar:var(--amber);--ring:var(--electric);
-  --workspace-glass-top:#ffffffed;--workspace-glass-bottom:#f5f9fff2;
-  background:radial-gradient(ellipse at 100% 0,#2878ff10,transparent 45%),radial-gradient(ellipse at 0 80%,#00c98d09,transparent 35%),var(--background);
+  background: var(--grad-aurora);
 }
-.workspace-shell.panel-canvas.dark {
-  --background:#0e1c2e;--foreground:#edf5ff;--primary:#86b6ff;--primary-hover:#b1d0ff;
-  --primary-foreground:#10243a;--card:#172c44;--muted-foreground:#b1c5db;--border:#334d69;
-  --mint:#163e3d;--surface:#122338;--ring:#86b6ff;
-  --workspace-glass-top:#172c44f5;--workspace-glass-bottom:#122338ed;
+.panel-canvas .workspace-nav-link.is-active {
+  color: var(--primary-foreground);
+  background: var(--grad-sun);
+  border-color: transparent;
+  box-shadow: var(--shadow-sun);
 }
-.panel-canvas .workspace-nav-link.is-active { color:#fff;background:var(--gradient-action);border-color:transparent;box-shadow:0 5px 15px #2878ff30; }
-.panel-canvas .workspace-nav-link:not(.is-active)>svg { color:var(--electric); }
-.panel-canvas .workspace-navigation-group:nth-child(2) .workspace-nav-link:not(.is-active)>svg { color:var(--violet); }
-.panel-canvas .workspace-toolbar { border-top:3px solid var(--electric); }
-.panel-canvas .workspace-support-link { background:var(--gradient-energy);color:#fff;border-color:transparent; }
-.panel-canvas .workspace-session-dot { background:var(--energy);box-shadow:0 0 0 4px #00c98d18; }
-.panel-canvas .workspace-content :where(input,textarea,select) { border-radius:12px; }
+.panel-canvas .workspace-nav-link:not(.is-active)>svg { color: var(--accent); }
+.panel-canvas .workspace-navigation-group:nth-child(2) .workspace-nav-link:not(.is-active)>svg { color: var(--volt-500); }
+.panel-canvas .workspace-toolbar { border-top: 3px solid var(--accent); }
+.panel-canvas .workspace-support-link {
+  background: var(--grad-energy);
+  color: var(--secondary-foreground);
+  border-color: transparent;
+}
+.panel-canvas .workspace-session-dot {
+  background: var(--secondary);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--secondary) 18%, transparent);
+}
+.panel-canvas .workspace-content :where(input,textarea,select) { border-radius: var(--radius-md); }

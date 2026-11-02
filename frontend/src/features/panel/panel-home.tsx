@@ -2,16 +2,19 @@
 
 import { useCallback } from "react";
 import Link from "next/link";
-import { Alert, ButtonLink, Card, EmptyState, Skeleton, StatusPill } from "@/components/ui";
+import { motion, useReducedMotion } from "framer-motion";
+import { Alert, ButtonLink, EmptyState, Skeleton, StatusPill } from "@/components/ui";
 import { useAuth } from "@/features/auth/session-provider";
 import { getContracts } from "@/features/contracts/contracts-api";
 import { contractStatusMeta } from "@/features/contracts/status-map";
 import { useContractResource } from "@/features/contracts/use-contract-resource";
-import { getPlants } from "@/features/plants/plants-api";
 import { usePlantInventory } from "@/features/plants/use-plant-inventory";
+import { PanelArt } from "@/features/panel/panel-art";
 import { faNumber } from "@/shared/lib/fa";
-import { Icon } from "@/shared/ui/icon";
+import { Icon, type IconName } from "@/shared/ui/icon";
+import { cn } from "@/shared/lib/cn";
 import type { Contract } from "@/features/contracts/contract-model";
+import "./panel-home.css";
 
 function greetingName(first?: string, last?: string) {
   const name = [first, last].filter(Boolean).join(" ");
@@ -69,8 +72,14 @@ function nextAction(contracts: readonly Contract[], plantPending: boolean, plant
   };
 }
 
+const fadeUp = {
+  hidden: { opacity: 0, y: 14 },
+  show: { opacity: 1, y: 0 },
+};
+
 export function PanelHome() {
   const { profile } = useAuth();
+  const reduceMotion = useReducedMotion();
   const loadContracts = useCallback((signal: AbortSignal) => getContracts(1, signal), []);
   const contracts = useContractResource("panel-home-contracts", loadContracts);
   const plants = usePlantInventory(1, 1);
@@ -92,15 +101,26 @@ export function PanelHome() {
     (plants.state.status === "error" && plants.state.message) ||
     null;
 
+  const motionProps = reduceMotion
+    ? {}
+    : {
+        initial: "hidden" as const,
+        animate: "show" as const,
+        variants: {
+          hidden: {},
+          show: { transition: { staggerChildren: 0.07 } },
+        },
+      };
+
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
-      <header className="space-y-1">
-        <p className="text-caption text-foreground-muted">فضای کار</p>
-        <h2 className="text-h2">سلام، {greetingName(profile?.firstName, profile?.lastName)}</h2>
+    <motion.div className="panel-home" {...motionProps}>
+      <motion.header className="panel-home-greeting" variants={reduceMotion ? undefined : fadeUp}>
+        <p className="panel-home-kicker">فضای کار خورشیدی</p>
+        <h2 className="text-h2 tracking-tight">سلام، {greetingName(profile?.firstName, profile?.lastName)}</h2>
         <p className="text-body text-foreground-muted">
           آمار زیر فقط از دادهٔ واقعی حساب شماست — بدون عدد نمونه.
         </p>
-      </header>
+      </motion.header>
 
       {error ? (
         <Alert tone="danger" title="دریافت اطلاعات کامل نشد">
@@ -108,32 +128,48 @@ export function PanelHome() {
         </Alert>
       ) : null}
 
-      <Card variant="gradient-border">
-        <p className="text-caption font-semibold text-accent">گام بعدی</p>
-        <h3 className="mt-2 text-h3">{action.title}</h3>
-        <p className="mt-2 text-sm leading-7 text-foreground-muted">{action.body}</p>
-        <ButtonLink href={action.href} className="mt-5">
-          {action.cta}
-          <Icon name="arrow" className="size-4 -scale-x-100" />
-        </ButtonLink>
-      </Card>
+      <motion.section className="panel-hero" variants={reduceMotion ? undefined : fadeUp} aria-label="گام بعدی">
+        <div className="panel-hero-copy">
+          <p className="panel-hero-eyebrow">گام بعدی</p>
+          <h3 className="panel-hero-title">{action.title}</h3>
+          <p className="panel-hero-body">{action.body}</p>
+          <ButtonLink href={action.href} className="panel-hero-cta mt-5">
+            {action.cta}
+            <Icon name="arrow" className="size-4 -scale-x-100" />
+          </ButtonLink>
+        </div>
+        <div className="panel-hero-art" aria-hidden>
+          <PanelArt name="hero-solar" width={720} height={405} className="panel-hero-image" priority />
+          <PanelArt name="decor-orb" width={120} height={120} className="panel-hero-orb" />
+        </div>
+      </motion.section>
 
-      <section aria-label="آمار واقعی" className="grid gap-4 sm:grid-cols-3">
+      <section aria-label="آمار واقعی" className="panel-stat-grid">
         {loading ? (
           <>
-            <Skeleton className="h-28" />
-            <Skeleton className="h-28" />
-            <Skeleton className="h-28" />
+            <Skeleton className="h-36 rounded-[22px]" />
+            <Skeleton className="h-36 rounded-[22px]" />
+            <Skeleton className="h-36 rounded-[22px]" />
           </>
         ) : (
           <>
-            <Stat label="قراردادها" value={contractData ? faNumber(contractData.count) : "—"} href="/panel/contracts" />
-            <Stat
+            <StatCard
+              label="قراردادها"
+              value={contractData ? faNumber(contractData.count) : "—"}
+              href="/panel/contracts"
+              art="stat-contracts"
+              tone="volt"
+              reduceMotion={Boolean(reduceMotion)}
+            />
+            <StatCard
               label="نیروگاه‌ها"
               value={plantData ? faNumber(plantData.plants.count) : "—"}
               href="/panel/plant"
+              art="stat-plants"
+              tone="mint"
+              reduceMotion={Boolean(reduceMotion)}
             />
-            <Stat
+            <StatCard
               label="پیش‌نویس‌های باز"
               value={
                 contractData
@@ -142,41 +178,49 @@ export function PanelHome() {
               }
               href="/panel/contracts?status=draft"
               hint="در صفحهٔ فعلی فهرست"
+              art="stat-drafts"
+              tone="sun"
+              reduceMotion={Boolean(reduceMotion)}
             />
           </>
         )}
       </section>
 
-      <section className="grid gap-4 md:grid-cols-2">
-        <Card>
+      <section className="panel-split">
+        <motion.div className="panel-surface panel-shortcuts" variants={reduceMotion ? undefined : fadeUp}>
           <h3 className="text-h4">میانبرها</h3>
           <ul className="mt-4 grid gap-2">
-            <Shortcut href="/panel/contracts/new" label="قرارداد جدید" icon="plus" />
-            <Shortcut href="/panel/contracts" label="قراردادهای من" icon="file" />
-            <Shortcut href="/panel/plant" label="نیروگاه من" icon="solarPanel" />
-            <Shortcut href="/panel/profile" label="پروفایل" icon="user" />
+            <Shortcut href="/panel/contracts/new" label="قرارداد جدید" icon="plus" tone="sun" />
+            <Shortcut href="/panel/contracts" label="قراردادهای من" icon="file" tone="volt" />
+            <Shortcut href="/panel/plant" label="نیروگاه من" icon="solarPanel" tone="mint" />
+            <Shortcut href="/panel/profile" label="پروفایل" icon="user" tone="sky" />
           </ul>
-        </Card>
-        <Card>
+        </motion.div>
+
+        <motion.div className="panel-surface" variants={reduceMotion ? undefined : fadeUp}>
           <h3 className="text-h4">آخرین قراردادها</h3>
           {loading ? (
-            <Skeleton className="mt-4 h-24" />
+            <Skeleton className="mt-4 h-28 rounded-xl" />
           ) : !contractData?.results.length ? (
-            <EmptyState
-              className="mt-4 border-0 shadow-none"
-              title="قراردادی نیست"
-              description="با ساخت پیش‌نویس مسیر فروش را شروع کنید."
-              action={<ButtonLink href="/panel/contracts/new">شروع قرارداد</ButtonLink>}
-            />
+            <div className="panel-empty-contracts mt-4">
+              <PanelArt name="empty-contracts" width={160} height={160} className="panel-empty-art" />
+              <EmptyState
+                hideIcon
+                className="border-0 bg-transparent p-0 shadow-none"
+                title="قراردادی نیست"
+                description="با ساخت پیش‌نویس مسیر فروش را شروع کنید."
+                action={<ButtonLink href="/panel/contracts/new">شروع قرارداد</ButtonLink>}
+              />
+            </div>
           ) : (
-            <ul className="mt-4 space-y-3">
+            <ul className="mt-4 space-y-2.5">
               {contractData.results.slice(0, 3).map((contract) => {
                 const meta = contractStatusMeta(contract.status);
                 return (
                   <li key={contract.uuid}>
                     <Link
                       href={`/panel/contracts/${encodeURIComponent(contract.uuid)}`}
-                      className="flex items-center justify-between gap-3 rounded-md border border-border px-3 py-3 hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                      className="panel-contract-row"
                     >
                       <span className="min-w-0">
                         <span className="block truncate text-sm font-semibold">
@@ -193,32 +237,40 @@ export function PanelHome() {
               })}
             </ul>
           )}
-        </Card>
+        </motion.div>
       </section>
-    </div>
+    </motion.div>
   );
 }
 
-function Stat({
+function StatCard({
   label,
   value,
   href,
   hint,
+  art,
+  tone,
+  reduceMotion,
 }: {
   label: string;
   value: string;
   href: string;
   hint?: string;
+  art: string;
+  tone: "sun" | "mint" | "volt";
+  reduceMotion: boolean;
 }) {
   return (
-    <Link
-      href={href}
-      className="block rounded-lg border border-border bg-card p-5 shadow-soft transition-shadow duration-fast ease-out hover:shadow-lifted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-    >
-      <p className="text-caption text-foreground-muted">{label}</p>
-      <p className="mt-2 text-h2 tabular-nums">{value}</p>
-      {hint ? <p className="mt-1 text-caption text-foreground-muted">{hint}</p> : null}
-    </Link>
+    <motion.div variants={reduceMotion ? undefined : fadeUp}>
+      <Link href={href} className={cn("panel-stat-card", `panel-stat-card--${tone}`)}>
+        <div className="panel-stat-copy">
+          <p className="text-caption text-foreground-muted">{label}</p>
+          <p className="panel-stat-value tabular-nums">{value}</p>
+          {hint ? <p className="mt-1 text-caption text-foreground-muted">{hint}</p> : null}
+        </div>
+        <PanelArt name={art} width={112} height={112} className="panel-stat-art" />
+      </Link>
+    </motion.div>
   );
 }
 
@@ -226,18 +278,17 @@ function Shortcut({
   href,
   label,
   icon,
+  tone,
 }: {
   href: string;
   label: string;
-  icon: "plus" | "file" | "solarPanel" | "user";
+  icon: IconName;
+  tone: "sun" | "volt" | "mint" | "sky";
 }) {
   return (
     <li>
-      <Link
-        href={href}
-        className="flex min-h-11 items-center gap-3 rounded-md px-2 text-sm font-semibold hover:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-      >
-        <span className="grid size-9 place-items-center rounded-md bg-surface text-foreground">
+      <Link href={href} className="panel-shortcut">
+        <span className={cn("panel-shortcut-icon", `panel-shortcut-icon--${tone}`)} aria-hidden>
           <Icon name={icon} className="size-4" />
         </span>
         {label}

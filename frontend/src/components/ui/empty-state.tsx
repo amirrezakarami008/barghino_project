@@ -6,6 +6,8 @@ export type EmptyStateProps = {
   title: string;
   description?: string;
   icon?: IconName;
+  /** When an external illustration is shown above, hide the default glyph tile. */
+  hideIcon?: boolean;
   action?: ReactNode;
   children?: ReactNode;
   className?: string;
@@ -15,6 +17,7 @@ export function EmptyState({
   title,
   description,
   icon = "file",
+  hideIcon = false,
   action,
   children,
   className,
@@ -27,9 +30,11 @@ export function EmptyState({
       )}
       role="status"
     >
-      <span className="flex size-14 items-center justify-center rounded-lg bg-grad-sun text-primary-foreground shadow-sun-glow">
-        <Icon name={icon} className="size-6" />
-      </span>
+      {hideIcon ? null : (
+        <span className="flex size-14 items-center justify-center rounded-lg bg-grad-sun text-primary-foreground shadow-sun-glow">
+          <Icon name={icon} className="size-6" />
+        </span>
+      )}
       <div className="space-y-1">
         <h3 className="text-h4">{title}</h3>
         {description ? <p className="max-w-sm text-sm text-foreground-muted">{description}</p> : null}

@@ -12,6 +12,7 @@ import {
 } from "@/components/ui";
 import { formatDecimal } from "@/features/contracts";
 import { plantStatusMeta } from "@/features/contracts/status-map";
+import { PanelArt } from "@/features/panel/panel-art";
 import { faNumber } from "@/shared/lib/fa";
 import { Icon } from "@/shared/ui/icon";
 import { usePlantInventory } from "./use-plant-inventory";
@@ -21,10 +22,10 @@ export function PlantWorkspace(): ReactElement {
   const { state, reload } = usePlantInventory(1, page);
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
-      <header className="flex flex-wrap items-end justify-between gap-3">
+    <div className="panel-page space-y-6">
+      <header className="panel-page-header flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h2 className="text-h2">نیروگاه من</h2>
+          <h2 className="text-h2 tracking-tight">نیروگاه من</h2>
           <p className="mt-2 text-body text-foreground-muted">
             ظرفیت، نشانی و وضعیت بررسی — فقط دادهٔ واقعی حساب شما.
           </p>
@@ -47,12 +48,22 @@ export function PlantWorkspace(): ReactElement {
           </Button>
         </Alert>
       ) : !state.data.plants.results.length ? (
-        <EmptyState
-          title="هنوز نیروگاهی ثبت نشده است"
-          description="ثبت انشعاب و نیروگاه در مسیر قرارداد جدید انجام می‌شود."
-          icon="solarPanel"
-          action={<ButtonLink href="/panel/contracts/new">شروع قرارداد</ButtonLink>}
-        />
+        <div className="panel-surface grid justify-items-center gap-3 py-8 text-center">
+          <PanelArt
+            name="stat-plants"
+            width={160}
+            height={160}
+            className="size-36 rounded-[22px] object-cover shadow-[var(--panel-float)]"
+          />
+          <EmptyState
+            hideIcon
+            className="border-0 bg-transparent p-0 shadow-none"
+            title="هنوز نیروگاهی ثبت نشده است"
+            description="ثبت انشعاب و نیروگاه در مسیر قرارداد جدید انجام می‌شود."
+            icon="solarPanel"
+            action={<ButtonLink href="/panel/contracts/new">شروع قرارداد</ButtonLink>}
+          />
+        </div>
       ) : (
         <>
           <p className="text-caption text-foreground-muted">

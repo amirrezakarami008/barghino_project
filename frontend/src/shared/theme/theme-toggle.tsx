@@ -1,5 +1,6 @@
 "use client";
 
+import { useSyncExternalStore } from "react";
 import { cn } from "@/shared/lib/cn";
 import { useTheme } from "./theme-provider";
 
@@ -9,10 +10,15 @@ type ThemeToggleProps = {
   showLabel?: boolean;
 };
 
+const emptySubscribe = () => () => {};
+
 /** Animated sun ↔ moon morph toggle for header placement. */
 export function ThemeToggle({ className, showLabel = false }: ThemeToggleProps) {
   const { resolvedTheme, toggleTheme } = useTheme();
-  const isDark = resolvedTheme === "dark";
+  const mounted = useSyncExternalStore(emptySubscribe, () => true, () => false);
+
+  // Keep SSR + first client paint identical; theme from storage applies after mount.
+  const isDark = mounted && resolvedTheme === "dark";
 
   return (
     <button
@@ -28,8 +34,13 @@ export function ThemeToggle({ className, showLabel = false }: ThemeToggleProps) 
       aria-label={isDark ? "فعال‌سازی حالت روشن" : "فعال‌سازی حالت تاریک"}
       title={isDark ? "حالت روشن" : "حالت تاریک"}
       aria-pressed={isDark}
+      suppressHydrationWarning
     >
-      {showLabel ? null : <span className="sr-only">{isDark ? "تاریک" : "روشن"}</span>}
+      {showLabel ? null : (
+        <span className="sr-only" suppressHydrationWarning>
+          {isDark ? "تاریک" : "روشن"}
+        </span>
+      )}
       <svg
         viewBox="0 0 24 24"
         className="size-5 shrink-0"
@@ -74,7 +85,9 @@ export function ThemeToggle({ className, showLabel = false }: ThemeToggleProps) 
           <path d="M17.51 6.49l1.56-1.56" />
         </g>
       </svg>
-      {showLabel ? <span>{isDark ? "حالت روشن" : "حالت تاریک"}</span> : null}
+      {showLabel ? (
+        <span suppressHydrationWarning>{isDark ? "حالت روشن" : "حالت تاریک"}</span>
+      ) : null}
     </button>
   );
 }

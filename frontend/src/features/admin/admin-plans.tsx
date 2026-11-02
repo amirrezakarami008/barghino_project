@@ -86,7 +86,9 @@ export function AdminPlans(): ReactElement {
   }
 
   useEffect(() => {
-    void load();
+    queueMicrotask(() => {
+      void load();
+    });
   }, [attempt]);
 
   async function toggleFlag(plan: SellPlan, field: "is_active" | "is_recommended", value: boolean): Promise<void> {

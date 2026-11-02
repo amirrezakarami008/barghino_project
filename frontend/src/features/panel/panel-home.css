@@ -1,0 +1,286 @@
+.panel-home {
+  margin-inline: auto;
+  max-width: 68rem;
+  display: grid;
+  gap: 1.35rem;
+}
+
+.panel-home-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  margin-bottom: 0.35rem;
+  border-radius: 999px;
+  padding: 0.2rem 0.7rem;
+  background: color-mix(in srgb, var(--sun-200) 55%, transparent);
+  color: var(--sun-800);
+  font-size: var(--text-caption);
+  font-weight: 700;
+}
+
+.dark .panel-home-kicker {
+  background: color-mix(in srgb, var(--sun-500) 18%, transparent);
+  color: var(--sun-200);
+}
+
+.panel-hero {
+  position: relative;
+  display: grid;
+  gap: 1rem;
+  overflow: hidden;
+  border-radius: 28px;
+  border: 1px solid color-mix(in srgb, var(--border) 70%, transparent);
+  background: var(--panel-hero-bg);
+  box-shadow: var(--panel-card-glow);
+  padding: 1.25rem;
+}
+
+.panel-hero-eyebrow {
+  font-size: var(--text-caption);
+  font-weight: 800;
+  color: var(--accent);
+}
+
+.panel-hero-title {
+  margin-top: 0.45rem;
+  font-size: clamp(1.35rem, 2.4vw, 1.85rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.35;
+}
+
+.panel-hero-body {
+  margin-top: 0.55rem;
+  max-width: 36rem;
+  color: var(--foreground-muted);
+  font-size: 0.95rem;
+  line-height: 1.75;
+}
+
+.panel-hero-cta {
+  box-shadow: var(--shadow-sun);
+}
+
+.panel-hero-art {
+  position: relative;
+  justify-self: center;
+  width: min(100%, 22rem);
+}
+
+.panel-hero-image {
+  width: 100%;
+  height: auto;
+  border-radius: 22px;
+  object-fit: cover;
+  box-shadow: var(--panel-float);
+}
+
+.panel-hero-orb {
+  position: absolute;
+  width: 4.5rem;
+  height: 4.5rem;
+  inset-inline-start: -0.6rem;
+  bottom: -0.4rem;
+  border-radius: 999px;
+  object-fit: cover;
+  box-shadow: var(--shadow-volt);
+  animation: panel-float 4.8s var(--ease-out) infinite;
+}
+
+.panel-stat-grid {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.panel-stat-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: 8.5rem;
+  overflow: hidden;
+  border-radius: 22px;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  background: color-mix(in srgb, var(--card) 94%, transparent);
+  padding: 1rem 1rem 1rem 0.65rem;
+  box-shadow: var(--panel-card-glow);
+  transition:
+    transform var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out);
+}
+
+.panel-stat-card:hover {
+  transform: translateY(-3px);
+  box-shadow: var(--panel-float);
+}
+
+.panel-stat-card--sun {
+  background:
+    linear-gradient(135deg, rgb(255 184 0 / 0.12), transparent 48%),
+    color-mix(in srgb, var(--card) 94%, transparent);
+}
+
+.panel-stat-card--mint {
+  background:
+    linear-gradient(135deg, rgb(25 227 177 / 0.12), transparent 48%),
+    color-mix(in srgb, var(--card) 94%, transparent);
+}
+
+.panel-stat-card--volt {
+  background:
+    linear-gradient(135deg, rgb(124 92 255 / 0.12), transparent 48%),
+    color-mix(in srgb, var(--card) 94%, transparent);
+}
+
+.panel-stat-value {
+  margin-top: 0.35rem;
+  font-size: clamp(1.75rem, 3vw, 2.15rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.1;
+}
+
+.panel-stat-art {
+  width: 5.5rem;
+  height: 5.5rem;
+  object-fit: cover;
+  border-radius: 18px;
+  flex-shrink: 0;
+  box-shadow: 0 10px 24px rgb(14 36 72 / 0.12);
+}
+
+.dark .panel-stat-art,
+.dark .panel-hero-image,
+.dark .panel-empty-art,
+.dark .panel-hero-orb {
+  box-shadow: 0 14px 36px rgb(0 0 0 / 0.45);
+  outline: 1px solid rgb(255 255 255 / 0.06);
+}
+
+.dark .panel-hero-image {
+  outline: 1px solid rgb(255 255 255 / 0.08);
+}
+
+.panel-split {
+  display: grid;
+  gap: 0.9rem;
+}
+
+.panel-shortcut {
+  display: flex;
+  min-height: 2.85rem;
+  align-items: center;
+  gap: 0.75rem;
+  border-radius: 14px;
+  padding-inline: 0.35rem;
+  font-size: 0.9rem;
+  font-weight: 700;
+  transition: background var(--motion-fast) var(--ease-out);
+}
+
+.panel-shortcut:hover {
+  background: color-mix(in srgb, var(--surface-2) 70%, transparent);
+}
+
+.panel-shortcut-icon {
+  display: grid;
+  width: 2.35rem;
+  height: 2.35rem;
+  place-items: center;
+  border-radius: 13px;
+  color: #fff;
+  box-shadow: var(--shadow-soft);
+}
+
+.panel-shortcut-icon--sun {
+  background: var(--panel-icon-sun);
+}
+.panel-shortcut-icon--volt {
+  background: var(--panel-icon-volt);
+}
+.panel-shortcut-icon--mint {
+  background: var(--panel-icon-mint);
+}
+.panel-shortcut-icon--sky {
+  background: var(--panel-icon-sky);
+}
+
+.panel-contract-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  padding: 0.85rem 0.95rem;
+  transition:
+    background var(--motion-fast) var(--ease-out),
+    box-shadow var(--motion-fast) var(--ease-out),
+    transform var(--motion-fast) var(--ease-out);
+}
+
+.panel-contract-row:hover {
+  background: var(--card);
+  box-shadow: var(--shadow-soft);
+  transform: translateY(-1px);
+}
+
+.panel-contract-row:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.panel-empty-contracts {
+  display: grid;
+  justify-items: center;
+  gap: 0.5rem;
+  text-align: center;
+}
+
+.panel-empty-art {
+  width: 7.5rem;
+  height: 7.5rem;
+  object-fit: cover;
+  border-radius: 22px;
+  box-shadow: var(--panel-float);
+}
+
+.panel-empty-contracts :is(.flex.size-14, span.flex.size-14) {
+  display: none;
+}
+
+@keyframes panel-float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-6px);
+  }
+}
+
+@media (min-width: 768px) {
+  .panel-hero {
+    grid-template-columns: minmax(0, 1.15fr) minmax(0, 0.85fr);
+    align-items: center;
+    padding: 1.5rem 1.35rem;
+  }
+
+  .panel-stat-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .panel-split {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .panel-hero-orb,
+  .panel-stat-card,
+  .panel-contract-row {
+    animation: none;
+    transition: none;
+  }
+}

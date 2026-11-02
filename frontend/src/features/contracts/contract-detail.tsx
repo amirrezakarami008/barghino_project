@@ -36,7 +36,7 @@ export function ContractDetail(): ReactElement {
   }, [reload]);
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6">
+    <div className="panel-page mx-auto max-w-5xl space-y-6">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <Link
           href="/panel/contracts"
