@@ -60,10 +60,10 @@
 }
 
 .site-section-card {
-  border: 1px solid var(--border);
-  border-radius: 1rem;
-  background: var(--card);
-  box-shadow: var(--shadow-soft, 0 8px 30px color-mix(in srgb, var(--ink-900) 4%, transparent));
+  border: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+  border-radius: 22px;
+  background: color-mix(in srgb, var(--card) 92%, transparent);
+  box-shadow: var(--panel-card-glow, var(--shadow-soft, 0 8px 30px color-mix(in srgb, var(--ink-900) 4%, transparent)));
   overflow: clip;
 }
 

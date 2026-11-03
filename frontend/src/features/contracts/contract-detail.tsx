@@ -3,16 +3,17 @@
 import { useCallback, useEffect, type ReactElement } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   Alert,
   Button,
   ButtonLink,
-  Card,
   LockedFeature,
   Skeleton,
   StatusPill,
   Timeline,
 } from "@/components/ui";
+import { PanelArt } from "@/features/panel/panel-art";
 import { Icon } from "@/shared/ui/icon";
 import { getContract } from "./contracts-api";
 import { formatDecimal, localDate, signedSnapshot, type Contract, type Identity } from "./contract-model";
@@ -21,9 +22,24 @@ import { contractStatusMeta } from "./status-map";
 import { useContractResource } from "./use-contract-resource";
 import { IdentityNotice } from "./identity-notice";
 import { SignaturePreview } from "./signature-preview";
+import "./contracts-workspace.css";
+
+const fadeUp = {
+  hidden: { opacity: 0, y: 14 },
+  show: { opacity: 1, y: 0 },
+};
+
+function statusArt(status: string): string {
+  if (status === "pending") return "contracts/pending";
+  if (status === "active") return "contracts/approved";
+  if (status === "cancelled" || status === "expired") return "contracts/rejected";
+  if (status === "draft") return "contracts/create";
+  return "contracts/agreement";
+}
 
 export function ContractDetail(): ReactElement {
   const { uuid } = useParams<{ uuid: string }>();
+  const reduceMotion = useReducedMotion();
   const load = useCallback((signal: AbortSignal) => getContract(uuid, signal), [uuid]);
   const { state, reload, refreshing, refreshError } = useContractResource(`contract:${uuid}`, load);
 
@@ -35,9 +51,23 @@ export function ContractDetail(): ReactElement {
     return () => document.removeEventListener("visibilitychange", visible);
   }, [reload]);
 
+  const motionProps = reduceMotion
+    ? {}
+    : {
+        initial: "hidden" as const,
+        animate: "show" as const,
+        variants: {
+          hidden: {},
+          show: { transition: { staggerChildren: 0.07 } },
+        },
+      };
+
   return (
-    <div className="panel-page mx-auto max-w-5xl space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <motion.div className="contracts-workspace mx-auto max-w-5xl" {...motionProps}>
+      <motion.div
+        className="flex flex-wrap items-center justify-between gap-3"
+        variants={reduceMotion ? undefined : fadeUp}
+      >
         <Link
           href="/panel/contracts"
           className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-foreground-muted hover:text-foreground"
@@ -48,7 +78,7 @@ export function ContractDetail(): ReactElement {
         <Button variant="secondary" disabled={refreshing} onClick={reload}>
           {refreshing ? "در حال دریافت…" : "تازه‌سازی وضعیت"}
         </Button>
-      </div>
+      </motion.div>
 
       {refreshError ? (
         <Alert tone="warning" title="اطلاعات تازه نشد">
@@ -57,17 +87,29 @@ export function ContractDetail(): ReactElement {
       ) : null}
 
       {state.status === "loading" ? (
-        <Skeleton className="h-64" />
+        <div className="grid gap-4">
+          <Skeleton className="h-56 rounded-[28px]" />
+          <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
+            <Skeleton className="h-72 rounded-[22px]" />
+            <Skeleton className="h-72 rounded-[22px]" />
+          </div>
+        </div>
       ) : state.status === "error" ? (
         <ContractError message={state.message} retry={reload} />
       ) : (
-        <ContractContents contract={state.data} />
+        <ContractContents contract={state.data} reduceMotion={Boolean(reduceMotion)} />
       )}
-    </div>
+    </motion.div>
   );
 }
 
-function ContractContents({ contract }: { readonly contract: Contract }): ReactElement {
+function ContractContents({
+  contract,
+  reduceMotion,
+}: {
+  readonly contract: Contract;
+  readonly reduceMotion: boolean;
+}): ReactElement {
   const snapshot = signedSnapshot(contract);
   const hasSignedEvidence = Boolean(contract.signedAt || contract.history.some((event) => event.type === "signed"));
   const seller = snapshot?.seller ?? contract.seller;
@@ -111,61 +153,87 @@ function ContractContents({ contract }: { readonly contract: Contract }): ReactE
 
   return (
     <>
-      <Card variant="gradient-border">
-        <div className="flex flex-wrap items-start justify-between gap-3">
+      <motion.section className="contracts-detail-hero" variants={reduceMotion ? undefined : fadeUp}>
+        <div className="grid gap-5 md:grid-cols-[minmax(0,1.2fr)_auto] md:items-start">
           <div>
             <StatusPill status={meta.tone} label={meta.label} />
-            <h2 className="mt-3 text-h2">{plant.name || "قرارداد فروش برق"}</h2>
-            <p className="mt-2 text-sm text-foreground-muted">{meta.next}</p>
-            <p className="mt-2 text-caption text-foreground-muted">
-              شناسه · <bdi dir="ltr">{contract.uuid}</bdi>
-            </p>
+            <h2 className="mt-3 text-h2 tracking-tight">{plant.name || "قرارداد فروش برق"}</h2>
+            <p className="mt-2 max-w-xl text-sm leading-7 text-foreground-muted">{meta.next}</p>
+            <dl className="mt-4 grid gap-2 text-caption text-foreground-muted sm:grid-cols-2">
+              <div>
+                ایجاد · <time dateTime={contract.createdAt}>{localDate(contract.createdAt)}</time>
+              </div>
+              <div>
+                به‌روزرسانی · <time dateTime={contract.updatedAt}>{localDate(contract.updatedAt)}</time>
+              </div>
+              <div className="sm:col-span-2">
+                شناسه · <bdi dir="ltr">{contract.uuid}</bdi>
+              </div>
+            </dl>
           </div>
-          <div className="rounded-lg border border-border bg-card p-4 text-sm">
-            <p className="text-caption text-foreground-muted">شرایط مالی ذخیره‌شده</p>
-            <p className="mt-2 font-bold tabular-nums">
-              <bdi dir="ltr">{formatDecimal(terms.rate)}</bdi> تومان/kWh
-            </p>
-            <p className="mt-1 tabular-nums text-foreground-muted">
-              تعهد · <bdi dir="ltr">{formatDecimal(terms.commitment)}</bdi> kWh
-            </p>
-            <p className="mt-2 text-caption text-foreground-muted">
-              این مقادیر هنگام ساخت پیش‌نویس قفل شده‌اند.
-            </p>
+          <div className="flex flex-col items-stretch gap-3 sm:flex-row md:flex-col">
+            <PanelArt
+              name={statusArt(contract.status)}
+              width={140}
+              height={140}
+              className="mx-auto size-28 rounded-[22px] object-cover shadow-[var(--panel-float)] md:mx-0"
+            />
+            <div className="contracts-detail-terms text-sm">
+              <p className="text-caption text-foreground-muted">شرایط مالی ذخیره‌شده</p>
+              <p className="mt-2 font-bold tabular-nums">
+                <bdi dir="ltr">{formatDecimal(terms.rate)}</bdi> تومان/kWh
+              </p>
+              <p className="mt-1 tabular-nums text-foreground-muted">
+                تعهد · <bdi dir="ltr">{formatDecimal(terms.commitment)}</bdi> kWh
+              </p>
+              <p className="mt-2 text-caption text-foreground-muted">
+                این مقادیر هنگام ساخت پیش‌نویس قفل شده‌اند.
+              </p>
+            </div>
           </div>
         </div>
-      </Card>
+      </motion.section>
 
       {contract.status === "cancelled" || contract.reviewDecision === "rejected" ? (
-        <Alert tone="danger" title={contract.reviewDecision === "rejected" ? "دلیل رد شرکت" : "این نسخه بسته شده است"}>
-          <p>
-            {contract.reviewNote ||
-              contract.history.find((event) => event.type === "rejected")?.reason ||
-              "دلیلی در اطلاعات دریافتی ثبت نشده است."}
-          </p>
-          <ButtonLink href="/panel/contracts/new" variant="secondary" className="mt-3">
-            ساخت پیش‌نویس جدید
-          </ButtonLink>
-        </Alert>
+        <motion.div variants={reduceMotion ? undefined : fadeUp}>
+          <Alert tone="danger" title={contract.reviewDecision === "rejected" ? "دلیل رد شرکت" : "این نسخه بسته شده است"}>
+            <p>
+              {contract.reviewNote ||
+                contract.history.find((event) => event.type === "rejected")?.reason ||
+                "دلیلی در اطلاعات دریافتی ثبت نشده است."}
+            </p>
+            <ButtonLink href="/panel/contracts/new" variant="secondary" className="mt-3">
+              ساخت پیش‌نویس جدید
+            </ButtonLink>
+          </Alert>
+        </motion.div>
       ) : null}
 
       <div className="grid gap-4 lg:grid-cols-[1.2fr_0.8fr]">
         <div className="space-y-4">
-          <Card>
-            <h3 className="text-h4">خلاصه</h3>
-            <dl className="mt-4 grid gap-3 sm:grid-cols-2">
-              <Field label="پلن" value={terms.planName || "ثبت نشده"} />
-              <Field
-                label="ظرفیت نیروگاه"
-                value={`${formatDecimal(plant.capacity)} kWp`}
+          <motion.section className="panel-surface" variants={reduceMotion ? undefined : fadeUp}>
+            <div className="mb-4 flex items-center gap-3">
+              <PanelArt
+                name="contracts/agreement"
+                width={64}
+                height={64}
+                className="size-14 rounded-2xl object-cover shadow-[var(--shadow-soft)]"
               />
+              <div>
+                <h3 className="text-h4">خلاصه قرارداد</h3>
+                <p className="text-caption text-foreground-muted">اطلاعات ذخیره‌شده از پاسخ سرور</p>
+              </div>
+            </div>
+            <dl className="grid gap-3 sm:grid-cols-2">
+              <Field label="پلن" value={terms.planName || "ثبت نشده"} />
+              <Field label="ظرفیت نیروگاه" value={`${formatDecimal(plant.capacity)} kWp`} />
               <Field label="نیروگاه" value={plant.name || "ثبت نشده"} />
               <Field label="شماره کنتور" value={branch.meter || "ثبت نشده"} dir="ltr" />
               <Field label="نشانی انشعاب" value={branch.address || "ثبت نشده"} wide />
             </dl>
             <h4 className="mt-6 text-h4">فروشنده</h4>
             <SellerIdentity value={seller} />
-          </Card>
+          </motion.section>
 
           {contract.status === "draft" ? (
             <>
@@ -178,19 +246,23 @@ function ContractContents({ contract }: { readonly contract: Contract }): ReactE
           ) : null}
 
           {hasSignedEvidence && contract.signatureUuid ? (
-            <Card>
+            <motion.section className="panel-surface" variants={reduceMotion ? undefined : fadeUp}>
               <h3 className="text-h4">ردپای امضای ثبت‌شده</h3>
-              <SignaturePreview key={contract.signatureUuid} uuid={contract.signatureUuid} />
-            </Card>
+              <p className="mt-1 text-caption text-foreground-muted">فایل خصوصی فقط با احراز هویت دریافت می‌شود.</p>
+              <div className="mt-4">
+                <SignaturePreview key={contract.signatureUuid} uuid={contract.signatureUuid} />
+              </div>
+            </motion.section>
           ) : null}
         </div>
 
-        <Card>
+        <motion.section className="panel-surface" variants={reduceMotion ? undefined : fadeUp}>
           <h3 className="text-h4">تاریخچه رویدادها</h3>
+          <p className="mt-1 text-caption text-foreground-muted">فقط رویدادهای واقعی ثبت‌شده در سرور</p>
           <div className="mt-4">
             <Timeline events={timelineEvents} />
           </div>
-        </Card>
+        </motion.section>
       </div>
     </>
   );
@@ -208,7 +280,7 @@ function Field({
   dir?: "ltr";
 }) {
   return (
-    <div className={wide ? "rounded-md bg-surface p-3 sm:col-span-2" : "rounded-md bg-surface p-3"}>
+    <div className={wide ? "contracts-field sm:col-span-2" : "contracts-field"}>
       <dt className="text-caption text-foreground-muted">{label}</dt>
       <dd className="mt-1 font-semibold" dir={dir}>
         {dir === "ltr" ? <bdi dir="ltr">{value}</bdi> : value}

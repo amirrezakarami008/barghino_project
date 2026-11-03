@@ -4,6 +4,7 @@ import { Alert, Button, EmptyState } from "@/components/ui";
 import type { IconName } from "@/shared/ui/icon";
 import { localDate, type Contract } from "./contract-model";
 import { contractStatusMeta } from "./status-map";
+import "./contracts-workspace.css";
 
 export function statusInfo(status: string) {
   const meta = contractStatusMeta(status);
@@ -23,14 +24,16 @@ export function ContractError({
   readonly retry?: () => void;
 }): ReactElement {
   return (
-    <Alert tone="danger" title="خطا">
-      <p>{message}</p>
-      {retry ? (
-        <Button variant="secondary" onClick={retry} className="mt-3">
-          تلاش دوباره
-        </Button>
-      ) : null}
-    </Alert>
+    <div className="panel-surface">
+      <Alert tone="danger" title="دریافت اطلاعات کامل نشد">
+        <p>{message}</p>
+        {retry ? (
+          <Button variant="secondary" onClick={retry} className="mt-3">
+            تلاش دوباره
+          </Button>
+        ) : null}
+      </Alert>
+    </div>
   );
 }
 
@@ -68,7 +71,7 @@ export function ContractPagination({
   readonly onChange: (page: number) => void;
 }): ReactElement {
   return (
-    <nav className="flex flex-wrap items-center justify-between gap-3" aria-label="صفحه‌بندی">
+    <nav className="contracts-pagination" aria-label="صفحه‌بندی">
       <Button variant="secondary" disabled={!previous} onClick={() => onChange(Math.max(1, page - 1))}>
         قبلی
       </Button>

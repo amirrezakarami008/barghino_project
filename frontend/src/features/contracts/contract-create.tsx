@@ -3,11 +3,11 @@
 import { useCallback, useRef, useState, type ReactElement } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   Alert,
   Button,
   ButtonLink,
-  Card,
   PlanCard,
   Skeleton,
   Stepper,
@@ -15,6 +15,7 @@ import {
   type StepItem,
   type StepState,
 } from "@/components/ui";
+import { PanelArt } from "@/features/panel/panel-art";
 import { Icon } from "@/shared/ui/icon";
 import { faNumber } from "@/shared/lib/fa";
 import { contractError, createDraft, getContracts, getPlanChoices, mutationMayHaveSucceeded } from "./contracts-api";
@@ -23,6 +24,7 @@ import { ContractEmpty, ContractError, ContractPagination } from "./contract-ui"
 import { IdentityNotice } from "./identity-notice";
 import { useContractResource } from "./use-contract-resource";
 import { ContractSiteStage, type SitePhase } from "./contract-site-stage";
+import "./contracts-workspace.css";
 
 type WizardStep = 1 | 2 | 3 | 4 | 5;
 type Submission =
@@ -39,6 +41,11 @@ const LABELS = [
   "ساخت پیش‌نویس",
 ] as const;
 
+const fadeUp = {
+  hidden: { opacity: 0, y: 14 },
+  show: { opacity: 1, y: 0 },
+};
+
 function stepState(index: number, current: WizardStep): StepState {
   if (index + 1 < current) return "done";
   if (index + 1 === current) return "current";
@@ -53,6 +60,7 @@ function initialStep(search: URLSearchParams): WizardStep {
 function ContractCreateInner(): ReactElement {
   const router = useRouter();
   const search = useSearchParams();
+  const reduceMotion = useReducedMotion();
   const [sitePhase, setSitePhase] = useState<SitePhase>(() => (search.get("plant") ? 2 : 1));
   const [step, setStep] = useState<WizardStep>(() => initialStep(search));
   const [planPage, setPlanPage] = useState(1);
@@ -114,9 +122,20 @@ function ContractCreateInner(): ReactElement {
     }
   }
 
+  const motionProps = reduceMotion
+    ? {}
+    : {
+        initial: "hidden" as const,
+        animate: "show" as const,
+        variants: {
+          hidden: {},
+          show: { transition: { staggerChildren: 0.07 } },
+        },
+      };
+
   return (
-    <div className="panel-page mx-auto max-w-6xl space-y-6">
-      <div className="flex flex-wrap items-center justify-between gap-3">
+    <motion.div className="contracts-workspace mx-auto max-w-6xl" {...motionProps}>
+      <motion.div variants={reduceMotion ? undefined : fadeUp}>
         <Link
           href="/panel/contracts"
           className="inline-flex min-h-11 items-center gap-2 text-sm font-semibold text-foreground-muted hover:text-foreground"
@@ -124,20 +143,28 @@ function ContractCreateInner(): ReactElement {
           <Icon name="arrow" className="size-4" />
           بازگشت به قراردادها
         </Link>
-      </div>
+      </motion.div>
 
-      <header className="glass-strong rounded-xl border border-border p-5 shadow-soft sm:p-6">
-        <p className="text-caption text-accent">مسیر ساخت پیش‌نویس</p>
-        <h2 ref={heading} tabIndex={-1} className="mt-2 text-h2 outline-none">
-          {LABELS[step - 1]}
-        </h2>
-        <p className="mt-2 max-w-2xl text-sm leading-7 text-foreground-muted">
-          ساخت پیش‌نویس به‌معنی امضای قرارداد یا آغاز خرید برق نیست. نرخ و تعهد فقط در متن پیش‌نویس ذخیره می‌شوند.
-        </p>
-        <div className="mt-6">
-          <Stepper steps={stepperSteps} />
+      <motion.header className="contracts-create-hero" variants={reduceMotion ? undefined : fadeUp}>
+        <div>
+          <p className="contracts-kicker">مسیر ساخت پیش‌نویس</p>
+          <h2 ref={heading} tabIndex={-1} className="mt-2 text-h2 tracking-tight outline-none">
+            {LABELS[step - 1]}
+          </h2>
+          <p className="mt-2 max-w-2xl text-sm leading-7 text-foreground-muted">
+            ساخت پیش‌نویس به‌معنی امضای قرارداد یا آغاز خرید برق نیست. نرخ و تعهد فقط در متن پیش‌نویس ذخیره می‌شوند.
+          </p>
+          <div className="mt-6">
+            <Stepper steps={stepperSteps} />
+          </div>
         </div>
-      </header>
+        <PanelArt
+          name={step >= 4 ? "contracts/agreement" : "contracts/create"}
+          width={180}
+          height={180}
+          className="contracts-create-art"
+        />
+      </motion.header>
 
       <IdentityNotice />
 
@@ -164,25 +191,30 @@ function ContractCreateInner(): ReactElement {
         {step === 3 ? (
           plans.state.status === "loading" ? (
             <div className="grid gap-3 md:grid-cols-3">
-              <Skeleton className="h-64" />
-              <Skeleton className="h-64" />
-              <Skeleton className="h-64" />
+              <Skeleton className="h-64 rounded-[22px]" />
+              <Skeleton className="h-64 rounded-[22px]" />
+              <Skeleton className="h-64 rounded-[22px]" />
             </div>
           ) : plans.state.status === "error" ? (
             <ContractError message={plans.state.message} retry={plans.reload} />
           ) : !plans.state.data.results.some((plan) => plan.active) ? (
-            <ContractEmpty title="پلن فعالی در دسترس نیست">
-              <p>کمی بعد دوباره بررسی کنید.</p>
-              <Button variant="secondary" onClick={plans.reload}>
-                دریافت دوباره
-              </Button>
-            </ContractEmpty>
+            <div className="contracts-empty">
+              <PanelArt name="contracts/agreement" width={160} height={160} className="contracts-empty-art" />
+              <ContractEmpty title="پلن فعالی در دسترس نیست">
+                <p>کمی بعد دوباره بررسی کنید.</p>
+                <Button variant="secondary" onClick={plans.reload}>
+                  دریافت دوباره
+                </Button>
+              </ContractEmpty>
+            </div>
           ) : (
             <>
-              <p className="text-sm text-foreground-muted">
-                پلن‌ها برای مقایسه هم‌ارتفاع‌اند. نرخ‌ها شرایط فعلی کاتالوگ‌اند و هنگام ساخت پیش‌نویس در قرارداد قفل
-                می‌شوند.
-              </p>
+              <div className="panel-surface">
+                <p className="text-sm leading-7 text-foreground-muted">
+                  پلن‌ها برای مقایسه هم‌ارتفاع‌اند. نرخ‌ها شرایط فعلی کاتالوگ‌اند و هنگام ساخت پیش‌نویس در قرارداد قفل
+                  می‌شوند.
+                </p>
+              </div>
               <div className="grid gap-4 md:grid-cols-3">
                 {plans.state.data.results
                   .filter((plan) => plan.active)
@@ -207,31 +239,42 @@ function ContractCreateInner(): ReactElement {
         ) : null}
 
         {step === 4 && selectedPlant && selectedPlan ? (
-          <Card>
-            <h3 className="text-h3">مرور نهایی پیش‌نویس</h3>
-            <dl className="mt-4 grid gap-3 sm:grid-cols-2">
-              <div className="rounded-md bg-surface p-3">
+          <section className="panel-surface">
+            <div className="mb-4 flex items-center gap-3">
+              <PanelArt
+                name="contracts/agreement"
+                width={72}
+                height={72}
+                className="size-16 rounded-2xl object-cover shadow-[var(--shadow-soft)]"
+              />
+              <div>
+                <h3 className="text-h3">مرور نهایی پیش‌نویس</h3>
+                <p className="text-caption text-foreground-muted">قبل از ساخت، شرایط ذخیره‌شونده را تأیید کنید</p>
+              </div>
+            </div>
+            <dl className="contracts-review-grid">
+              <div className="contracts-field">
                 <dt className="text-caption text-foreground-muted">نیروگاه</dt>
                 <dd className="mt-1 font-semibold">{selectedPlant.plant.name}</dd>
               </div>
-              <div className="rounded-md bg-surface p-3">
+              <div className="contracts-field">
                 <dt className="text-caption text-foreground-muted">انشعاب / کنتور</dt>
                 <dd className="mt-1 font-semibold">
                   {selectedPlant.branch?.name} · <bdi dir="ltr">{selectedPlant.branch?.meter}</bdi>
                 </dd>
               </div>
-              <div className="rounded-md bg-surface p-3">
+              <div className="contracts-field">
                 <dt className="text-caption text-foreground-muted">پلن</dt>
                 <dd className="mt-1 font-semibold">{selectedPlan.name}</dd>
               </div>
-              <div className="rounded-md bg-surface p-3">
+              <div className="contracts-field">
                 <dt className="text-caption text-foreground-muted">نرخ و تعهد</dt>
                 <dd className="mt-1 font-semibold tabular-nums">
                   <bdi dir="ltr">{formatDecimal(selectedPlan.rate)}</bdi> تومان/kWh ·{" "}
                   <bdi dir="ltr">{formatDecimal(selectedPlan.commitment)}</bdi> kWh
                 </dd>
               </div>
-              <div className="rounded-md bg-surface p-3 sm:col-span-2">
+              <div className="contracts-field sm:col-span-2">
                 <dt className="text-caption text-foreground-muted">نشانی انشعاب</dt>
                 <dd className="mt-1 font-semibold">{selectedPlant.branch?.address}</dd>
               </div>
@@ -239,20 +282,31 @@ function ContractCreateInner(): ReactElement {
             <Alert tone="info" className="mt-4" title="این مرحله امضا نیست">
               با ادامه، فقط پیش‌نویس ساخته می‌شود. خرید برق و تعهدات نهایی فقط پس از سند رسمی و امضای فعال آغاز می‌شود.
             </Alert>
-          </Card>
+          </section>
         ) : null}
 
         {step === 5 && selectedPlant && selectedPlan ? (
-          <Card>
-            <h3 className="text-h3">ساخت پیش‌نویس</h3>
-            <p className="mt-2 text-sm leading-7 text-foreground-muted">
+          <section className="panel-surface">
+            <div className="mb-4 flex items-center gap-3">
+              <PanelArt
+                name="contracts/approved"
+                width={72}
+                height={72}
+                className="size-16 rounded-2xl object-cover shadow-[var(--shadow-soft)]"
+              />
+              <div>
+                <h3 className="text-h3">ساخت پیش‌نویس</h3>
+                <p className="text-caption text-foreground-muted">آخرین تأیید قبل از ذخیره در سرور</p>
+              </div>
+            </div>
+            <p className="text-sm leading-7 text-foreground-muted">
               با تأیید، پلن «{selectedPlan.name}» روی نیروگاه «{selectedPlant.plant.name}» به‌صورت پیش‌نویس ذخیره
               می‌شود.
             </p>
             <Alert tone="warning" className="mt-4" title="ساخت پیش‌نویس ≠ امضا و ≠ شروع خرید برق">
               پس از ساخت می‌توانید جزئیات را ببینید؛ دکمهٔ امضا تا آماده‌شدن سند رسمی غیرفعال می‌ماند.
             </Alert>
-          </Card>
+          </section>
         ) : null}
 
         {submission.status === "error" ? <ContractError message={submission.message} /> : null}
@@ -278,7 +332,7 @@ function ContractCreateInner(): ReactElement {
         ) : null}
 
         {step >= 3 ? (
-          <footer className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-border bg-card p-4">
+          <footer className="contracts-create-footer">
             <Button
               variant="secondary"
               disabled={pending || submission.status === "uncertain"}
@@ -312,7 +366,7 @@ function ContractCreateInner(): ReactElement {
           </footer>
         ) : null}
       </section>
-    </div>
+    </motion.div>
   );
 }
 

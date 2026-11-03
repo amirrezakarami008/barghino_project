@@ -3,21 +3,24 @@
 import { useCallback, useMemo, useState, type ReactElement } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   Button,
   ButtonLink,
-  Card,
   EmptyState,
   Skeleton,
   StatusPill,
 } from "@/components/ui";
 import { PanelArt } from "@/features/panel/panel-art";
+import { faNumber } from "@/shared/lib/fa";
 import { Icon } from "@/shared/ui/icon";
+import { cn } from "@/shared/lib/cn";
 import { getContracts } from "./contracts-api";
 import { formatDecimal, localDate, type Contract } from "./contract-model";
 import { contractStatusMeta } from "./status-map";
 import { useContractResource } from "./use-contract-resource";
 import { ContractError, ContractPagination } from "./contract-ui";
+import "./contracts-workspace.css";
 
 const FILTERS = [
   { value: "all", label: "همه" },
@@ -28,8 +31,14 @@ const FILTERS = [
   { value: "expired", label: "منقضی" },
 ] as const;
 
+const fadeUp = {
+  hidden: { opacity: 0, y: 14 },
+  show: { opacity: 1, y: 0 },
+};
+
 export function ContractsList(): ReactElement {
   const search = useSearchParams();
+  const reduceMotion = useReducedMotion();
   const initialFilter = FILTERS.some((item) => item.value === search.get("status"))
     ? (search.get("status") as (typeof FILTERS)[number]["value"])
     : "all";
@@ -44,57 +53,147 @@ export function ContractsList(): ReactElement {
     return state.data.results.filter((item) => item.status === filter);
   }, [filter, state]);
 
-  return (
-    <div className="panel-page space-y-6">
-      <header className="panel-page-header flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <h2 className="text-h2 tracking-tight">قراردادهای من</h2>
-          <p className="mt-2 text-body text-foreground-muted">
-            وضعیت واقعی هر پیش‌نویس و قرارداد — بدون عدد ساختگی.
-          </p>
-        </div>
-        <ButtonLink href="/panel/contracts/new">
-          <Icon name="plus" className="size-4" />
-          قرارداد جدید
-        </ButtonLink>
-      </header>
+  const pageCounts = useMemo(() => {
+    if (state.status !== "ready") {
+      return { draft: 0, pending: 0, active: 0, closed: 0 };
+    }
+    const results = state.data.results;
+    return {
+      draft: results.filter((item) => item.status === "draft").length,
+      pending: results.filter((item) => item.status === "pending").length,
+      active: results.filter((item) => item.status === "active").length,
+      closed: results.filter((item) => item.status === "cancelled" || item.status === "expired").length,
+    };
+  }, [state]);
 
-      <div className="flex flex-wrap gap-2" role="tablist" aria-label="فیلتر وضعیت">
-        {FILTERS.map((item) => (
-          <button
-            key={item.value}
-            type="button"
-            role="tab"
-            aria-selected={filter === item.value}
-            className={
-              filter === item.value
-                ? "min-h-11 rounded-pill bg-grad-sun px-4 text-sm font-semibold text-primary-foreground shadow-sun-glow"
-                : "min-h-11 rounded-pill border border-border bg-card px-4 text-sm font-semibold text-foreground-muted hover:bg-surface"
-            }
-            onClick={() => setFilter(item.value)}
-          >
-            {item.label}
-          </button>
-        ))}
-        <Button variant="ghost" size="sm" disabled={refreshing} onClick={reload}>
+  const motionProps = reduceMotion
+    ? {}
+    : {
+        initial: "hidden" as const,
+        animate: "show" as const,
+        variants: {
+          hidden: {},
+          show: { transition: { staggerChildren: 0.07 } },
+        },
+      };
+
+  return (
+    <motion.div className="contracts-workspace" {...motionProps}>
+      <motion.header variants={reduceMotion ? undefined : fadeUp}>
+        <p className="contracts-kicker">مدیریت قرارداد</p>
+        <h2 className="text-h2 tracking-tight">قراردادهای من</h2>
+        <p className="mt-2 max-w-2xl text-body text-foreground-muted">
+          پیش‌نویس‌ها و قراردادهای واقعی حساب شما — با وضعیت شفاف و بدون عدد ساختگی.
+        </p>
+      </motion.header>
+
+      <motion.section className="contracts-hero" variants={reduceMotion ? undefined : fadeUp} aria-label="شروع قرارداد">
+        <div>
+          <p className="contracts-hero-eyebrow">فضای قرارداد خورشیدی</p>
+          <h3 className="contracts-hero-title">پلن را انتخاب کنید و پیش‌نویس بسازید</h3>
+          <p className="contracts-hero-body">
+            مسیر از ثبت انشعاب و نیروگاه آغاز می‌شود. ساخت پیش‌نویس به‌معنی امضا یا شروع خرید برق نیست.
+          </p>
+          <ButtonLink href="/panel/contracts/new" className="contracts-hero-cta mt-5">
+            <Icon name="plus" className="size-4" />
+            قرارداد جدید
+            <Icon name="arrow" className="size-4 -scale-x-100" />
+          </ButtonLink>
+        </div>
+        <div className="contracts-hero-art" aria-hidden>
+          <PanelArt name="contracts/hero" width={720} height={405} className="contracts-hero-image" priority />
+          <PanelArt name="contracts/decor" width={120} height={120} className="contracts-hero-orb" />
+        </div>
+      </motion.section>
+
+      <section aria-label="خلاصه وضعیت" className="contracts-stat-grid">
+        {state.status === "loading" ? (
+          <>
+            <Skeleton className="h-36 rounded-[22px]" />
+            <Skeleton className="h-36 rounded-[22px]" />
+            <Skeleton className="h-36 rounded-[22px]" />
+            <Skeleton className="h-36 rounded-[22px]" />
+          </>
+        ) : (
+          <>
+            <SummaryCard
+              label="کل قراردادها"
+              value={state.status === "ready" ? faNumber(state.data.count) : "—"}
+              hint="مجموع حساب شما"
+              art="stat-contracts"
+              tone="volt"
+              onSelect={() => setFilter("all")}
+              reduceMotion={Boolean(reduceMotion)}
+            />
+            <SummaryCard
+              label="پیش‌نویس‌ها"
+              value={state.status === "ready" ? faNumber(pageCounts.draft) : "—"}
+              hint="در صفحهٔ فعلی فهرست"
+              art="stat-drafts"
+              tone="sun"
+              onSelect={() => setFilter("draft")}
+              reduceMotion={Boolean(reduceMotion)}
+            />
+            <SummaryCard
+              label="در انتظار بررسی"
+              value={state.status === "ready" ? faNumber(pageCounts.pending) : "—"}
+              hint="در صفحهٔ فعلی فهرست"
+              art="contracts/pending"
+              tone="sky"
+              onSelect={() => setFilter("pending")}
+              reduceMotion={Boolean(reduceMotion)}
+            />
+            <SummaryCard
+              label="فعال"
+              value={state.status === "ready" ? faNumber(pageCounts.active) : "—"}
+              hint="در صفحهٔ فعلی فهرست"
+              art="contracts/approved"
+              tone="mint"
+              onSelect={() => setFilter("active")}
+              reduceMotion={Boolean(reduceMotion)}
+            />
+          </>
+        )}
+      </section>
+
+      <motion.div className="contracts-toolbar" variants={reduceMotion ? undefined : fadeUp}>
+        <div className="contracts-toolbar-filters" role="tablist" aria-label="فیلتر وضعیت">
+          {FILTERS.map((item) => (
+            <button
+              key={item.value}
+              type="button"
+              role="tab"
+              aria-selected={filter === item.value}
+              className={cn(
+                "contracts-filter shrink-0",
+                filter === item.value ? "contracts-filter--active" : "contracts-filter--idle",
+              )}
+              onClick={() => setFilter(item.value)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </div>
+        <Button variant="ghost" size="sm" disabled={refreshing} onClick={reload} className="shrink-0">
           {refreshing ? "در حال دریافت…" : "تازه‌سازی"}
         </Button>
-      </div>
+      </motion.div>
 
       {state.status === "loading" ? (
         <div className="grid gap-3">
-          <Skeleton className="h-28" />
-          <Skeleton className="h-28" />
+          <Skeleton className="h-36 rounded-[22px]" />
+          <Skeleton className="h-36 rounded-[22px]" />
+          <Skeleton className="h-36 rounded-[22px]" />
         </div>
       ) : state.status === "error" ? (
         <ContractError message={state.message} retry={reload} />
       ) : !rows.length ? (
-        <div className="panel-surface grid justify-items-center gap-3 py-8 text-center">
+        <motion.div className="contracts-empty" variants={reduceMotion ? undefined : fadeUp}>
           <PanelArt
-            name="empty-contracts"
-            width={160}
-            height={160}
-            className="size-36 rounded-[22px] object-cover shadow-[var(--panel-float)]"
+            name={filter === "all" ? "empty-contracts" : filter === "pending" ? "contracts/pending" : filter === "active" ? "contracts/approved" : filter === "cancelled" || filter === "expired" ? "contracts/rejected" : "stat-drafts"}
+            width={180}
+            height={180}
+            className="contracts-empty-art"
           />
           <EmptyState
             hideIcon
@@ -103,11 +202,13 @@ export function ContractsList(): ReactElement {
             description="مسیر از ثبت انشعاب و نیروگاه تا ساخت پیش‌نویس ادامه دارد."
             action={<ButtonLink href="/panel/contracts/new">شروع قرارداد</ButtonLink>}
           />
-        </div>
+        </motion.div>
       ) : (
         <ul className="grid gap-3">
           {rows.map((contract) => (
-            <ContractCard key={contract.uuid} contract={contract} />
+            <motion.li key={contract.uuid} variants={reduceMotion ? undefined : fadeUp}>
+              <ContractCard contract={contract} />
+            </motion.li>
           ))}
         </ul>
       )}
@@ -121,47 +222,80 @@ export function ContractsList(): ReactElement {
           onChange={setPage}
         />
       ) : null}
-    </div>
+    </motion.div>
+  );
+}
+
+function SummaryCard({
+  label,
+  value,
+  hint,
+  art,
+  tone,
+  onSelect,
+  reduceMotion,
+}: {
+  label: string;
+  value: string;
+  hint: string;
+  art: string;
+  tone: "sun" | "mint" | "volt" | "coral" | "sky";
+  onSelect: () => void;
+  reduceMotion: boolean;
+}) {
+  return (
+    <motion.button
+      type="button"
+      variants={reduceMotion ? undefined : fadeUp}
+      className={cn("contracts-stat-card", `contracts-stat-card--${tone}`, "w-full text-start")}
+      onClick={onSelect}
+    >
+      <div>
+        <p className="text-caption text-foreground-muted">{label}</p>
+        <p className="contracts-stat-value tabular-nums">{value}</p>
+        <p className="mt-1 text-caption text-foreground-muted">{hint}</p>
+      </div>
+      <PanelArt name={art} width={112} height={112} className="contracts-stat-art" />
+    </motion.button>
   );
 }
 
 function ContractCard({ contract }: { contract: Contract }) {
   const meta = contractStatusMeta(contract.status);
   return (
-    <li>
-      <Card variant="interactive" className="overflow-hidden rounded-[22px] p-0 shadow-[var(--panel-card-glow)]">
-        <Link
-          href={`/panel/contracts/${encodeURIComponent(contract.uuid)}`}
-          className="block rounded-[22px] p-5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-        >
-          <div className="flex flex-wrap items-start justify-between gap-3">
-            <div className="min-w-0 space-y-1">
-              <h3 className="text-h4">{contract.plantName || "نیروگاه ثبت نشده"}</h3>
-              <p className="text-sm text-foreground-muted">{contract.planName || "پلن ثبت نشده"}</p>
-            </div>
-            <StatusPill status={meta.tone} label={meta.label} />
-          </div>
-          <dl className="mt-4 grid gap-2 text-sm sm:grid-cols-3">
-            <div>
-              <dt className="text-caption text-foreground-muted">نرخ ذخیره‌شده</dt>
-              <dd className="tabular-nums font-semibold">
-                <bdi dir="ltr">{formatDecimal(contract.rate)}</bdi> تومان/kWh
-              </dd>
-            </div>
-            <div>
-              <dt className="text-caption text-foreground-muted">تعهد انرژی</dt>
-              <dd className="tabular-nums font-semibold">
-                <bdi dir="ltr">{formatDecimal(contract.commitment)}</bdi> kWh
-              </dd>
-            </div>
-            <div>
-              <dt className="text-caption text-foreground-muted">آخرین رویداد</dt>
-              <dd>{localDate(contract.reviewedAt || contract.signedAt || contract.createdAt)}</dd>
-            </div>
-          </dl>
-          <p className="mt-3 text-caption text-foreground-muted">{meta.next}</p>
-        </Link>
-      </Card>
-    </li>
+    <Link
+      href={`/panel/contracts/${encodeURIComponent(contract.uuid)}`}
+      className="contracts-row focus-visible:outline-none"
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0 space-y-1">
+          <h3 className="text-h4 tracking-tight">{contract.plantName || "نیروگاه ثبت نشده"}</h3>
+          <p className="text-sm text-foreground-muted">{contract.planName || "پلن ثبت نشده"}</p>
+          <p className="text-caption text-foreground-muted">
+            شناسه · <bdi dir="ltr">{contract.uuid.slice(0, 8)}…</bdi>
+          </p>
+        </div>
+        <StatusPill status={meta.tone} label={meta.label} />
+      </div>
+      <dl className="contracts-row-meta">
+        <div className="contracts-meta-chip">
+          <dt className="text-caption text-foreground-muted">نرخ ذخیره‌شده</dt>
+          <dd className="mt-1 tabular-nums font-semibold">
+            <bdi dir="ltr">{formatDecimal(contract.rate)}</bdi> تومان/kWh
+          </dd>
+        </div>
+        <div className="contracts-meta-chip">
+          <dt className="text-caption text-foreground-muted">تعهد انرژی</dt>
+          <dd className="mt-1 tabular-nums font-semibold">
+            <bdi dir="ltr">{formatDecimal(contract.commitment)}</bdi> kWh
+          </dd>
+        </div>
+        <div className="contracts-meta-chip">
+          <dt className="text-caption text-foreground-muted">آخرین رویداد</dt>
+          <dd className="mt-1 font-semibold">{localDate(contract.reviewedAt || contract.signedAt || contract.createdAt)}</dd>
+        </div>
+      </dl>
+      <p className="mt-3 text-caption leading-6 text-foreground-muted">{meta.next}</p>
+    </Link>
   );
 }
