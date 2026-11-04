@@ -4,7 +4,7 @@ export type Identity = Readonly<Record<string, string | null>>;
 export type ContractSnapshot = {
   readonly seller: Identity;
   readonly plant: { readonly uuid: string; readonly name: string; readonly capacity: Decimal | null };
-  readonly branch: { readonly uuid: string; readonly meter: string; readonly address: string };
+  readonly branch: { readonly uuid: string; readonly billId: string; readonly address: string };
   readonly terms: { readonly planName: string; readonly commitment: Decimal | null; readonly rate: Decimal | null };
 };
 export type ContractEvent = {
@@ -13,16 +13,41 @@ export type ContractEvent = {
   readonly termsVersion: string; readonly termsHash: string;
 };
 export type Contract = {
-  readonly uuid: string; readonly status: string; readonly plantUuid: string; readonly plantName: string;
-  readonly capacity: Decimal | null; readonly branchUuid: string; readonly meter: string; readonly address: string;
-  readonly seller: Identity | null; readonly planUuid: string; readonly planName: string;
-  readonly commitment: Decimal | null; readonly rate: Decimal | null;
-  readonly createdAt: string; readonly updatedAt: string; readonly signedAt: string; readonly reviewedAt: string;
-  readonly reviewDecision: string; readonly reviewNote: string; readonly termsVersion: string; readonly termsHash: string;
-  readonly signatureUuid: string; readonly history: readonly ContractEvent[];
+  readonly uuid: string;
+  readonly status: string;
+  readonly title: string;
+  readonly contractNumber: string;
+  readonly plantUuid: string;
+  readonly plantName: string;
+  readonly capacity: Decimal | null;
+  readonly schemeType: string;
+  readonly systemType: string;
+  readonly branchUuid: string;
+  readonly billId: string;
+  readonly address: string;
+  readonly seller: Identity | null;
+  readonly planUuid: string;
+  readonly planName: string;
+  readonly commitment: Decimal | null;
+  readonly rate: Decimal | null;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+  readonly signedAt: string;
+  readonly reviewedAt: string;
+  readonly reviewDecision: string;
+  readonly reviewNote: string;
+  readonly startsOn: string;
+  readonly endsOn: string;
+  readonly isNearExpiry: boolean;
+  readonly renewalRequested: boolean;
+  readonly renewalRequestedAt: string;
+  readonly termsVersion: string;
+  readonly termsHash: string;
+  readonly signatureUuid: string;
+  readonly history: readonly ContractEvent[];
 };
 export type Plant = { readonly uuid: string; readonly name: string; readonly branchUuid: string; readonly capacity: Decimal | null; readonly status: string; readonly reviewNote: string };
-export type Branch = { readonly uuid: string; readonly name: string; readonly meter: string; readonly address: string; readonly status: string };
+export type Branch = { readonly uuid: string; readonly name: string; readonly billId: string; readonly address: string; readonly status: string };
 export type Plan = { readonly uuid: string; readonly name: string; readonly description: string; readonly rate: Decimal | null; readonly commitment: Decimal | null; readonly benefits: readonly string[]; readonly recommended: boolean; readonly active: boolean };
 export type PlantOption = { readonly plant: Plant; readonly branch: Branch | null };
 export type Remote<T> = { readonly status: "loading" } | { readonly status: "error"; readonly message: string } | { readonly status: "ready"; readonly data: T };
@@ -37,6 +62,11 @@ export function record(value: unknown): Record<string, unknown> {
 }
 function text(value: unknown): string { if (value == null) return ""; if (typeof value !== "string") throw new ContractDataError(); return value; }
 function required(value: unknown): string { const result = text(value); if (!result) throw new ContractDataError(); return result; }
+function flag(value: unknown): boolean {
+  if (value == null) return false;
+  if (typeof value !== "boolean") throw new ContractDataError();
+  return value;
+}
 function decimal(value: unknown): Decimal | null {
   if (value == null) return null;
   if (typeof value !== "string" && typeof value !== "number") throw new ContractDataError();
@@ -56,19 +86,106 @@ export function parseSnapshot(value: unknown): ContractSnapshot | null {
     const identityFields = seller.kind === "individual" ? ["first_name", "last_name", "national_id"] : seller.kind === "legal" ? ["company_name", "company_national_id", "representative_first_name", "representative_last_name", "representative_national_id"] : [];
     if (!identityFields.length || identityFields.some((key) => !seller[key])) return null;
     if (decimal(terms.commitment_kwh) === null || decimal(terms.rate_toman_per_kwh) === null) return null;
-    return { seller, plant: { uuid: required(plant.uuid), name: required(plant.name), capacity: decimal(plant.capacity_kwp) }, branch: { uuid: required(branch.uuid), meter: required(branch.meter_number), address: required(branch.address) }, terms: { planName: required(terms.plan_name), commitment: decimal(terms.commitment_kwh), rate: decimal(terms.rate_toman_per_kwh) } };
+    return { seller, plant: { uuid: required(plant.uuid), name: required(plant.name), capacity: decimal(plant.capacity_kwp) }, branch: { uuid: required(branch.uuid), billId: required(branch.bill_id), address: required(branch.address) }, terms: { planName: required(terms.plan_name), commitment: decimal(terms.commitment_kwh), rate: decimal(terms.rate_toman_per_kwh) } };
   } catch { return null; }
 }
 export function parseContract(value: unknown): Contract {
   const raw = record(value);
   if (!Array.isArray(raw.history)) throw new ContractDataError();
+  const capacity = decimal(raw.plant_capacity_kwp);
+  const planName = text(raw.plan_name);
+  const title = text(raw.title);
+  const plantName = text(raw.plant_name);
   return {
-    uuid: required(raw.uuid), status: required(raw.status), plantUuid: text(raw.plant_uuid), plantName: text(raw.plant_name), capacity: decimal(raw.plant_capacity_kwp), branchUuid: text(raw.branch_uuid), meter: text(raw.meter_number), address: text(raw.branch_address), seller: identity(raw.seller_identity), planUuid: text(raw.plan_uuid), planName: text(raw.plan_name), commitment: decimal(raw.commitment_kwh), rate: decimal(raw.rate_toman_per_kwh), createdAt: required(raw.created_at), updatedAt: required(raw.updated_at), signedAt: text(raw.signed_at), reviewedAt: text(raw.reviewed_at), reviewDecision: text(raw.review_decision), reviewNote: text(raw.review_note), termsVersion: text(raw.terms_version), termsHash: text(raw.terms_sha256), signatureUuid: text(raw.signature_file_uuid),
-    history: raw.history.map((item) => { const event = record(item), details = record(event.details ?? {}); return { uuid: required(event.uuid), type: required(event.event_type), from: text(event.from_status), to: text(event.to_status), createdAt: required(event.created_at), reason: text(details.reason), snapshot: parseSnapshot(details.contract_snapshot), termsVersion: text(details.accepted_terms_version), termsHash: text(details.accepted_terms_sha256) }; }),
+    uuid: required(raw.uuid),
+    status: required(raw.status),
+    title,
+    contractNumber: text(raw.contract_number),
+    plantUuid: text(raw.plant_uuid),
+    plantName,
+    capacity,
+    schemeType: text(raw.plant_scheme_type),
+    systemType: text(raw.plant_system_type),
+    branchUuid: text(raw.branch_uuid),
+    billId: text(raw.bill_id),
+    address: text(raw.branch_address),
+    seller: identity(raw.seller_identity),
+    planUuid: text(raw.plan_uuid),
+    planName,
+    commitment: decimal(raw.commitment_kwh),
+    rate: decimal(raw.rate_toman_per_kwh),
+    createdAt: required(raw.created_at),
+    updatedAt: required(raw.updated_at),
+    signedAt: text(raw.signed_at),
+    reviewedAt: text(raw.reviewed_at),
+    reviewDecision: text(raw.review_decision),
+    reviewNote: text(raw.review_note),
+    startsOn: text(raw.starts_on),
+    endsOn: text(raw.ends_on),
+    isNearExpiry: flag(raw.is_near_expiry),
+    renewalRequested: flag(raw.renewal_requested),
+    renewalRequestedAt: text(raw.renewal_requested_at),
+    termsVersion: text(raw.terms_version),
+    termsHash: text(raw.terms_sha256),
+    signatureUuid: text(raw.signature_file_uuid),
+    history: raw.history.map((item) => {
+      const event = record(item);
+      const details = record(event.details ?? {});
+      return {
+        uuid: required(event.uuid),
+        type: required(event.event_type),
+        from: text(event.from_status),
+        to: text(event.to_status),
+        createdAt: required(event.created_at),
+        reason: text(details.reason),
+        snapshot: parseSnapshot(details.contract_snapshot),
+        termsVersion: text(details.accepted_terms_version),
+        termsHash: text(details.accepted_terms_sha256),
+      };
+    }),
   };
 }
-export function parsePlant(value: unknown): Plant { const raw = record(value); return { uuid: required(raw.uuid), name: required(raw.name), branchUuid: required(raw.branch_uuid), capacity: decimal(raw.capacity_kwp), status: required(raw.status), reviewNote: text(raw.review_note) }; }
-export function parseBranch(value: unknown): Branch { const raw = record(value); return { uuid: required(raw.uuid), name: required(raw.name), meter: required(raw.meter_number), address: required(raw.address), status: required(raw.status) }; }
+
+export function contractDisplayTitle(contract: Contract): string {
+  if (contract.title.trim()) return contract.title.trim();
+  if (contract.plantName.trim()) return contract.plantName.trim();
+  if (contract.capacity && contract.planName) {
+    return `${formatDecimal(contract.capacity)} kWp — ${contract.planName}`;
+  }
+  return contract.planName.trim() || "قرارداد بدون عنوان";
+}
+
+export function sellerDisplayName(seller: Identity | null): string {
+  if (!seller) return "";
+  if (seller.kind === "legal") return (seller.company_name ?? "").trim();
+  return [seller.first_name, seller.last_name].filter((part): part is string => Boolean(part?.trim())).join(" ").trim();
+}
+
+export function contractActionLabel(status: string): string {
+  if (status === "draft") return "بررسی و ادامه";
+  if (status === "pending") return "پیگیری بررسی";
+  if (status === "active") return "مشاهده قرارداد";
+  return "مشاهده پرونده";
+}
+export function parsePlant(value: unknown): Plant {
+  const raw = record(value);
+  const capacity = decimal(raw.capacity_kwp);
+  const schemeType = typeof raw.scheme_type === "string" ? raw.scheme_type : "";
+  const systemType = typeof raw.system_type === "string" ? raw.system_type : "";
+  const capacityLabel = capacity ?? "";
+  const derivedName =
+    (schemeType === "residential" ? "مسکونی" : schemeType === "non_residential" ? "غیرمسکونی" : "خورشیدی");
+  const name = text(raw.name) || (capacityLabel ? `نیروگاه ${derivedName} ${capacityLabel} kWp` : `نیروگاه ${derivedName}`);
+  return {
+    uuid: required(raw.uuid),
+    name,
+    branchUuid: required(raw.branch_uuid),
+    capacity,
+    status: required(raw.status),
+    reviewNote: text(raw.review_note),
+  };
+}
+export function parseBranch(value: unknown): Branch { const raw = record(value); return { uuid: required(raw.uuid), name: required(raw.name), billId: required(raw.bill_id), address: required(raw.address), status: required(raw.status) }; }
 export function parsePlan(value: unknown): Plan {
   const raw = record(value);
   if (typeof raw.is_active !== "boolean" || typeof raw.is_recommended !== "boolean" || !Array.isArray(raw.benefits) || !raw.benefits.every((item) => typeof item === "string")) throw new ContractDataError();
@@ -88,6 +205,19 @@ export function eligibility(option: PlantOption): string | null {
   if (!option.branch) return "اطلاعات انشعاب در دسترس نیست؛ دوباره دریافت کنید.";
   if (option.branch.status !== "active") return "انشعاب متصل هنوز تأیید نشده است.";
   return null;
+}
+
+/** Cancelled/expired contracts free the branch for a new draft. */
+export function contractOccupiesBranch(status: string): boolean {
+  return status !== "cancelled" && status !== "expired";
+}
+
+export function occupiedBranchIds(contracts: readonly Contract[]): ReadonlySet<string> {
+  const ids = new Set<string>();
+  for (const contract of contracts) {
+    if (contract.branchUuid && contractOccupiesBranch(contract.status)) ids.add(contract.branchUuid);
+  }
+  return ids;
 }
 export function formatDecimal(value: Decimal | null): string {
   if (value === null) return "—";

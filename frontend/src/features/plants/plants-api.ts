@@ -1,9 +1,18 @@
 import { ApiError, apiRequest } from "@/features/auth/lib/api";
+import {
+  defaultPlantName,
+  isSchemeType,
+  isSystemType,
+  type SchemeType,
+  type SystemType,
+} from "./plant-options";
+
+export type { SchemeType, SystemType } from "./plant-options";
 
 export type Branch = {
   readonly uuid: string;
   readonly name: string;
-  readonly meter_number: string;
+  readonly bill_id: string;
   readonly address: string;
   readonly status: string;
   readonly review_note: string;
@@ -16,10 +25,13 @@ export type Branch = {
 };
 export type Plant = {
   readonly uuid: string;
+  /** Display label; derived client-side when the API omits name. */
   readonly name: string;
   readonly branch_uuid: string;
   readonly address: string;
   readonly capacity_kwp: string;
+  readonly scheme_type: SchemeType;
+  readonly system_type: SystemType;
   readonly status: string;
   readonly review_note: string;
   readonly owner_phone: string;
@@ -30,8 +42,8 @@ export type Plant = {
   readonly reviewed_by_uuid: string;
 };
 export type Page<T> = { readonly count: number; readonly next: boolean; readonly previous: boolean; readonly results: readonly T[] };
-export type BranchInput = Pick<Branch, "name" | "meter_number" | "address">;
-export type PlantInput = Pick<Plant, "name" | "branch_uuid" | "address" | "capacity_kwp">;
+export type BranchInput = Pick<Branch, "name" | "bill_id" | "address">;
+export type PlantInput = Pick<Plant, "branch_uuid" | "capacity_kwp" | "scheme_type" | "system_type">;
 
 function record(value: unknown): Record<string, unknown> {
   if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("پاسخ سرویس قابل خواندن نیست.");
@@ -46,7 +58,7 @@ function base(value: unknown): Branch {
     name: text(raw.name),
     status: text(raw.status),
     address: text(raw.address),
-    meter_number: text(raw.meter_number),
+    bill_id: text(raw.bill_id),
     review_note: text(raw.review_note),
     owner_phone: text(raw.owner_phone),
     created_at: text(raw.created_at),
@@ -58,9 +70,36 @@ function base(value: unknown): Branch {
 }
 export function parseBranch(value: unknown): Branch { return base(value); }
 export function parsePlant(value: unknown): Plant {
-  const raw = record(value), item = base(value);
-  if (!text(raw.branch_uuid) || !["string", "number"].includes(typeof raw.capacity_kwp)) throw new Error("اطلاعات نیروگاه ناقص است.");
-  return { ...item, branch_uuid: text(raw.branch_uuid), capacity_kwp: String(raw.capacity_kwp) };
+  const raw = record(value);
+  if (!text(raw.uuid) || !text(raw.status)) throw new Error("اطلاعات دریافتی ناقص است.");
+  if (!text(raw.branch_uuid) || !["string", "number"].includes(typeof raw.capacity_kwp)) {
+    throw new Error("اطلاعات نیروگاه ناقص است.");
+  }
+  if (!isSchemeType(raw.scheme_type) || !isSystemType(raw.system_type)) {
+    throw new Error("نوع طرح یا اتصال شبکه نیروگاه نامعتبر است.");
+  }
+  const capacity_kwp = String(raw.capacity_kwp);
+  const scheme_type = raw.scheme_type;
+  const system_type = raw.system_type;
+  return {
+    uuid: text(raw.uuid),
+    name:
+      text(raw.name) ||
+      defaultPlantName({ schemeType: scheme_type, systemType: system_type, capacity: capacity_kwp }),
+    status: text(raw.status),
+    address: text(raw.address),
+    review_note: text(raw.review_note),
+    owner_phone: text(raw.owner_phone),
+    created_at: text(raw.created_at),
+    updated_at: text(raw.updated_at),
+    reviewed_at: text(raw.reviewed_at),
+    review_decision: text(raw.review_decision),
+    reviewed_by_uuid: text(raw.reviewed_by_uuid),
+    branch_uuid: text(raw.branch_uuid),
+    capacity_kwp,
+    scheme_type,
+    system_type,
+  };
 }
 export function parsePage<T>(value: unknown, parse: (item: unknown) => T): Page<T> {
   const raw = record(value);
@@ -85,8 +124,10 @@ export function plantError(error: unknown): string {
     if (error.status === 403) return "برای این کار دسترسی ندارید.";
     if (error.status === 404) return "این مورد دیگر در دسترس نیست. فهرست را تازه‌سازی کنید.";
     if (error.status === 0 || error.status >= 500) return "پاسخ سرویس دریافت نشد؛ پیش از تکرار ثبت، فهرست را بررسی کنید.";
-    if (error.fields.meter_number) return "شماره کنتور معتبر وارد کنید؛ این شماره ممکن است قبلاً ثبت شده باشد.";
+    if (error.fields.bill_id) return "شناسه قبض معتبر وارد کنید؛ این شناسه ممکن است قبلاً ثبت شده باشد.";
     if (error.fields.capacity_kwp) return "ظرفیت باید عدد مثبت با حداکثر سه رقم اعشار باشد.";
+    if (error.fields.scheme_type) return "کاربری طرح را از بین گزینه‌های مسکونی و غیرمسکونی انتخاب کنید.";
+    if (error.fields.system_type) return "نوع اتصال به شبکه را مشخص کنید.";
     if (error.fields.branch_uuid || error.fields.branch) return "انشعاب انتخاب‌شده قابل استفاده نیست؛ فهرست را تازه‌سازی کنید.";
     return "درخواست پذیرفته نشد. اطلاعات و وضعیت مورد انتخاب‌شده را بررسی کنید.";
   }

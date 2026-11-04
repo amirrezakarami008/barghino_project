@@ -24,6 +24,8 @@ export type PlantWrite = {
   readonly name: string;
   readonly address: string;
   readonly capacity_kwp: string;
+  readonly scheme_type: Plant["scheme_type"];
+  readonly system_type: Plant["system_type"];
   readonly commissioned_at: string | null;
 };
 
@@ -77,11 +79,10 @@ function parseAdminBranch(value: unknown): AdminBranch {
 
 export async function getAdminPlants(
   page: number,
-  status: string,
-  search: string,
   signal: AbortSignal,
+  search = "",
 ): Promise<InventoryPage<AdminPlant>> {
-  const params = new URLSearchParams({ page: String(page), page_size: "12", status });
+  const params = new URLSearchParams({ page: String(page), page_size: "12" });
   if (search.trim()) params.set("search", search.trim());
   return parsePage(await apiRequest<unknown>(`/staff/plants/?${params}`, { auth: true, signal }), parseAdminPlant);
 }
@@ -115,6 +116,20 @@ export async function deleteAdminPlant(uuid: string): Promise<void> {
   await apiRequest(`/staff/plants/${encodeURIComponent(uuid)}/`, { auth: true, method: "DELETE" });
 }
 
+export async function reviewAdminPlant(
+  uuid: string,
+  decision: "approved" | "rejected",
+  reason: string,
+): Promise<AdminPlant> {
+  return parseAdminPlant(
+    await apiRequest<unknown>(`/staff/plants/${encodeURIComponent(uuid)}/review/`, {
+      auth: true,
+      method: "POST",
+      body: { decision, reason },
+    }),
+  );
+}
+
 export function adminPlantError(error: unknown): string {
   if (error instanceof ApiError) {
     if (error.status === 403) return "دسترسی مدیریت نیروگاه‌ها برای حساب شما فعال نیست.";
@@ -124,9 +139,17 @@ export function adminPlantError(error: unknown): string {
       return "نتیجهٔ درخواست مشخص نیست؛ پیش از ارسال دوباره، فهرست را تازه‌سازی و بررسی کنید.";
     }
     if (error.fields.branch || error.fields.branch_uuid) {
-      return "انشعاب انتخاب‌شده قابل استفاده نیست یا به مالک این نیروگاه تعلق ندارد. انتقال به انشعاب مالک دیگر یک ویرایش عادی نیست.";
+      return "انشعاب انتخاب‌شده قابل استفاده نیست یا به مالک این نیروگاه تعلق ندارد.";
+    }
+    if (error.fields.decision || error.fields.reason) {
+      return "تصمیم بررسی معتبر نیست؛ برای رد، دلیل کافی وارد کنید.";
+    }
+    if (error.fields.detail?.includes?.("Pending") || error.message.includes("Pending")) {
+      return "این نیروگاه دیگر در صف بررسی نیست؛ فهرست را تازه‌سازی کنید.";
     }
     if (error.fields.capacity_kwp) return "ظرفیت مثبت با حداکثر سه رقم اعشار وارد کنید.";
+    if (error.fields.scheme_type) return "کاربری طرح (مسکونی / غیرمسکونی) را انتخاب کنید.";
+    if (error.fields.system_type) return "نوع اتصال به شبکه را مشخص کنید.";
     if (error.fields.name) return "نام نیروگاه را بررسی کنید.";
     if (error.fields.address) return "نشانی نیروگاه را بررسی کنید.";
     if (error.fields.commissioned_at) return "تاریخ بهره‌برداری را بررسی کنید.";

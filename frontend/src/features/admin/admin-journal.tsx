@@ -1,10 +1,13 @@
 "use client";
 
 import Link from "next/link";
-import { useState, type ReactElement } from "react";
-import { Button, DataTable, EmptyState, Input, type DataTableColumn } from "@/components/ui";
+import type { ReactElement } from "react";
+import { motion, useReducedMotion } from "framer-motion";
+import { ButtonLink, EmptyState } from "@/components/ui";
+import { PanelArt } from "@/features/panel/panel-art";
 import { faNumber } from "@/shared/lib/fa";
-import { AdminPage, AdminSolidSurface } from "./admin-page";
+import { Icon } from "@/shared/ui/icon";
+import "./admin-workspace.css";
 
 type JournalArticle = {
   readonly slug: string;
@@ -13,93 +16,88 @@ type JournalArticle = {
   readonly minutes: number;
 };
 
+const fadeUp = {
+  hidden: { opacity: 0, y: 12 },
+  show: { opacity: 1, y: 0 },
+};
+
 export function AdminJournal({
   articles,
 }: {
   readonly articles: readonly JournalArticle[];
 }): ReactElement {
-  const [query, setQuery] = useState("");
-  const normalizedQuery = normalizePersian(query);
-  const filtered = articles.filter((article) =>
-    normalizePersian(`${article.title} ${article.summary}`).includes(normalizedQuery),
-  );
-
-  const columns: DataTableColumn<JournalArticle>[] = [
-    {
-      id: "title",
-      header: "عنوان",
-      mobilePrimary: true,
-      cell: (row) => (
-        <div className="space-y-1">
-          <Link href={`/blog/${row.slug}`} className="font-semibold hover:underline">
-            {row.title}
-          </Link>
-          <p className="text-caption text-foreground-muted line-clamp-2">{row.summary}</p>
-        </div>
-      ),
-    },
-    {
-      id: "status",
-      header: "وضعیت",
-      cell: () => <span className="text-sm">فقط‌خواندنی · نمونه</span>,
-    },
-    {
-      id: "minutes",
-      header: "مطالعه",
-      cell: (row) => <span>{faNumber(row.minutes)} دقیقه</span>,
-    },
-  ];
+  const reduceMotion = useReducedMotion();
+  const motionProps = reduceMotion
+    ? {}
+    : {
+        initial: "hidden" as const,
+        animate: "show" as const,
+        variants: {
+          hidden: {},
+          show: { transition: { staggerChildren: 0.05 } },
+        },
+      };
 
   return (
-    <AdminPage
-      title="راهنماها"
-      description="فهرست فقط‌خواندنی راهنماهای منتشرشده در سایت. ویرایش از این بخش هنوز فعال نیست."
-      action={{ href: "/blog", label: "مشاهده در سایت", icon: "eye" }}
-    >
-      <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
-        <Input
-          className="sm:max-w-sm"
-          label="جست‌وجو در راهنماها"
-          type="search"
-          value={query}
-          onChange={(event) => setQuery(event.target.value)}
-          placeholder="جست‌وجو در عنوان و توضیحات…"
-        />
-        <span className="text-sm text-foreground-muted" role="status">
-          {faNumber(filtered.length)} از {faNumber(articles.length)} راهنما
-        </span>
-      </div>
+    <motion.div className="admin-workspace" {...motionProps}>
+      <motion.section className="admin-ws-hero" variants={reduceMotion ? undefined : fadeUp}>
+        <div className="min-w-0">
+          <p className="admin-ws-hero-eyebrow">محتوای سایت</p>
+          <h2 className="admin-ws-hero-title">راهنماهای منتشرشده</h2>
+          <p className="admin-ws-hero-body">
+            فهرست فقط‌خواندنی راهنماهای عمومی سایت. ویرایش از این بخش هنوز فعال نیست.
+          </p>
+          <div className="mt-4">
+            <ButtonLink href="/blog" className="admin-ws-hero-cta">
+              <Icon name="eye" className="size-4" />
+              مشاهده در سایت
+            </ButtonLink>
+          </div>
+        </div>
+        <div className="admin-ws-hero-art">
+          <PanelArt name="installs/document" width={260} height={260} className="admin-ws-hero-image" />
+        </div>
+      </motion.section>
 
-      <AdminSolidSurface className="overflow-hidden">
-        {filtered.length === 0 ? (
+      {articles.length === 0 ? (
+        <motion.div className="admin-ws-empty" variants={reduceMotion ? undefined : fadeUp}>
+          <PanelArt name="installs/empty" width={180} height={180} className="admin-ws-empty-art" />
           <EmptyState
-            title="راهنمایی با این عبارت پیدا نشد"
-            description="عنوان یا موضوع دیگری را امتحان کنید."
-            icon="search"
-            action={
-              <Button variant="secondary" onClick={() => setQuery("")}>
-                پاک کردن جست‌وجو
-              </Button>
-            }
+            hideIcon
+            className="border-0 bg-transparent p-0 shadow-none"
+            title="راهنمایی منتشر نشده"
+            description="وقتی راهنما در سایت منتشر شود، اینجا دیده می‌شود."
+            icon="book"
           />
-        ) : (
-          <DataTable
-            columns={columns}
-            rows={filtered}
-            getRowId={(row) => row.slug}
-            emptyTitle="راهنمایی نیست"
-          />
-        )}
-      </AdminSolidSurface>
-    </AdminPage>
+        </motion.div>
+      ) : (
+        <>
+          <p className="admin-ws-result">{faNumber(articles.length)} راهنما</p>
+          <ul className="admin-ws-list">
+            {articles.map((article) => (
+              <motion.li key={article.slug} variants={reduceMotion ? undefined : fadeUp}>
+                <article className="admin-ws-card">
+                  <div className="admin-ws-card-top">
+                    <div className="min-w-0">
+                      <h3 className="admin-ws-card-title">{article.title}</h3>
+                      <p className="admin-ws-card-hint">{article.summary}</p>
+                    </div>
+                    <span className="admin-ws-chip">{faNumber(article.minutes)} دقیقه</span>
+                  </div>
+                  <div className="admin-ws-card-foot">
+                    <span className="admin-ws-result">فقط‌خواندنی · نمونه منتشرشده</span>
+                    <div className="admin-ws-actions">
+                      <ButtonLink href={`/blog/${article.slug}`} variant="secondary" size="sm">
+                        باز کردن
+                      </ButtonLink>
+                    </div>
+                  </div>
+                </article>
+              </motion.li>
+            ))}
+          </ul>
+        </>
+      )}
+    </motion.div>
   );
-}
-
-function normalizePersian(value: string): string {
-  return value
-    .replace(/ي/g, "ی")
-    .replace(/ك/g, "ک")
-    .replace(/[\u200c\u064b-\u065f]/g, "")
-    .trim()
-    .toLocaleLowerCase("fa");
 }

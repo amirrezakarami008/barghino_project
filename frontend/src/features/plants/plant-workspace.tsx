@@ -15,7 +15,9 @@ import { plantStatusMeta } from "@/features/contracts/status-map";
 import { PanelArt } from "@/features/panel/panel-art";
 import { faNumber } from "@/shared/lib/fa";
 import { Icon } from "@/shared/ui/icon";
+import { schemeTypeLabel, systemTypeLabel } from "./plant-options";
 import { usePlantInventory } from "./use-plant-inventory";
+import "./plants.css";
 
 export function PlantWorkspace(): ReactElement {
   const [page, setPage] = useState(1);
@@ -59,9 +61,9 @@ export function PlantWorkspace(): ReactElement {
             hideIcon
             className="border-0 bg-transparent p-0 shadow-none"
             title="هنوز نیروگاهی ثبت نشده است"
-            description="ثبت انشعاب و نیروگاه در مسیر قرارداد جدید انجام می‌شود."
+            description="ابتدا انشعاب را تعریف کنید؛ سپس در مرحلهٔ بعد نیروگاه را روی همان انشعاب ثبت کنید."
             icon="solarPanel"
-            action={<ButtonLink href="/panel/contracts/new">شروع قرارداد</ButtonLink>}
+            action={<ButtonLink href="/panel/contracts/new">ثبت نیروگاه</ButtonLink>}
           />
         </div>
       ) : (
@@ -90,7 +92,13 @@ export function PlantWorkspace(): ReactElement {
                       </div>
                       <StatusPill status={meta.tone} label={meta.label} />
                     </div>
-                    <p className="mt-4 text-sm leading-7 text-foreground-muted">{plant.address}</p>
+                    <div className="plant-meta-chips">
+                      <span className="plant-meta-chip">{schemeTypeLabel(plant.scheme_type)}</span>
+                      <span className="plant-meta-chip">{systemTypeLabel(plant.system_type)}</span>
+                    </div>
+                    {plant.address ? (
+                      <p className="mt-4 text-sm leading-7 text-foreground-muted">{plant.address}</p>
+                    ) : null}
                     {branch ? (
                       <p className="mt-2 text-caption text-foreground-muted">انشعاب: {branch.name}</p>
                     ) : null}

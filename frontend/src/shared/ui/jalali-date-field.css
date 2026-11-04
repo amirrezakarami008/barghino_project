@@ -1,0 +1,19 @@
+.jalali-date-field .rmdp-container {
+  width: 100%;
+  display: block;
+}
+
+.jalali-date-field .rmdp-input {
+  box-sizing: border-box;
+  width: 100% !important;
+  height: auto !important;
+  margin: 0;
+}
+
+.jalali-date-field .rmdp-wrapper {
+  z-index: 60;
+}
+
+.jalali-date-field .rmdp-calendar {
+  font-family: inherit;
+}

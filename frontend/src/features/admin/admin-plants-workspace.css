@@ -1,0 +1,76 @@
+/* Plant-specific accents on top of admin-workspace.css */
+
+.admin-plants-card[data-status="pending"]::before {
+  background: linear-gradient(180deg, #38bdf8, #7c5cff);
+}
+
+.admin-plants-card[data-status="active"]::before {
+  background: linear-gradient(180deg, #34d399, #0d9488);
+}
+
+.admin-plants-card[data-status="inactive"]::before {
+  background: linear-gradient(180deg, #fb7185, #e11d48);
+}
+
+.admin-plants-card[data-status="maintenance"]::before {
+  background: linear-gradient(180deg, #fbbf24, #d97706);
+}
+
+.admin-plants-card-art {
+  width: 4.5rem;
+  height: 4.5rem;
+  border-radius: 18px;
+  object-fit: cover;
+  box-shadow: var(--panel-float, var(--shadow-soft));
+  flex-shrink: 0;
+}
+
+.admin-plants-facts {
+  display: grid;
+  gap: 0.55rem;
+}
+
+.admin-plants-fact {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.admin-plants-fact-icon {
+  display: grid;
+  place-items: center;
+  width: 2.15rem;
+  height: 2.15rem;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface-2, var(--surface)) 88%, transparent);
+  color: var(--foreground-muted);
+  flex-shrink: 0;
+}
+
+.admin-plants-fact-icon--mint {
+  color: var(--emerald, #0d9488);
+  background: color-mix(in srgb, var(--emerald, #0d9488) 14%, transparent);
+}
+
+.admin-plants-fact .label {
+  display: block;
+  font-size: var(--text-caption);
+  font-weight: 700;
+  color: var(--foreground-muted);
+}
+
+.admin-plants-fact .value {
+  display: block;
+  margin-top: 0.15rem;
+  font-size: 0.875rem;
+  font-weight: 650;
+  line-height: 1.5;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 560px) {
+  .admin-plants-card-art {
+    display: none;
+  }
+}

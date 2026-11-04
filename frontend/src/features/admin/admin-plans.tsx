@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, type FormEvent, type ReactElement } from "react";
+import { motion, useReducedMotion } from "framer-motion";
 import {
   Alert,
   Button,
@@ -12,9 +13,9 @@ import {
   Textarea,
 } from "@/components/ui";
 import { ApiError } from "@/features/auth/lib/api";
+import { PanelArt } from "@/features/panel/panel-art";
 import { faNumber } from "@/shared/lib/fa";
 import { Icon } from "@/shared/ui/icon";
-import { AdminAuditLine, AdminPage, AdminSolidSurface } from "./admin-page";
 import {
   deletePlan,
   formatPlanNumber,
@@ -23,6 +24,8 @@ import {
   savePlan,
   type SellPlan,
 } from "./plans-api";
+import "./admin-workspace.css";
+import "./admin-plans-workspace.css";
 
 type Draft = {
   name: string;
@@ -59,7 +62,13 @@ function fromPlan(plan: SellPlan): Draft {
   };
 }
 
+const fadeUp = {
+  hidden: { opacity: 0, y: 12 },
+  show: { opacity: 1, y: 0 },
+};
+
 export function AdminPlans(): ReactElement {
+  const reduceMotion = useReducedMotion();
   const [plans, setPlans] = useState<readonly SellPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
@@ -127,18 +136,159 @@ export function AdminPlans(): ReactElement {
     void persistOrder(next);
   }
 
+  const motionProps = reduceMotion
+    ? {}
+    : {
+        initial: "hidden" as const,
+        animate: "show" as const,
+        variants: {
+          hidden: {},
+          show: { transition: { staggerChildren: 0.05 } },
+        },
+      };
+
   return (
-    <AdminPage
-      title="پلن‌های فروش"
-      description="ترتیب نمایش را بکشید، وضعیت فعال و پیشنهادی را تنظیم کنید، و فرم را کنار پیش‌نمایش زنده کارت پلن ویرایش کنید."
-      headerAction={
-        <Button variant="primary" onClick={() => setEditing(null)}>
-          <Icon name="plus" className="size-4" />
-          پلن جدید
-        </Button>
-      }
-    >
-      {notice ? <Alert tone="success" title={notice} /> : null}
+    <>
+      <motion.div className="admin-workspace admin-plans-page" {...motionProps}>
+        <motion.section className="admin-ws-hero" variants={reduceMotion ? undefined : fadeUp}>
+          <div className="min-w-0">
+            <p className="admin-ws-hero-eyebrow">کاتالوگ فروش</p>
+            <h2 className="admin-ws-hero-title">پلن‌های فروش برق</h2>
+            <p className="admin-ws-hero-body">
+              ترتیب را بکشید؛ فعال و پیشنهادی را همین‌جا تنظیم کنید.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              <Button variant="primary" className="admin-ws-hero-cta" onClick={() => setEditing(null)}>
+                <Icon name="plus" className="size-4" />
+                پلن جدید
+              </Button>
+              <Button variant="secondary" onClick={() => setAttempt((value) => value + 1)}>
+                تازه‌سازی
+              </Button>
+            </div>
+          </div>
+          <div className="admin-ws-hero-art">
+            <PanelArt name="energy-bulb" width={160} height={160} className="admin-ws-hero-image" />
+          </div>
+        </motion.section>
+
+        {notice ? <Alert tone="success" title={notice} /> : null}
+
+        {loading ? (
+          <div className="admin-ws-list">
+            <Skeleton className="h-24 rounded-[18px]" />
+            <Skeleton className="h-24 rounded-[18px]" />
+          </div>
+        ) : loadError ? (
+          <Alert tone="danger" title={loadError}>
+            <Button variant="secondary" className="mt-2" onClick={() => setAttempt((value) => value + 1)}>
+              تلاش دوباره
+            </Button>
+          </Alert>
+        ) : plans.length === 0 ? (
+          <div className="admin-ws-empty">
+            <PanelArt name="installs/empty" width={140} height={140} className="admin-ws-empty-art" />
+            <EmptyState
+              hideIcon
+              className="border-0 bg-transparent p-0 shadow-none"
+              title="هنوز پلنی تعریف نشده"
+              description="اولین پلن فروش را با نرخ خرید، تعهد انرژی و مزایا بسازید."
+              icon="plan"
+              action={
+                <Button variant="primary" onClick={() => setEditing(null)}>
+                  تعریف پلن
+                </Button>
+              }
+            />
+          </div>
+        ) : (
+          <>
+            <p className="admin-ws-result">{faNumber(plans.length)} پلن · برای جابه‌جایی بکشید</p>
+            <ul className="admin-ws-list" aria-label="فهرست پلن‌ها با امکان جابه‌جایی">
+              {plans.map((plan) => (
+                <motion.li
+                  key={plan.uuid}
+                  variants={reduceMotion ? undefined : fadeUp}
+                  draggable={!reorderPending}
+                  onDragStart={() => setDragId(plan.uuid)}
+                  onDragOver={(event) => event.preventDefault()}
+                  onDrop={() => onDrop(plan.uuid)}
+                >
+                  <article className="admin-plans-row">
+                    <div className="admin-plans-row-main">
+                      <span className="admin-plans-drag" aria-hidden title="کشیدن برای تغییر ترتیب">
+                        ⋮⋮
+                      </span>
+                      <div className="min-w-0">
+                        <h3 className="admin-plans-row-title">{plan.name}</h3>
+                        <p className="admin-plans-row-meta">
+                          ترتیب {faNumber(plan.sort_order)}
+                          {plan.description.trim() ? ` · ${plan.description.trim()}` : ""}
+                        </p>
+                        <div className="admin-plans-row-chips">
+                          <span className="admin-ws-chip">{plan.is_active ? "فعال" : "غیرفعال"}</span>
+                          {plan.is_recommended ? <span className="admin-ws-chip">پیشنهادی</span> : null}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="admin-plans-row-metrics">
+                      <div className="admin-plans-metric">
+                        <span>نرخ خرید</span>
+                        <strong dir="ltr">{formatPlanNumber(plan.rate_toman_per_kwh)} تومان/kWh</strong>
+                      </div>
+                      <div className="admin-plans-metric">
+                        <span>تعهد انرژی</span>
+                        <strong dir="ltr">{formatPlanNumber(plan.commitment_kwh)} kWh</strong>
+                      </div>
+                    </div>
+
+                    <div className="admin-plans-row-foot">
+                      <div className="admin-plans-toggles">
+                        <label>
+                          <input
+                            type="checkbox"
+                            checked={plan.is_active}
+                            onChange={(event) => {
+                              void toggleFlag(plan, "is_active", event.target.checked);
+                            }}
+                          />
+                          فعال
+                        </label>
+                        <label>
+                          <input
+                            type="checkbox"
+                            checked={plan.is_recommended}
+                            onChange={(event) => {
+                              void toggleFlag(plan, "is_recommended", event.target.checked);
+                            }}
+                          />
+                          پیشنهادی
+                        </label>
+                      </div>
+                      <div className="admin-plans-actions">
+                        <Button variant="secondary" size="sm" onClick={() => setEditing(plan)}>
+                          ویرایش
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setDeleteError("");
+                            setDeleting(plan);
+                          }}
+                        >
+                          حذف
+                        </Button>
+                      </div>
+                    </div>
+                  </article>
+                </motion.li>
+              ))}
+            </ul>
+          </>
+        )}
+      </motion.div>
 
       {editing !== undefined ? (
         <PlanEditor
@@ -152,114 +302,6 @@ export function AdminPlans(): ReactElement {
           }}
         />
       ) : null}
-
-      <AdminSolidSurface className="overflow-hidden">
-        {loading ? (
-          <div className="space-y-3 p-4">
-            <Skeleton className="h-14 w-full" />
-            <Skeleton className="h-14 w-full" />
-            <Skeleton className="h-14 w-3/4" />
-          </div>
-        ) : loadError ? (
-          <div className="p-4">
-            <Alert tone="danger" title={loadError}>
-              <Button variant="secondary" className="mt-2" onClick={() => setAttempt((value) => value + 1)}>
-                تلاش دوباره
-              </Button>
-            </Alert>
-          </div>
-        ) : plans.length === 0 ? (
-          <EmptyState
-            title="هنوز پلنی تعریف نشده"
-            description="اولین پلن فروش را با نرخ خرید، تعهد انرژی و مزایا بسازید."
-            icon="plan"
-            action={
-              <Button variant="primary" onClick={() => setEditing(null)}>
-                تعریف پلن
-              </Button>
-            }
-          />
-        ) : (
-          <ul className="divide-y divide-border" aria-label="فهرست پلن‌ها با امکان جابه‌جایی">
-            {plans.map((plan) => (
-              <li
-                key={plan.uuid}
-                draggable={!reorderPending}
-                onDragStart={() => setDragId(plan.uuid)}
-                onDragOver={(event) => event.preventDefault()}
-                onDrop={() => onDrop(plan.uuid)}
-                className="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between"
-              >
-                <div className="flex min-w-0 items-start gap-3">
-                  <span
-                    className="mt-1 grid size-9 shrink-0 cursor-grab place-items-center rounded-md border border-border text-foreground-muted active:cursor-grabbing"
-                    aria-hidden="true"
-                    title="کشیدن برای تغییر ترتیب"
-                  >
-                    ⋮⋮
-                  </span>
-                  <div className="min-w-0 space-y-1">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <strong className="text-sm">{plan.name}</strong>
-                      {plan.is_recommended ? (
-                        <span className="rounded-sm bg-sun-100 px-2 py-0.5 text-caption font-semibold text-sun-800 dark:bg-sun-900/40 dark:text-sun-200">
-                          پیشنهادی
-                        </span>
-                      ) : null}
-                    </div>
-                    <p className="text-sm text-foreground-muted">
-                      {formatPlanNumber(plan.rate_toman_per_kwh)} تومان/kWh · تعهد{" "}
-                      {formatPlanNumber(plan.commitment_kwh)} kWh · ترتیب {faNumber(plan.sort_order)}
-                    </p>
-                    <AdminAuditLine
-                      text={
-                        plan.is_active
-                          ? "آخرین وضعیت: فعال در کاتالوگ قرارداد"
-                          : "آخرین وضعیت: غیرفعال — در قراردادهای جدید دیده نمی‌شود"
-                      }
-                    />
-                  </div>
-                </div>
-                <div className="flex flex-wrap items-center gap-2 ps-12 sm:ps-0">
-                  <label className="inline-flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={plan.is_active}
-                      onChange={(event) => {
-                        void toggleFlag(plan, "is_active", event.target.checked);
-                      }}
-                    />
-                    فعال
-                  </label>
-                  <label className="inline-flex items-center gap-2 text-sm">
-                    <input
-                      type="checkbox"
-                      checked={plan.is_recommended}
-                      onChange={(event) => {
-                        void toggleFlag(plan, "is_recommended", event.target.checked);
-                      }}
-                    />
-                    پیشنهادی
-                  </label>
-                  <Button variant="secondary" size="sm" onClick={() => setEditing(plan)}>
-                    ویرایش
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => {
-                      setDeleteError("");
-                      setDeleting(plan);
-                    }}
-                  >
-                    حذف
-                  </Button>
-                </div>
-              </li>
-            ))}
-          </ul>
-        )}
-      </AdminSolidSurface>
 
       <ConfirmDialog
         open={Boolean(deleting)}
@@ -292,7 +334,7 @@ export function AdminPlans(): ReactElement {
       >
         {deleteError ? <Alert tone="danger" title={deleteError} /> : null}
       </ConfirmDialog>
-    </AdminPage>
+    </>
   );
 }
 
@@ -358,7 +400,7 @@ function PlanEditor({
   const previewRate = Number(draft.rate_toman_per_kwh) || 0;
 
   return (
-    <AdminSolidSurface className="p-4">
+    <div className="admin-ws-panel">
       <div className="mb-4 flex items-start justify-between gap-3">
         <div>
           <h3 className="text-h4">{plan ? "ویرایش پلن" : "پلن جدید"}</h3>
@@ -502,6 +544,6 @@ function PlanEditor({
           />
         </div>
       </div>
-    </AdminSolidSurface>
+    </div>
   );
 }

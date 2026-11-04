@@ -162,24 +162,19 @@ export function PanelHome() {
               reduceMotion={Boolean(reduceMotion)}
             />
             <StatCard
+              label="انشعاب‌ها"
+              value={plantData ? faNumber(plantData.branches.count) : "—"}
+              href="/panel/branch"
+              art="energy-bulb"
+              tone="volt"
+              reduceMotion={Boolean(reduceMotion)}
+            />
+            <StatCard
               label="نیروگاه‌ها"
               value={plantData ? faNumber(plantData.plants.count) : "—"}
               href="/panel/plant"
               art="stat-plants"
               tone="mint"
-              reduceMotion={Boolean(reduceMotion)}
-            />
-            <StatCard
-              label="پیش‌نویس‌های باز"
-              value={
-                contractData
-                  ? faNumber(contractData.results.filter((item) => item.status === "draft").length)
-                  : "—"
-              }
-              href="/panel/contracts?status=draft"
-              hint="در صفحهٔ فعلی فهرست"
-              art="stat-drafts"
-              tone="sun"
               reduceMotion={Boolean(reduceMotion)}
             />
           </>
@@ -191,7 +186,7 @@ export function PanelHome() {
           <h3 className="text-h4">میانبرها</h3>
           <ul className="mt-4 grid gap-2">
             <Shortcut href="/panel/contracts/new" label="قرارداد جدید" icon="plus" tone="sun" />
-            <Shortcut href="/panel/contracts" label="قراردادهای من" icon="file" tone="volt" />
+            <Shortcut href="/panel/branch" label="انشعاب‌ها" icon="bolt" tone="volt" />
             <Shortcut href="/panel/plant" label="نیروگاه من" icon="solarPanel" tone="mint" />
             <Shortcut href="/panel/profile" label="پروفایل" icon="user" tone="sky" />
           </ul>

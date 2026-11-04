@@ -121,7 +121,9 @@
     "kind": "individual",
     "first_name": "علی",
     "last_name": "محمدی",
-    "national_id": "0012345678"
+    "national_id": "0012345678",
+    "birth_certificate_number": "12345",
+    "date_of_birth": "1990-01-01"
   },
   "identity_profile_completion": {
     "is_complete": true,
@@ -130,13 +132,31 @@
 }
 ```
 
-ویرایش نام (در صورت نیاز): `PATCH /api/v1/auth/me/`
+ویرایش مشخصات (در صورت نیاز): `PUT/PATCH /api/v1/auth/me/`
+
+حقیقی:
 
 ```json
-{ "first_name": "علی", "last_name": "محمدی" }
+{
+  "first_name": "علی",
+  "last_name": "محمدی",
+  "birth_certificate_number": "12345",
+  "date_of_birth": "1990-01-01"
+}
 ```
 
-> شماره ملی / نوع حساب / path از این endpoint عوض نمی‌شود.
+حقوقی:
+
+```json
+{
+  "first_name": "علی",
+  "last_name": "محمدی",
+  "representative_birth_certificate_number": "12345",
+  "representative_date_of_birth": "1990-01-01"
+}
+```
+
+> شماره ملی / نوع حساب / path از این endpoint عوض نمی‌شود. شماره شناسنامه و تاریخ تولد روی پروفایل هویت (`IndividualProfile` / `LegalProfile`) هستند؛ در `identity_profile_completion` اجباری نیستند. تاریخ آینده رد می‌شود. برای امضا فقط شماره شناسنامه لازم است.
 
 ---
 
@@ -275,7 +295,7 @@ Body رد (دلیل اجباری):
 
 Body مثل انشعاب: `{ "decision": "approved"|"rejected", "reason": "..." }`
 
-نکته مهم بک‌اند: **تایید نیروگاه فقط وقتی ممکن است که انشعاب متصل `active` باشد.**
+تأیید نیروگاه به وضعیت انشعاب وابسته نیست؛ ادمین می‌تواند نیروگاه را مستقل تأیید کند.
 
 - `approved` → `status: "active"`
 - `rejected` → `status: "inactive"`
@@ -382,8 +402,6 @@ Query:
   "is_near_expiry": false,
   "terms_version": "",
   "terms_sha256": "",
-  "birth_certificate_number": "",
-  "signing_address": "",
   "signed_at": null,
   "signature_file_uuid": null,
   "national_id_file_uuid": null,
@@ -487,8 +505,6 @@ visibility: private
   "accepted_terms": true,
   "terms_version": "v1",
   "terms_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
-  "birth_certificate_number": "12345",
-  "signing_address": "تهران، خیابان نمونه، پلاک ۱",
   "signature_file_uuid": "<از آپلود امضا>",
   "national_id_file_uuid": "<از آپلود کارت ملی>",
   "signed_pdf_file_uuid": "<از آپلود PDF>"
@@ -707,4 +723,21 @@ job بک‌اند قراردادهای `active` با `ends_on < امروز` را
 - رد قرارداد نسخه امضاشده را می‌بندد (`cancelled`)؛ اصلاح داده + draft جدید لازم است.
 - `terms_sha256` را بک‌اند محاسبه نمی‌کند؛ فرانت مسئول digest سند نمایش‌داده‌شده است.
 - پول و انرژی در API عدد هستند (`commitment_kwh`, `rate_toman_per_kwh`, `capacity_kwp`)، نه string.
+
+---
+
+## وضعیت پیاده‌سازی فرانت (نسبت به بک‌اند فعلی)
+
+پیاده‌سازی شده با سیستم طراحی Solar Aurora:
+
+- فاز ۰–۴: ثبت‌نام `path=sell`، انشعاب/نیروگاه در ویزارد قرارداد، پلن، ساخت draft، لیست/جزئیات
+- فاز ۵: سند کلاینت `v1` + SHA-256 + آپلود امضا/کارت ملی/PDF + نشانی امضا؛ شماره شناسنامه از پروفایل (نه در body امضا)
+- پروفایل: `PUT/PATCH /auth/me/` — حقیقی: `birth_certificate_number` / `date_of_birth`؛ حقوقی: `representative_*`
+- ادمین: صف بررسی انشعاب/نیروگاه/قرارداد + صف تمدید (`GET/POST staff/contracts/.../renewal`)
+
+هنوز به APIهای سند وابسته‌اند و تا موجود بودن بک‌اند صدا زده نمی‌شوند:
+
+- `GET /contracts/stats/` و فیلتر سروری `status`/`q`
+- تمدید سمت کاربر (`POST /contracts/{uuid}/renewal/`)
+- `GET /contracts/{uuid}/files/`
 )

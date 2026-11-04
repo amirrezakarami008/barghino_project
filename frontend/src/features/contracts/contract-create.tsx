@@ -20,13 +20,13 @@ import { Icon } from "@/shared/ui/icon";
 import { faNumber } from "@/shared/lib/fa";
 import { contractError, createDraft, getContracts, getPlanChoices, mutationMayHaveSucceeded } from "./contracts-api";
 import { eligibility, formatDecimal, type Contract, type Plan, type PlantOption } from "./contract-model";
-import { ContractEmpty, ContractError, ContractPagination } from "./contract-ui";
+import { ContractEmpty, ContractError } from "./contract-ui";
 import { IdentityNotice } from "./identity-notice";
 import { useContractResource } from "./use-contract-resource";
 import { ContractSiteStage, type SitePhase } from "./contract-site-stage";
 import "./contracts-workspace.css";
 
-type WizardStep = 1 | 2 | 3 | 4 | 5;
+type WizardStep = 1 | 2 | 3 | 4;
 type Submission =
   | { readonly status: "idle" }
   | { readonly status: "submitting" }
@@ -38,7 +38,6 @@ const LABELS = [
   "وضعیت بررسی",
   "انتخاب پلن",
   "مرور نهایی",
-  "ساخت پیش‌نویس",
 ] as const;
 
 const fadeUp = {
@@ -63,14 +62,13 @@ function ContractCreateInner(): ReactElement {
   const reduceMotion = useReducedMotion();
   const [sitePhase, setSitePhase] = useState<SitePhase>(() => (search.get("plant") ? 2 : 1));
   const [step, setStep] = useState<WizardStep>(() => initialStep(search));
-  const [planPage, setPlanPage] = useState(1);
   const [selectedPlant, setSelectedPlant] = useState<PlantOption>();
   const [selectedPlan, setSelectedPlan] = useState<Plan>();
   const [submission, setSubmission] = useState<Submission>({ status: "idle" });
   const inFlight = useRef(false);
   const heading = useRef<HTMLHeadingElement>(null);
-  const loadPlans = useCallback((signal: AbortSignal) => getPlanChoices(planPage, signal), [planPage]);
-  const plans = useContractResource(`plans:${planPage}`, loadPlans);
+  const loadPlans = useCallback((signal: AbortSignal) => getPlanChoices(signal), []);
+  const plans = useContractResource("plans", loadPlans);
   const pending = submission.status === "submitting";
 
   const stepperSteps: StepItem[] = LABELS.map((label, index) => ({
@@ -233,77 +231,115 @@ function ContractCreateInner(): ReactElement {
                     />
                   ))}
               </div>
-              <ContractPagination page={planPage} {...plans.state.data} onChange={setPlanPage} />
             </>
           )
         ) : null}
 
         {step === 4 && selectedPlant && selectedPlan ? (
-          <section className="panel-surface">
-            <div className="mb-4 flex items-center gap-3">
+          <section className="contracts-final-review" aria-labelledby="contracts-final-review-title">
+            <header className="contracts-final-review__hero">
+              <div>
+                <p className="contracts-kicker">گام آخر ساخت</p>
+                <h3 id="contracts-final-review-title" className="contracts-final-review__title">
+                  مرور نهایی پیش‌نویس
+                </h3>
+                <p className="contracts-final-review__lede">
+                  قبل از ساخت، نیروگاه، انشعاب و پلن انتخاب‌شده را یک‌بار دیگر تأیید کنید.
+                </p>
+              </div>
               <PanelArt
                 name="contracts/agreement"
-                width={72}
-                height={72}
-                className="size-16 rounded-2xl object-cover shadow-[var(--shadow-soft)]"
+                width={160}
+                height={160}
+                className="contracts-final-review__art"
               />
-              <div>
-                <h3 className="text-h3">مرور نهایی پیش‌نویس</h3>
-                <p className="text-caption text-foreground-muted">قبل از ساخت، شرایط ذخیره‌شونده را تأیید کنید</p>
-              </div>
-            </div>
-            <dl className="contracts-review-grid">
-              <div className="contracts-field">
-                <dt className="text-caption text-foreground-muted">نیروگاه</dt>
-                <dd className="mt-1 font-semibold">{selectedPlant.plant.name}</dd>
-              </div>
-              <div className="contracts-field">
-                <dt className="text-caption text-foreground-muted">انشعاب / کنتور</dt>
-                <dd className="mt-1 font-semibold">
-                  {selectedPlant.branch?.name} · <bdi dir="ltr">{selectedPlant.branch?.meter}</bdi>
-                </dd>
-              </div>
-              <div className="contracts-field">
-                <dt className="text-caption text-foreground-muted">پلن</dt>
-                <dd className="mt-1 font-semibold">{selectedPlan.name}</dd>
-              </div>
-              <div className="contracts-field">
-                <dt className="text-caption text-foreground-muted">نرخ و تعهد</dt>
-                <dd className="mt-1 font-semibold tabular-nums">
-                  <bdi dir="ltr">{formatDecimal(selectedPlan.rate)}</bdi> تومان/kWh ·{" "}
-                  <bdi dir="ltr">{formatDecimal(selectedPlan.commitment)}</bdi> kWh
-                </dd>
-              </div>
-              <div className="contracts-field sm:col-span-2">
-                <dt className="text-caption text-foreground-muted">نشانی انشعاب</dt>
-                <dd className="mt-1 font-semibold">{selectedPlant.branch?.address}</dd>
-              </div>
-            </dl>
-            <Alert tone="info" className="mt-4" title="این مرحله امضا نیست">
-              با ادامه، فقط پیش‌نویس ساخته می‌شود. خرید برق و تعهدات نهایی فقط پس از سند رسمی و امضای فعال آغاز می‌شود.
-            </Alert>
-          </section>
-        ) : null}
+            </header>
 
-        {step === 5 && selectedPlant && selectedPlan ? (
-          <section className="panel-surface">
-            <div className="mb-4 flex items-center gap-3">
-              <PanelArt
-                name="contracts/approved"
-                width={72}
-                height={72}
-                className="size-16 rounded-2xl object-cover shadow-[var(--shadow-soft)]"
-              />
-              <div>
-                <h3 className="text-h3">ساخت پیش‌نویس</h3>
-                <p className="text-caption text-foreground-muted">آخرین تأیید قبل از ذخیره در سرور</p>
-              </div>
+            <div className="contracts-final-review__panels">
+              <article className="contracts-final-panel">
+                <div className="contracts-final-panel__head">
+                  <span className="contracts-final-panel__icon" aria-hidden>
+                    <Icon name="solarPanel" className="size-4" />
+                  </span>
+                  <h4>نیروگاه و انشعاب</h4>
+                </div>
+                <dl className="contracts-review-grid">
+                  <div className="contracts-field">
+                    <dt>نیروگاه</dt>
+                    <dd>{selectedPlant.plant.name}</dd>
+                  </div>
+                  <div className="contracts-field">
+                    <dt>ظرفیت</dt>
+                    <dd>
+                      {selectedPlant.plant.capacity ? (
+                        <>
+                          <bdi dir="ltr">{formatDecimal(selectedPlant.plant.capacity)}</bdi> kWp
+                        </>
+                      ) : (
+                        "—"
+                      )}
+                    </dd>
+                  </div>
+                  <div className="contracts-field">
+                    <dt>انشعاب</dt>
+                    <dd>{selectedPlant.branch?.name || "—"}</dd>
+                  </div>
+                  <div className="contracts-field">
+                    <dt>شناسه قبض</dt>
+                    <dd>
+                      <bdi dir="ltr">{selectedPlant.branch?.billId || "—"}</bdi>
+                    </dd>
+                  </div>
+                  <div className="contracts-field contracts-field--wide">
+                    <dt>نشانی انشعاب</dt>
+                    <dd>{selectedPlant.branch?.address || "—"}</dd>
+                  </div>
+                </dl>
+              </article>
+
+              <article className="contracts-final-panel contracts-final-panel--plan">
+                <div className="contracts-final-panel__head">
+                  <span className="contracts-final-panel__icon" aria-hidden>
+                    <Icon name="plan" className="size-4" />
+                  </span>
+                  <h4>پلن تجاری</h4>
+                </div>
+                <dl className="contracts-review-grid">
+                  <div className="contracts-field">
+                    <dt>نام پلن</dt>
+                    <dd>{selectedPlan.name}</dd>
+                  </div>
+                  <div className="contracts-field">
+                    <dt>نرخ</dt>
+                    <dd className="tabular-nums">
+                      <bdi dir="ltr">{formatDecimal(selectedPlan.rate)}</bdi> تومان/kWh
+                    </dd>
+                  </div>
+                  <div className="contracts-field contracts-field--wide">
+                    <dt>تعهد انرژی</dt>
+                    <dd className="tabular-nums">
+                      <bdi dir="ltr">{formatDecimal(selectedPlan.commitment)}</bdi> kWh
+                    </dd>
+                  </div>
+                </dl>
+                {selectedPlan.benefits.length ? (
+                  <ul className="contracts-final-benefits">
+                    {selectedPlan.benefits.slice(0, 4).map((benefit) => (
+                      <li key={benefit}>
+                        <Icon name="check" className="size-3.5" />
+                        <span>{benefit}</span>
+                      </li>
+                    ))}
+                  </ul>
+                ) : null}
+              </article>
             </div>
-            <p className="text-sm leading-7 text-foreground-muted">
-              با تأیید، پلن «{selectedPlan.name}» روی نیروگاه «{selectedPlant.plant.name}» به‌صورت پیش‌نویس ذخیره
-              می‌شود.
+
+            <p className="contracts-final-review__summary">
+              با تأیید، پلن «{selectedPlan.name}» روی نیروگاه «{selectedPlant.plant.name}» به‌صورت پیش‌نویس
+              ذخیره می‌شود.
             </p>
-            <Alert tone="warning" className="mt-4" title="ساخت پیش‌نویس ≠ امضا و ≠ شروع خرید برق">
+            <Alert tone="warning" title="ساخت پیش‌نویس ≠ امضا و ≠ شروع خرید برق">
               پس از ساخت می‌توانید جزئیات را ببینید؛ دکمهٔ امضا تا آماده‌شدن سند رسمی غیرفعال می‌ماند.
             </Alert>
           </section>
@@ -341,20 +377,15 @@ function ContractCreateInner(): ReactElement {
               مرحلهٔ قبل
             </Button>
             <span className="text-caption text-foreground-muted" role="status">
-              {pending ? "در حال ساخت پیش‌نویس…" : `مرحلهٔ ${faNumber(step)} از ${faNumber(5)}`}
+              {pending ? "در حال ساخت پیش‌نویس…" : `مرحلهٔ ${faNumber(step)} از ${faNumber(4)}`}
             </span>
-            {step < 5 ? (
-              <Button
-                disabled={
-                  (step === 3 && !selectedPlan) || (step === 4 && (!selectedPlant || !selectedPlan))
-                }
-                onClick={() => go((step + 1) as WizardStep)}
-              >
+            {step < 4 ? (
+              <Button disabled={step === 3 && !selectedPlan} onClick={() => go((step + 1) as WizardStep)}>
                 ادامه
               </Button>
             ) : (
               <Button
-                disabled={pending || submission.status === "uncertain"}
+                disabled={pending || submission.status === "uncertain" || !selectedPlant || !selectedPlan}
                 onClick={() => {
                   void submit();
                 }}

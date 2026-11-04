@@ -135,9 +135,8 @@
 }
 
 .panel-nav-link:hover .panel-nav-icon {
-  background: var(--panel-icon-sky);
-  color: #fff;
-  box-shadow: 0 8px 18px rgb(37 99 235 / 0.25);
+  filter: brightness(1.08);
+  box-shadow: 0 8px 18px rgb(14 36 72 / 0.18);
 }
 
 .panel-nav-link.is-active {
@@ -147,18 +146,13 @@
 }
 
 .panel-nav-link.is-active .panel-nav-icon {
-  background: var(--grad-sun);
-  color: var(--primary-foreground);
-  box-shadow: var(--shadow-sun);
+  box-shadow: 0 10px 22px rgb(14 36 72 / 0.22);
+  filter: brightness(1.05);
 }
 
 .panel-nav-locked {
   cursor: not-allowed;
   opacity: 0.62;
-}
-
-.panel-nav-locked .panel-nav-icon {
-  background: color-mix(in srgb, var(--ink-200) 55%, transparent);
 }
 
 .panel-app[data-collapsed="true"] .panel-nav-label,

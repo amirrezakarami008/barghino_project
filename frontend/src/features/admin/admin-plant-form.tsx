@@ -3,7 +3,10 @@
 import { useEffect, useId, useRef, useState, type FormEvent, type ReactElement } from "react";
 import { Alert, Button, Input, Modal, Textarea } from "@/components/ui";
 import { ApiError } from "@/features/auth/lib/api";
+import { PlantSpecChoices } from "@/features/plants";
+import { isSchemeType, isSystemType, type SchemeType, type SystemType } from "@/features/plants/plant-options";
 import { faNumber } from "@/shared/lib/fa";
+import { JalaliDateField } from "@/shared/ui/jalali-date-field";
 import {
   adminPlantError,
   getAdminBranches,
@@ -33,6 +36,8 @@ export function AdminPlantForm({
   const [name, setName] = useState(plant?.name ?? "");
   const [address, setAddress] = useState(plant?.address ?? "");
   const [capacity, setCapacity] = useState(plant?.capacity_kwp ?? "");
+  const [schemeType, setSchemeType] = useState<SchemeType | "">(plant?.scheme_type ?? "");
+  const [systemType, setSystemType] = useState<SystemType | "">(plant?.system_type ?? "");
   const [date, setDate] = useState(plant?.commissionedAt ?? "");
   const [branchId, setBranchId] = useState(plant?.branch_uuid ?? "");
   const [selected, setSelected] = useState<AdminBranch>();
@@ -77,6 +82,10 @@ export function AdminPlantForm({
       setError("انشعاب و ظرفیت مثبت با حداکثر پنج رقم صحیح و سه رقم اعشار را مشخص کنید.");
       return;
     }
+    if (!isSchemeType(schemeType) || !isSystemType(systemType)) {
+      setError("کاربری طرح و نوع اتصال به شبکه را انتخاب کنید.");
+      return;
+    }
     inFlight.current = true;
     setPending(true);
     setError("");
@@ -88,6 +97,8 @@ export function AdminPlantForm({
           name: name.trim(),
           address: address.trim(),
           capacity_kwp: normalized,
+          scheme_type: schemeType,
+          system_type: systemType,
           commissioned_at: date || null,
         },
         plant?.uuid,
@@ -140,8 +151,8 @@ export function AdminPlantForm({
     >
       <form id={`${id}-form`} className="space-y-4" onSubmit={(event) => void submit(event)}>
         {plant ? (
-          <Alert tone="warning" title="انشعاب و مالک">
-            انشعاب جدید فقط از انشعاب‌های همین مالک قابل انتخاب است. انتقال به مالک دیگر ویرایش عادی نیست.
+          <Alert tone="info" title="انشعاب ثابت">
+            هر نیروگاه فقط به یک انشعاب متصل است و انشعاب پس از ثبت قابل تغییر نیست.
           </Alert>
         ) : null}
 
@@ -164,12 +175,24 @@ export function AdminPlantForm({
             error={fields.capacity_kwp}
             helperText="ظرفیت مثبت؛ حداکثر سه رقم اعشار، مثلاً 5.5"
           />
-          <Input
+          <PlantSpecChoices
+            idPrefix={id}
+            schemeType={schemeType}
+            systemType={systemType}
+            onSchemeChange={setSchemeType}
+            onSystemChange={setSystemType}
+            schemeError={fields.scheme_type}
+            systemError={fields.system_type}
+            schemeValid={isSchemeType(schemeType)}
+            systemValid={isSystemType(systemType)}
+            disabled={pending || uncertain}
+          />
+          <JalaliDateField
             label="تاریخ بهره‌برداری (اختیاری)"
-            type="date"
-            dir="ltr"
             value={date}
-            onChange={(event) => setDate(event.target.value)}
+            onChange={setDate}
+            disabled={pending || uncertain}
+            helperText="تاریخ را به شمسی انتخاب کنید؛ در سرویس میلادی ذخیره می‌شود."
           />
           <Textarea
             label="نشانی نیروگاه"
@@ -181,98 +204,111 @@ export function AdminPlantForm({
             error={fields.address}
           />
 
-          <section className="space-y-3 rounded-md border border-border bg-surface p-3" aria-label="انتخاب انشعاب">
+          <section className="space-y-3 rounded-md border border-border bg-surface p-3" aria-label="انشعاب نیروگاه">
             <h3 className="text-sm font-semibold">انشعاب و مالک</h3>
-            {selectedBranch ? (
+            {plant ? (
               <p className="text-sm text-foreground-muted">
-                انتخاب‌شده: {selectedBranch.name} · <bdi dir="ltr">{selectedBranch.owner_phone}</bdi> · کنتور{" "}
-                <bdi dir="ltr">{selectedBranch.meter_number}</bdi>
-              </p>
-            ) : plant ? (
-              <p className="text-sm text-foreground-muted">
-                انشعاب فعلی: <bdi dir="ltr">{plant.branch_uuid}</bdi> · مالک{" "}
-                <bdi dir="ltr">{plant.owner_phone}</bdi>
+                {selectedBranch ? (
+                  <>
+                    {selectedBranch.name} · <bdi dir="ltr">{selectedBranch.owner_phone}</bdi> · شناسه قبض{" "}
+                    <bdi dir="ltr">{selectedBranch.bill_id}</bdi>
+                  </>
+                ) : (
+                  <>
+                    انشعاب: <bdi dir="ltr">{plant.branch_uuid}</bdi> · مالک{" "}
+                    <bdi dir="ltr">{plant.owner_phone}</bdi>
+                  </>
+                )}
               </p>
             ) : (
-              <p className="text-sm text-foreground-muted">از انشعاب‌های ثبت‌شدهٔ کاربران انتخاب کنید.</p>
+              <>
+                {selectedBranch ? (
+                  <p className="text-sm text-foreground-muted">
+                    انتخاب‌شده: {selectedBranch.name} · <bdi dir="ltr">{selectedBranch.owner_phone}</bdi> · شناسه قبض{" "}
+                    <bdi dir="ltr">{selectedBranch.bill_id}</bdi>
+                  </p>
+                ) : (
+                  <p className="text-sm text-foreground-muted">از انشعاب‌های ثبت‌شدهٔ کاربران انتخاب کنید.</p>
+                )}
+
+                <Input
+                  label="جست‌وجوی انشعاب"
+                  type="search"
+                  value={query}
+                  onChange={(event) => {
+                    setQuery(event.target.value);
+                    setPage(1);
+                  }}
+                  placeholder="نام، شناسه قبض یا موبایل مالک…"
+                />
+
+                {state.status === "loading" ? (
+                  <p role="status" className="text-sm text-foreground-muted">
+                    دریافت انشعاب‌ها…
+                  </p>
+                ) : state.status === "error" ? (
+                  <Alert tone="danger" title={state.message}>
+                    <Button type="button" variant="secondary" className="mt-2" onClick={() => setAttempt((value) => value + 1)}>
+                      تلاش دوباره
+                    </Button>
+                  </Alert>
+                ) : state.data.results.length ? (
+                  <div className="max-h-48 space-y-2 overflow-auto">
+                    {state.data.results.map((entry) => (
+                      <label
+                        key={entry.uuid}
+                        className="flex cursor-pointer items-start gap-2 rounded-md border border-border bg-card p-2 text-sm has-[:checked]:border-energy-400"
+                      >
+                        <input
+                          type="radio"
+                          name={`${id}-branch`}
+                          checked={branchId === entry.uuid}
+                          onChange={() => {
+                            setBranchId(entry.uuid);
+                            setSelected(entry);
+                          }}
+                        />
+                        <span>
+                          <strong>{entry.name}</strong>
+                          <small className="mt-0.5 block text-foreground-muted">
+                            <bdi dir="ltr">{entry.owner_phone}</bdi> · شناسه قبض{" "}
+                            <bdi dir="ltr">{entry.bill_id}</bdi>
+                          </small>
+                        </span>
+                      </label>
+                    ))}
+                  </div>
+                ) : (
+                  <p className="text-sm text-foreground-muted">
+                    انشعابی در این صفحه پیدا نشد. ثبت انشعاب کاربر از مسیر قرارداد انجام می‌شود.
+                  </p>
+                )}
+
+                {state.status === "ready" ? (
+                  <nav className="flex items-center justify-between gap-2 text-sm" aria-label="صفحه‌بندی انتخاب انشعاب">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      disabled={!state.data.previous}
+                      onClick={() => setPage((value) => Math.max(1, value - 1))}
+                    >
+                      قبلی
+                    </Button>
+                    <span>{faNumber(page)}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      disabled={!state.data.next}
+                      onClick={() => setPage((value) => value + 1)}
+                    >
+                      بعدی
+                    </Button>
+                  </nav>
+                ) : null}
+              </>
             )}
-
-            <Input
-              label="جست‌وجوی انشعاب"
-              type="search"
-              value={query}
-              onChange={(event) => {
-                setQuery(event.target.value);
-                setPage(1);
-              }}
-              placeholder="نام، شماره کنتور یا موبایل مالک…"
-            />
-
-            {state.status === "loading" ? (
-              <p role="status" className="text-sm text-foreground-muted">
-                دریافت انشعاب‌ها…
-              </p>
-            ) : state.status === "error" ? (
-              <Alert tone="danger" title={state.message}>
-                <Button type="button" variant="secondary" className="mt-2" onClick={() => setAttempt((value) => value + 1)}>
-                  تلاش دوباره
-                </Button>
-              </Alert>
-            ) : state.data.results.length ? (
-              <div className="max-h-48 space-y-2 overflow-auto">
-                {state.data.results.map((entry) => (
-                  <label
-                    key={entry.uuid}
-                    className="flex cursor-pointer items-start gap-2 rounded-md border border-border bg-card p-2 text-sm has-[:checked]:border-energy-400"
-                  >
-                    <input
-                      type="radio"
-                      name={`${id}-branch`}
-                      checked={branchId === entry.uuid}
-                      onChange={() => {
-                        setBranchId(entry.uuid);
-                        setSelected(entry);
-                      }}
-                    />
-                    <span>
-                      <strong>{entry.name}</strong>
-                      <small className="mt-0.5 block text-foreground-muted">
-                        <bdi dir="ltr">{entry.owner_phone}</bdi> · کنتور{" "}
-                        <bdi dir="ltr">{entry.meter_number}</bdi>
-                      </small>
-                    </span>
-                  </label>
-                ))}
-              </div>
-            ) : (
-              <p className="text-sm text-foreground-muted">
-                انشعابی در این صفحه پیدا نشد. ثبت انشعاب کاربر از مسیر قرارداد انجام می‌شود.
-              </p>
-            )}
-
-            {state.status === "ready" ? (
-              <nav className="flex items-center justify-between gap-2 text-sm" aria-label="صفحه‌بندی انتخاب انشعاب">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  disabled={!state.data.previous}
-                  onClick={() => setPage((value) => Math.max(1, value - 1))}
-                >
-                  قبلی
-                </Button>
-                <span>{faNumber(page)}</span>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  disabled={!state.data.next}
-                  onClick={() => setPage((value) => value + 1)}
-                >
-                  بعدی
-                </Button>
-              </nav>
-            ) : null}
           </section>
         </fieldset>
 

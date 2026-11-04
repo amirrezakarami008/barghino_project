@@ -1,100 +1,96 @@
 "use client";
 
 import type { ReactElement } from "react";
-import { StatusPill } from "@/components/ui";
 import { Icon } from "@/shared/ui/icon";
+import { cn } from "@/shared/lib/cn";
 import { faNumber } from "@/shared/lib/fa";
-import { plantStatusMeta } from "./status-map";
-import { intakeCompleteness, type Completeness } from "./site-intake-validation";
+import { intakeCompleteness } from "./site-intake-validation";
 import type { SiteIntakeDraft } from "./site-intake-types";
 import type { Branch, Plant } from "@/features/plants";
+
+export type IntakePhase = "branch" | "plant";
 
 type Props = {
   readonly draft: SiteIntakeDraft;
   readonly branch?: Branch;
   readonly plant?: Plant;
   readonly sectionsValid: { readonly branch: boolean; readonly plant: boolean };
+  readonly phase: IntakePhase;
   readonly compact?: boolean;
 };
 
-function Ring({ value }: { readonly value: Completeness }): ReactElement {
-  const pct = value.total === 0 ? 0 : Math.round((value.filled / value.total) * 100);
-  return (
-    <div className="site-dossier-ring" style={{ ["--pct" as string]: pct }} aria-hidden>
-      <span>
-        {faNumber(value.filled)}/{faNumber(value.total)}
-      </span>
-    </div>
-  );
-}
-
-function Line({ value, fallback }: { readonly value: string; readonly fallback?: boolean }): ReactElement {
-  if (!value.trim()) return <span className="site-dossier-skel" aria-hidden />;
-  return <span className="site-dossier-line">{fallback ? value : value}</span>;
-}
-
-export function SiteDossier({ draft, branch, plant, sectionsValid, compact = false }: Props): ReactElement {
+/**
+ * Lightweight progress strip for sequential branch → plant intake.
+ */
+export function SiteDossier({ draft, sectionsValid, phase }: Props): ReactElement {
   const completeness = intakeCompleteness(draft);
-  const branchName =
-    draft.branchMode === "existing" ? (branch?.name ?? "") : draft.branchName;
-  const meter =
-    draft.branchMode === "existing" ? (branch?.meter_number ?? "") : draft.meter;
-  const branchAddress =
-    draft.branchMode === "existing" ? (branch?.address ?? "") : draft.branchAddress;
-  const plantName = draft.plantMode === "existing" ? (plant?.name ?? "") : draft.plantName;
-  const plantAddress =
-    draft.plantMode === "existing" ? (plant?.address ?? "") : draft.plantAddress;
-  const capacity =
-    draft.plantMode === "existing" ? (plant?.capacity_kwp ?? "") : draft.capacity;
-  const branchStatus = branch?.status;
-  const plantStatus = plant?.status;
-  const linked = sectionsValid.branch && sectionsValid.plant;
+  const branchLabel =
+    draft.branchMode === "existing"
+      ? "انشعاب انتخاب‌شده"
+      : draft.branchName.trim() || "انشعاب";
+  const plantLabel =
+    draft.plantMode === "existing"
+      ? "نیروگاه انتخاب‌شده"
+      : draft.capacity.trim()
+        ? `${draft.capacity} kWp`
+        : "نیروگاه";
 
   return (
-    <aside className="site-dossier" aria-label="خلاصه پرونده انشعاب و نیروگاه">
-      <div className="flex items-center justify-between gap-3">
-        <h3 className="site-dossier__title">پرونده</h3>
-        <Ring value={completeness} />
+    <aside className="site-progress" aria-label="پیشرفت ثبت انشعاب و نیروگاه">
+      <div className="site-progress__meta">
+        <p className="site-progress__title">ثبت انشعاب و نیروگاه</p>
+        <p className="site-progress__count" role="status">
+          {faNumber(completeness.filled)} از {faNumber(completeness.total)} فیلد
+        </p>
       </div>
-
-      <article className="site-dossier-node">
-        <span className="site-dossier-node__icon" aria-hidden>
-          <Icon name="home" className="size-5" />
-        </span>
-        <div className="site-dossier-node__body">
-          <strong>{branchName.trim() || "انشعاب"}</strong>
-          <Line value={meter ? `کنتور ${meter}` : ""} />
-          {!compact ? <Line value={branchAddress} /> : null}
-          <StatusPill
-            status={branchStatus ? plantStatusMeta(branchStatus).tone : "draft"}
-            label={
-              branchStatus ? plantStatusMeta(branchStatus).label : "پیش‌نویس فرم"
-            }
-          />
-        </div>
-      </article>
-
-      <div className="site-dossier-connector" data-complete={linked}>
-        <div className="site-dossier-connector__line" />
-        <span className="site-dossier-connector__label">
-          {linked ? "متصل" : "در انتظار تکمیل"}
-        </span>
-      </div>
-
-      <article className="site-dossier-node">
-        <span className="site-dossier-node__icon" aria-hidden>
-          <Icon name="solarPanel" className="size-5" />
-        </span>
-        <div className="site-dossier-node__body">
-          <strong>{plantName.trim() || "نیروگاه"}</strong>
-          <Line value={capacity ? `${capacity} کیلووات` : ""} />
-          {!compact ? <Line value={plantAddress} /> : null}
-          <StatusPill
-            status={plantStatus ? plantStatusMeta(plantStatus).tone : "draft"}
-            label={plantStatus ? plantStatusMeta(plantStatus).label : "پیش‌نویس فرم"}
-          />
-        </div>
-      </article>
+      <ol className="site-progress__steps">
+        <li
+          className={cn(
+            "site-progress__step",
+            sectionsValid.branch && "site-progress__step--done",
+            phase === "branch" && "site-progress__step--current",
+          )}
+        >
+          <span className="site-progress__index" aria-hidden>
+            {sectionsValid.branch ? <Icon name="check" className="size-3.5" /> : faNumber(1)}
+          </span>
+          <span className="site-progress__body">
+            <strong>۱. انشعاب</strong>
+            <span>
+              {sectionsValid.branch
+                ? branchLabel
+                : "ابتدا انشعاب را انتخاب یا ثبت کنید"}
+            </span>
+          </span>
+          <span className="site-progress__glyph" aria-hidden>
+            <Icon name="home" className="size-4" />
+          </span>
+        </li>
+        <li
+          className={cn(
+            "site-progress__step",
+            sectionsValid.plant && "site-progress__step--done",
+            phase === "plant" && "site-progress__step--current",
+          )}
+        >
+          <span className="site-progress__index" aria-hidden>
+            {sectionsValid.plant ? <Icon name="check" className="size-3.5" /> : faNumber(2)}
+          </span>
+          <span className="site-progress__body">
+            <strong>۲. نیروگاه</strong>
+            <span>
+              {phase === "branch"
+                ? "پس از انشعاب فعال می‌شود"
+                : sectionsValid.plant
+                  ? plantLabel
+                  : "نیروگاه را روی انشعاب انتخاب‌شده تعریف کنید"}
+            </span>
+          </span>
+          <span className="site-progress__glyph" aria-hidden>
+            <Icon name="solarPanel" className="size-4" />
+          </span>
+        </li>
+      </ol>
     </aside>
   );
 }

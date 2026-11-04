@@ -15,8 +15,16 @@ import { PanelArt } from "@/features/panel/panel-art";
 import { faNumber } from "@/shared/lib/fa";
 import { Icon } from "@/shared/ui/icon";
 import { cn } from "@/shared/lib/cn";
+import { schemeTypeLabel, systemTypeLabel } from "@/features/plants/plant-options";
 import { getContracts } from "./contracts-api";
-import { formatDecimal, localDate, type Contract } from "./contract-model";
+import {
+  contractActionLabel,
+  contractDisplayTitle,
+  formatDecimal,
+  localDate,
+  sellerDisplayName,
+  type Contract,
+} from "./contract-model";
 import { contractStatusMeta } from "./status-map";
 import { useContractResource } from "./use-contract-resource";
 import { ContractError, ContractPagination } from "./contract-ui";
@@ -204,7 +212,7 @@ export function ContractsList(): ReactElement {
           />
         </motion.div>
       ) : (
-        <ul className="grid gap-3">
+        <ul className="contracts-ticket-list">
           {rows.map((contract) => (
             <motion.li key={contract.uuid} variants={reduceMotion ? undefined : fadeUp}>
               <ContractCard contract={contract} />
@@ -262,40 +270,135 @@ function SummaryCard({
 
 function ContractCard({ contract }: { contract: Contract }) {
   const meta = contractStatusMeta(contract.status);
+  const title = contractDisplayTitle(contract);
+  const seller = sellerDisplayName(contract.seller);
+  const stageClass =
+    contract.status === "draft"
+      ? "contracts-ticket--draft"
+      : contract.status === "pending"
+        ? "contracts-ticket--pending"
+        : contract.status === "active"
+          ? "contracts-ticket--active"
+          : contract.status === "cancelled" || contract.status === "expired"
+            ? "contracts-ticket--closed"
+            : undefined;
+  const art =
+    contract.status === "active"
+      ? "contracts/approved"
+      : contract.status === "pending"
+        ? "contracts/pending"
+        : contract.status === "cancelled" || contract.status === "expired"
+          ? "contracts/rejected"
+          : "stat-drafts";
+  const chips = [
+    contract.schemeType ? schemeTypeLabel(contract.schemeType) : "",
+    contract.systemType ? systemTypeLabel(contract.systemType) : "",
+    contract.planName,
+  ].filter(Boolean);
+
   return (
     <Link
       href={`/panel/contracts/${encodeURIComponent(contract.uuid)}`}
-      className="contracts-row focus-visible:outline-none"
+      className={cn("contracts-ticket", stageClass)}
     >
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0 space-y-1">
-          <h3 className="text-h4 tracking-tight">{contract.plantName || "نیروگاه ثبت نشده"}</h3>
-          <p className="text-sm text-foreground-muted">{contract.planName || "پلن ثبت نشده"}</p>
-          <p className="text-caption text-foreground-muted">
-            شناسه · <bdi dir="ltr">{contract.uuid.slice(0, 8)}…</bdi>
-          </p>
+      <div className="contracts-ticket-top">
+        <div className="min-w-0">
+          <div className="contracts-ticket-kicker">
+            <StatusPill status={meta.tone} label={meta.label} />
+            <span className="contracts-ticket-date">
+              {localDate(contract.reviewedAt || contract.signedAt || contract.createdAt)}
+            </span>
+          </div>
+          <h3 className="contracts-ticket-title">{title}</h3>
+          {chips.length ? (
+            <div className="contracts-ticket-chips" aria-label="مشخصات طرح">
+              {chips.map((chip) => (
+                <span key={chip} className="contracts-ticket-chip">
+                  {chip}
+                </span>
+              ))}
+            </div>
+          ) : null}
+          <p className="contracts-ticket-hint">{meta.next}</p>
         </div>
-        <StatusPill status={meta.tone} label={meta.label} />
+        <PanelArt name={art} width={96} height={96} className="contracts-ticket-art" />
       </div>
-      <dl className="contracts-row-meta">
-        <div className="contracts-meta-chip">
-          <dt className="text-caption text-foreground-muted">نرخ ذخیره‌شده</dt>
-          <dd className="mt-1 tabular-nums font-semibold">
-            <bdi dir="ltr">{formatDecimal(contract.rate)}</bdi> تومان/kWh
-          </dd>
+
+      <div className="contracts-ticket-body">
+        <div className="contracts-ticket-metrics" aria-label="اعداد قرارداد">
+          <div className="contracts-ticket-metric contracts-ticket-metric--hero">
+            <span>ظرفیت نیروگاه</span>
+            <strong>
+              <bdi dir="ltr">{formatDecimal(contract.capacity)}</bdi>
+            </strong>
+            <em>کیلووات‌پیک</em>
+          </div>
+          <div className="contracts-ticket-metric">
+            <span>نرخ توافقی</span>
+            <strong>
+              <bdi dir="ltr">{formatDecimal(contract.rate)}</bdi>
+            </strong>
+            <em>تومان / kWh</em>
+          </div>
+          <div className="contracts-ticket-metric">
+            <span>تعهد انرژی</span>
+            <strong>
+              <bdi dir="ltr">{formatDecimal(contract.commitment)}</bdi>
+            </strong>
+            <em>کیلووات‌ساعت</em>
+          </div>
         </div>
-        <div className="contracts-meta-chip">
-          <dt className="text-caption text-foreground-muted">تعهد انرژی</dt>
-          <dd className="mt-1 tabular-nums font-semibold">
-            <bdi dir="ltr">{formatDecimal(contract.commitment)}</bdi> kWh
-          </dd>
+
+        <div className="contracts-ticket-facts">
+          {contract.billId ? (
+            <div className="contracts-ticket-fact">
+              <span className="contracts-ticket-fact-icon" aria-hidden>
+                <Icon name="bolt" className="size-4" />
+              </span>
+              <p>
+                <span className="label">شناسه قبض</span>
+                <span className="value dir-ltr text-start block tabular-nums">
+                  <bdi dir="ltr">{contract.billId}</bdi>
+                </span>
+              </p>
+            </div>
+          ) : null}
+          {contract.address ? (
+            <div className="contracts-ticket-fact">
+              <span className="contracts-ticket-fact-icon contracts-ticket-fact-icon--mint" aria-hidden>
+                <Icon name="home" className="size-4" />
+              </span>
+              <p>
+                <span className="label">نشانی انشعاب</span>
+                <span className="value contracts-ticket-fact-value--wrap">{contract.address}</span>
+              </p>
+            </div>
+          ) : null}
+          {seller ? (
+            <div className="contracts-ticket-fact">
+              <span className="contracts-ticket-fact-icon contracts-ticket-fact-icon--sky" aria-hidden>
+                <Icon name="user" className="size-4" />
+              </span>
+              <p>
+                <span className="label">فروشنده</span>
+                <span className="value block">{seller}</span>
+              </p>
+            </div>
+          ) : null}
         </div>
-        <div className="contracts-meta-chip">
-          <dt className="text-caption text-foreground-muted">آخرین رویداد</dt>
-          <dd className="mt-1 font-semibold">{localDate(contract.reviewedAt || contract.signedAt || contract.createdAt)}</dd>
-        </div>
-      </dl>
-      <p className="mt-3 text-caption leading-6 text-foreground-muted">{meta.next}</p>
+      </div>
+
+      <div className="contracts-ticket-foot">
+        <p className="contracts-ticket-id">
+          {contract.contractNumber
+            ? <>شماره قرارداد · <bdi dir="ltr">{contract.contractNumber}</bdi></>
+            : <>شناسه · <bdi dir="ltr">{contract.uuid.slice(0, 8)}…</bdi></>}
+        </p>
+        <span className="contracts-ticket-cta">
+          {contractActionLabel(contract.status)}
+          <Icon name="arrow" className="size-3.5 -scale-x-100" />
+        </span>
+      </div>
     </Link>
   );
 }

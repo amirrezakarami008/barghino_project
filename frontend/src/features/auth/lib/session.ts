@@ -11,6 +11,10 @@ export type AuthUser = {
   nationalId?: string | null;
   companyName?: string | null;
   companyNationalId?: string | null;
+  /** From IndividualProfile.birth_certificate_number or LegalProfile.representative_*. */
+  birthCertificateNumber?: string | null;
+  /** ISO `YYYY-MM-DD` from date_of_birth / representative_date_of_birth. */
+  dateOfBirth?: string | null;
   identityProfile?: Record<string, string | null> | null;
   identityProfileCompletion?: { isComplete: boolean; missingFields: string[] } | null;
   dateJoined?: string | null;
@@ -68,6 +72,7 @@ export function sessionSnapshot() {
 
 export function userFromApi(value: unknown): AuthUser {
   const user = (value ?? {}) as Record<string, unknown>;
+  const identity = parseIdentityProfile(user.identity_profile);
   return {
     uuid: String(user.uuid ?? ""),
     phone: String(user.phone ?? ""),
@@ -81,7 +86,9 @@ export function userFromApi(value: unknown): AuthUser {
     nationalId: nullableString(user.national_id),
     companyName: nullableString(user.company_name),
     companyNationalId: nullableString(user.company_national_id),
-    identityProfile: parseIdentityProfile(user.identity_profile),
+    birthCertificateNumber: pickBirthCertificate(identity),
+    dateOfBirth: pickDateOfBirth(identity),
+    identityProfile: identity,
     identityProfileCompletion: parseIdentityProfileCompletion(user.identity_profile_completion),
     dateJoined: nullableString(user.date_joined),
     isPhoneVerified: user.is_phone_verified === true,
@@ -94,11 +101,12 @@ function nullableString(value: unknown) {
 
 function parseIdentityProfile(value: unknown): AuthUser["identityProfile"] {
   if (!value || typeof value !== "object" || Array.isArray(value)) return null;
-  return Object.fromEntries(
-    Object.entries(value as Record<string, unknown>).flatMap(([key, field]) =>
-      typeof field === "string" ? [[key, field]] : [],
-    ),
-  );
+  const result: Record<string, string | null> = {};
+  for (const [key, field] of Object.entries(value as Record<string, unknown>)) {
+    if (typeof field === "string") result[key] = field;
+    else if (field === null) result[key] = null;
+  }
+  return result;
 }
 
 function parseIdentityProfileCompletion(value: unknown): AuthUser["identityProfileCompletion"] {
@@ -110,4 +118,17 @@ function parseIdentityProfileCompletion(value: unknown): AuthUser["identityProfi
       ? completion.missing_fields.filter((field): field is string => typeof field === "string")
       : [],
   };
+}
+
+function pickBirthCertificate(identity: AuthUser["identityProfile"]): string | null {
+  if (!identity) return null;
+  return (
+    nullableString(identity.birth_certificate_number) ??
+    nullableString(identity.representative_birth_certificate_number)
+  );
+}
+
+function pickDateOfBirth(identity: AuthUser["identityProfile"]): string | null {
+  if (!identity) return null;
+  return nullableString(identity.date_of_birth) ?? nullableString(identity.representative_date_of_birth);
 }

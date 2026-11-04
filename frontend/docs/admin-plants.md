@@ -2,7 +2,7 @@
 
 ## UI
 
-`/admin/plants` manages plants across users: server-side status filtering, search (name, owner phone, meter), real pagination, creation, editing, soft deletion and explicit approval/rejection. Creation selects an existing branch and derives the owner server-side. Editing can only select another branch of the same owner. New/edited plants enter pending review; there is no hidden auto-approval. Rejection requires a reason; approval requires the branch to be active. Existing `/admin/reviews` remains the combined branch/plant/contract queue.
+`/admin/plants` manages plants across users: server-side status filtering, search (name, owner phone, meter), real pagination, creation, editing, soft deletion and explicit approval/rejection. Creation selects an existing branch and derives the owner server-side. Editing can only select another branch of the same owner. New/edited plants enter pending review; there is no hidden auto-approval. Rejection requires a reason; plant approval does not depend on branch status. Existing `/admin/reviews` remains the combined branch/plant/contract queue.
 
 Modal dialogs use native focus trapping, Escape, background scroll lock and focus restoration. Pending mutations block related controls. Ambiguous mutation failures block blind re-submission and offer a close-and-refresh path. All customer-facing messages are Persian; capacities preserve decimal strings.
 
@@ -18,7 +18,7 @@ Every staff endpoint requires IsStaff. Existing `/plants/` and `/branches/` rema
 
 ## Locked user sections
 
-Home, contracts, read-only My Plant and profile remain active. Production, invoices, payments, installation requests, documents, notifications, support tickets and settings are disabled with lock icons in both sidebar layouts. Their direct routes show a locked section instead of placeholder controls. The home dashboard no longer shows fabricated/unfinished metric placeholders. Notification shortcuts were removed and support links now lead to the existing public contact page.
+Home, contracts, installation requests, read-only My Plant and profile remain active. Production, invoices, payments, documents, notifications, support tickets and settings are disabled with lock icons in both sidebar layouts. Their direct routes show a locked section instead of placeholder controls. The home dashboard no longer shows fabricated/unfinished metric placeholders. Notification shortcuts were removed and support links now lead to the existing public contact page.
 
 ## Verification
 

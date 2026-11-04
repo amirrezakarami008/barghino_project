@@ -3,37 +3,48 @@
 import Link from "next/link";
 import type { ReactElement } from "react";
 import { Alert } from "@/components/ui";
+import {
+  hasBirthCertificateForSigning,
+  identityFieldLabels,
+  isProfileIdentityComplete,
+  profileIdentityGaps,
+} from "@/features/auth/lib/identity-completion";
 import { useAuth } from "@/features/auth/session-provider";
-
-const labels: Record<string, string> = {
-  account_type: "نوع حساب مشتری",
-  first_name: "نام",
-  last_name: "نام خانوادگی",
-  national_id: "کد ملی",
-  company_name: "نام شرکت",
-  company_national_id: "شناسه ملی شرکت",
-  representative_first_name: "نام نماینده",
-  representative_last_name: "نام خانوادگی نماینده",
-  representative_national_id: "کد ملی نماینده",
-};
 
 export function IdentityNotice(): ReactElement | null {
   const { profile } = useAuth();
-  const completion = profile?.identityProfileCompletion;
-  if (completion?.isComplete) return null;
+  const identityComplete = isProfileIdentityComplete(profile);
+  const hasBirthCertificate = hasBirthCertificateForSigning(profile);
+  if (identityComplete && hasBirthCertificate) return null;
 
-  const missing =
-    completion?.missingFields.length
-      ? `موارد لازم: ${completion.missingFields.map((field) => labels[field] ?? "مشخصات هویتی").join("، ")}. `
-      : "";
+  const missingFields = profileIdentityGaps(profile);
+  const parts: string[] = [];
+  if (missingFields.length) {
+    parts.push(
+      `موارد لازم: ${missingFields.map((field) => identityFieldLabels[field] ?? "مشخصات هویتی").join("، ")}.`,
+    );
+  }
+  if (identityComplete && !hasBirthCertificate) {
+    parts.push(
+      profile?.accountType === "legal"
+        ? "برای امضا، شماره شناسنامه نماینده را در پروفایل وارد کنید."
+        : "برای امضا، شماره شناسنامه را در پروفایل وارد کنید.",
+    );
+  }
 
   return (
     <Alert
       tone="warning"
-      title={completion ? "اطلاعات هویتی شما کامل نیست" : "کامل‌بودن اطلاعات هویتی مشخص نیست"}
+      title={
+        !identityComplete
+          ? profile?.identityProfileCompletion
+            ? "اطلاعات هویتی شما کامل نیست"
+            : "کامل‌بودن اطلاعات هویتی مشخص نیست"
+          : "شماره شناسنامه برای امضا لازم است"
+      }
     >
       <p>
-        {missing}
+        {parts.join(" ")}{" "}
         این اطلاعات برای امضا لازم‌اند؛ ساخت پیش‌نویس به معنی تأیید هویت نیست.
       </p>
       <Link
@@ -43,7 +54,8 @@ export function IdentityNotice(): ReactElement | null {
         بررسی اطلاعات پروفایل
       </Link>
       <p className="mt-2 text-caption text-foreground-muted">
-        پروفایل فعلی امکان مشاهده دارد؛ اگر فیلد لازم قابل ویرایش نیست، از پشتیبانی کمک بگیرید.
+        نام، شماره شناسنامه و تاریخ تولد را از پروفایل می‌توانید ویرایش کنید؛ شماره ملی و نوع حساب فقط از پشتیبانی
+        قابل اصلاح‌اند.
       </p>
     </Alert>
   );

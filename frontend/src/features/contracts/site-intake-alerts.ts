@@ -1,7 +1,7 @@
 import { createAlertSelector, type AlertDescriptor } from "@/components/ui";
 import { faNumber } from "@/shared/lib/fa";
 import {
-  findOwnMeterDuplicate,
+  findOwnBillDuplicate,
   isSuspiciousCapacity,
 } from "./site-intake-validation";
 import type { SiteIntakeAlertState, SiteIntakeFieldId } from "./site-intake-types";
@@ -9,22 +9,22 @@ import type { SiteIntakeAlertState, SiteIntakeFieldId } from "./site-intake-type
 const FIELD_LABELS: Record<SiteIntakeFieldId, string> = {
   "branch-select": "انتخاب انشعاب",
   "branch-name": "نام انشعاب",
-  "branch-meter": "شماره کنتور",
+  "branch-bill": "شناسه قبض",
   "branch-address": "نشانی انشعاب",
   "plant-select": "انتخاب نیروگاه",
   "plant-name": "نام نیروگاه",
-  "plant-address": "نشانی نیروگاه",
   "plant-capacity": "ظرفیت نصب‌شده",
+  "plant-scheme": "کاربری طرح",
+  "plant-system": "اتصال به شبکه",
 };
 
 export type SiteIntakeAlertActions = {
   useExistingBranch: (branchId: string) => void;
   editBranch: () => void;
-  pickAnotherBranch: () => void;
   editPlant: () => void;
+  pickAnotherBranch: () => void;
   pickAnotherPlant: () => void;
   ackCapacity: () => void;
-  continueToPlan: () => void;
   resetDraft: () => void;
   retrySubmit: () => void;
   loginAgain: () => void;
@@ -44,24 +44,6 @@ export const selectSiteIntakeAlerts = createAlertSelector(
         priority: 10,
         title: "اطلاعات ذخیره‌نشدهٔ قبلی بازیابی شد",
         actions: [{ label: "شروع از نو", variant: "secondary", onClick: actions.resetDraft }],
-      });
-    }
-
-    const bothApproved =
-      draft.branchMode === "existing" &&
-      draft.plantMode === "existing" &&
-      selectedBranch?.status === "active" &&
-      selectedPlant?.status === "active" &&
-      selectedPlant.branch_uuid === selectedBranch.uuid;
-
-    if (bothApproved) {
-      alerts.push({
-        id: "both.approved",
-        variant: "success",
-        placement: "banner",
-        priority: 40,
-        title: "انشعاب و نیروگاه تأیید شده‌اند",
-        actions: [{ label: "ادامه: انتخاب پلن", variant: "primary", onClick: actions.continueToPlan }],
       });
     }
 
@@ -94,27 +76,47 @@ export const selectSiteIntakeAlerts = createAlertSelector(
         description: selectedBranch.review_note || "دلیل رد در پاسخ سرویس ثبت نشده است.",
         actions: [
           { label: "اصلاح اطلاعات", variant: "primary", onClick: actions.editBranch },
-          { label: "انتخاب انشعاب دیگر", variant: "secondary", onClick: actions.pickAnotherBranch },
         ],
       });
     }
 
+    if (
+      draft.branchMode === "existing" &&
+      draft.branchId &&
+      state.occupiedBranchIds.has(draft.branchId)
+    ) {
+      alerts.push({
+        id: "branch.existing.occupied",
+        variant: "danger",
+        placement: "section-branch",
+        priority: 40,
+        title: "این انشعاب در قرارداد دیگری استفاده شده است",
+        description: "برای پیش‌نویس جدید، انشعاب آزاد دیگری را انتخاب کنید یا انشعاب تازه ثبت کنید.",
+        actions: [{ label: "انتخاب انشعاب دیگر", variant: "secondary", onClick: actions.pickAnotherBranch }],
+      });
+    }
+
     if (draft.branchMode === "new") {
-      const duplicate = findOwnMeterDuplicate(draft.meter, state.branches);
+      const duplicate = findOwnBillDuplicate(draft.billId, state.branches);
       if (duplicate) {
+        const occupied = state.occupiedBranchIds.has(duplicate.uuid);
         alerts.push({
           id: "branch.duplicate.own",
           variant: "warning",
           placement: "section-branch",
           priority: 30,
-          title: "این شماره کنتور قبلاً برای شما ثبت شده است",
-          actions: [
-            {
-              label: "استفاده از انشعاب موجود",
-              variant: "primary",
-              onClick: () => actions.useExistingBranch(duplicate.uuid),
-            },
-          ],
+          title: occupied
+            ? "این شناسه قبض قبلاً ثبت شده و در قرارداد دیگری است"
+            : "این شناسه قبض قبلاً برای شما ثبت شده است",
+          actions: occupied
+            ? undefined
+            : [
+                {
+                  label: "استفاده از انشعاب موجود",
+                  variant: "primary",
+                  onClick: () => actions.useExistingBranch(duplicate.uuid),
+                },
+              ],
         });
       }
     }
@@ -125,8 +127,8 @@ export const selectSiteIntakeAlerts = createAlertSelector(
         variant: "danger",
         placement: "section-branch",
         priority: 50,
-        title: "ثبت این شماره کنتور ممکن نیست",
-        description: "شماره را بررسی کنید یا با پشتیبانی تماس بگیرید.",
+        title: "ثبت این شناسه قبض ممکن نیست",
+        description: "شناسه را بررسی کنید یا با پشتیبانی تماس بگیرید.",
       });
     }
 
@@ -196,7 +198,7 @@ export const selectSiteIntakeAlerts = createAlertSelector(
         placement: "form-summary",
         priority: 55,
         title: "ارتباط با سرور برقرار نشد",
-        description: "اطلاعات فرم حفظ شده است.",
+        description: "محتوای فرم هنوز روی صفحه است؛ دوباره ذخیره را بزنید.",
         actions: [{ label: "تلاش دوباره", variant: "primary", onClick: actions.retrySubmit }],
       });
     }
@@ -221,7 +223,7 @@ export const selectSiteIntakeAlerts = createAlertSelector(
         placement: "form-summary",
         priority: 70,
         title: "نشست شما منقضی شده است",
-        description: "پیش‌نویس فرم حفظ شده است.",
+        description: "پس از ورود دوباره، همین فرم را دوباره ذخیره کنید.",
         actions: [{ label: "ورود دوباره", variant: "primary", onClick: actions.loginAgain }],
       });
     }

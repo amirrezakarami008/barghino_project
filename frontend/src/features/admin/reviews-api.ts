@@ -1,9 +1,15 @@
 import { apiRequest } from "@/features/auth/lib/api";
-import { parseBranch, parsePlant, parsePage } from "@/features/plants";
-import { parseContract, signedSnapshot, formatDecimal } from "@/features/contracts";
+import { parseBranch, parsePlant, parsePage, schemeTypeLabel, systemTypeLabel } from "@/features/plants";
+import {
+  parseContract,
+  signedSnapshot,
+  formatDecimal,
+  localDate,
+  contractDisplayTitle,
+} from "@/features/contracts";
 import { formatLastAction } from "./admin-audit";
 
-export type ReviewKind = "branches" | "plants" | "contracts";
+export type ReviewKind = "branches" | "plants" | "contracts" | "renewals";
 
 export type ReviewItem = {
   readonly uuid: string;
@@ -45,6 +51,89 @@ function record(value: unknown): Record<string, unknown> {
   return value as Record<string, unknown>;
 }
 
+function queuePath(kind: ReviewKind): string {
+  if (kind === "contracts") return "/contracts/";
+  if (kind === "renewals") return "/staff/contracts/renewals/";
+  return `/staff/${kind}/`;
+}
+
+function calendarDate(value: string): string {
+  if (!value) return "";
+  if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    const date = new Date(`${value}T12:00:00`);
+    if (Number.isNaN(date.getTime())) return value;
+    return new Intl.DateTimeFormat("fa-IR", { dateStyle: "medium" }).format(date);
+  }
+  return localDate(value);
+}
+
+function mapContractReviewItem(entry: ReturnType<typeof parseContract>): ReviewItem {
+  const snapshot = signedSnapshot(entry);
+  const seller = snapshot?.seller;
+  return {
+    uuid: entry.uuid,
+    title: snapshot?.plant.name || contractDisplayTitle(entry),
+    signature: entry.signatureUuid,
+    createdAt: entry.createdAt,
+    updatedAt: entry.updatedAt,
+    reviewedAt: entry.reviewedAt,
+    reviewDecision: entry.reviewDecision,
+    reviewNote: entry.reviewNote,
+    lastAction: formatLastAction({
+      reviewedAt: entry.reviewedAt,
+      reviewDecision: entry.reviewDecision,
+      reviewNote: entry.reviewNote,
+      updatedAt: entry.updatedAt,
+      createdAt: entry.createdAt,
+    }),
+    fields: [
+      ["نسخهٔ اطلاعات", snapshot ? "ثبت‌شده هنگام امضا" : "نسخهٔ امضا در دسترس نیست؛ قبل از تصمیم بررسی کنید"],
+      [
+        "فروشنده",
+        seller?.company_name ?? [seller?.first_name, seller?.last_name].filter(Boolean).join(" "),
+      ],
+      ["شناسه قبض", snapshot?.branch.billId ?? entry.billId],
+      ["نشانی", snapshot?.branch.address ?? entry.address],
+      ["پلن", snapshot?.terms.planName ?? entry.planName],
+      ["نرخ خرید / تومان", formatDecimal(snapshot?.terms.rate ?? entry.rate)],
+      ["تعهد / kWh", formatDecimal(snapshot?.terms.commitment ?? entry.commitment)],
+      ["نسخه سند", entry.termsVersion],
+      ["هش سند", entry.termsHash],
+    ],
+  };
+}
+
+function mapRenewalItem(entry: ReturnType<typeof parseContract>): ReviewItem {
+  return {
+    uuid: entry.uuid,
+    title: contractDisplayTitle(entry),
+    signature: entry.signatureUuid || undefined,
+    createdAt: entry.createdAt,
+    updatedAt: entry.updatedAt,
+    reviewedAt: entry.reviewedAt,
+    reviewDecision: entry.reviewDecision,
+    reviewNote: entry.reviewNote,
+    lastAction: entry.renewalRequestedAt
+      ? `درخواست تمدید · ${localDate(entry.renewalRequestedAt)}`
+      : formatLastAction({
+          updatedAt: entry.updatedAt,
+          createdAt: entry.createdAt,
+        }),
+    fields: [
+      ["شماره قرارداد", entry.contractNumber],
+      ["وضعیت", entry.status],
+      ["شروع", calendarDate(entry.startsOn)],
+      ["پایان", calendarDate(entry.endsOn)],
+      ["نزدیک به انقضا", entry.isNearExpiry ? "بله" : "خیر"],
+      ["پلن", entry.planName],
+      ["نرخ خرید / تومان", formatDecimal(entry.rate)],
+      ["تعهد / kWh", formatDecimal(entry.commitment)],
+      ["شناسه قبض", entry.billId],
+      ["نشانی", entry.address],
+    ],
+  };
+}
+
 export async function getReviewQueue(
   kind: ReviewKind,
   page: number,
@@ -53,7 +142,7 @@ export async function getReviewQueue(
 ): Promise<ReviewPage> {
   const params = new URLSearchParams({ page: String(page), page_size: "12" });
   if (search.trim()) params.set("search", search.trim());
-  const raw = await apiRequest<unknown>(`/staff/${kind}/?${params}`, { auth: true, signal });
+  const raw = await apiRequest<unknown>(`${queuePath(kind)}?${params}`, { auth: true, signal });
 
   if (kind === "branches") {
     const result = parsePage(raw, (item) => {
@@ -89,7 +178,7 @@ export async function getReviewQueue(
         }),
         fields: [
           ["شماره کاربر", entry.owner_phone],
-          ["شماره کنتور", entry.meter_number],
+          ["شناسه قبض", entry.bill_id],
           ["نشانی", entry.address],
           ["وضعیت", entry.status],
         ],
@@ -133,6 +222,8 @@ export async function getReviewQueue(
         fields: [
           ["شماره کاربر", entry.owner_phone],
           ["ظرفیت (kWp)", entry.capacity_kwp],
+          ["کاربری طرح", schemeTypeLabel(entry.scheme_type)],
+          ["اتصال شبکه", systemTypeLabel(entry.system_type)],
           ["نشانی", entry.address],
           ["شناسه انشعاب", entry.branch_uuid],
           ["وضعیت", entry.status],
@@ -141,49 +232,23 @@ export async function getReviewQueue(
     };
   }
 
+  if (kind === "renewals") {
+    const result = parsePage(raw, parseContract);
+    return {
+      ...result,
+      results: result.results.map(mapRenewalItem),
+    };
+  }
+
   const result = parsePage(raw, parseContract);
   return {
     ...result,
-    results: result.results.map((entry) => {
-      const snapshot = signedSnapshot(entry);
-      const seller = snapshot?.seller;
-      return {
-        uuid: entry.uuid,
-        title: snapshot?.plant.name ?? entry.plantName,
-        signature: entry.signatureUuid,
-        createdAt: entry.createdAt,
-        updatedAt: entry.updatedAt,
-        reviewedAt: entry.reviewedAt,
-        reviewDecision: entry.reviewDecision,
-        reviewNote: entry.reviewNote,
-        lastAction: formatLastAction({
-          reviewedAt: entry.reviewedAt,
-          reviewDecision: entry.reviewDecision,
-          reviewNote: entry.reviewNote,
-          updatedAt: entry.updatedAt,
-          createdAt: entry.createdAt,
-        }),
-        fields: [
-          ["نسخهٔ اطلاعات", snapshot ? "ثبت‌شده هنگام امضا" : "نسخهٔ امضا در دسترس نیست؛ قبل از تصمیم بررسی کنید"],
-          [
-            "فروشنده",
-            seller?.company_name ?? [seller?.first_name, seller?.last_name].filter(Boolean).join(" "),
-          ],
-          ["شماره کنتور", snapshot?.branch.meter ?? entry.meter],
-          ["نشانی", snapshot?.branch.address ?? entry.address],
-          ["پلن", snapshot?.terms.planName ?? entry.planName],
-          ["نرخ خرید / تومان", formatDecimal(snapshot?.terms.rate ?? entry.rate)],
-          ["تعهد / kWh", formatDecimal(snapshot?.terms.commitment ?? entry.commitment)],
-          ["نسخه سند", entry.termsVersion],
-          ["هش سند", entry.termsHash],
-        ],
-      };
-    }),
+    results: result.results.map(mapContractReviewItem),
   };
 }
 
 export async function submitReview(
-  kind: ReviewKind,
+  kind: Exclude<ReviewKind, "renewals">,
   uuid: string,
   decision: "approved" | "rejected",
   reason: string,
@@ -195,15 +260,29 @@ export async function submitReview(
   });
 }
 
+export async function processRenewal(uuid: string): Promise<void> {
+  await apiRequest<unknown>(`/staff/contracts/${encodeURIComponent(uuid)}/renewal/`, {
+    auth: true,
+    method: "POST",
+  });
+}
+
 export async function getQueueCounts(signal: AbortSignal): Promise<{
   branches: number;
   plants: number;
   contracts: number;
+  renewals: number;
 }> {
-  const [branches, plants, contracts] = await Promise.all([
+  const [branches, plants, contracts, renewals] = await Promise.all([
     getReviewQueue("branches", 1, "", signal),
     getReviewQueue("plants", 1, "", signal),
     getReviewQueue("contracts", 1, "", signal),
+    getReviewQueue("renewals", 1, "", signal),
   ]);
-  return { branches: branches.count, plants: plants.count, contracts: contracts.count };
+  return {
+    branches: branches.count,
+    plants: plants.count,
+    contracts: contracts.count,
+    renewals: renewals.count,
+  };
 }

@@ -17,14 +17,18 @@ import {
 import { ApiError } from "@/features/auth/lib/api";
 import {
   getPlants,
+  PlantSpecChoices,
   type Branch,
   type Plant,
   type Registration,
   type RegistrationResult,
+  type SchemeType,
+  type SystemType,
 } from "@/features/plants";
+import { isSchemeType, isSystemType } from "@/features/plants/plant-options";
 import { latinDigits, plantError, saveBranch, savePlant } from "@/features/plants/plants-api";
 import { faNumber } from "@/shared/lib/fa";
-import { normalizeCapacityInput, normalizeMeterInput } from "./site-intake-validation";
+import { normalizeCapacityInput, normalizeBillIdInput } from "./site-intake-validation";
 
 type Props = {
   readonly registration: Registration | undefined;
@@ -35,15 +39,14 @@ type Props = {
 
 type BranchSnapshot = {
   name: string;
-  meter: string;
+  billId: string;
   address: string;
 };
 
 type PlantSnapshot = {
-  name: string;
-  address: string;
   capacity: string;
-  branchUuid: string;
+  schemeType: SchemeType;
+  systemType: SystemType;
 };
 
 function Field({
@@ -83,9 +86,10 @@ export function SiteReviewEditDrawer({
 
   const [name, setName] = useState("");
   const [address, setAddress] = useState("");
-  const [meter, setMeter] = useState("");
+  const [billId, setBillId] = useState("");
   const [capacity, setCapacity] = useState("");
-  const [branchUuid, setBranchUuid] = useState(branch.uuid);
+  const [schemeType, setSchemeType] = useState<SchemeType | "">("");
+  const [systemType, setSystemType] = useState<SystemType | "">("");
   const [baseline, setBaseline] = useState<BranchSnapshot | PlantSnapshot>();
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
@@ -98,29 +102,29 @@ export function SiteReviewEditDrawer({
     if (!registration?.item || !kind) return;
     const current = registration.item;
     queueMicrotask(() => {
-      setName(current.name);
-      setAddress(current.address);
       setError("");
       setUncertain(false);
       setConfirmOpen(false);
       if (kind === "branch") {
         const snap: BranchSnapshot = {
           name: current.name,
-          meter: (current as Branch).meter_number,
+          billId: (current as Branch).bill_id,
           address: current.address,
         };
-        setMeter(snap.meter);
+        setName(snap.name);
+        setAddress(snap.address);
+        setBillId(snap.billId);
         setBaseline(snap);
       } else {
         const plant = current as Plant;
         const snap: PlantSnapshot = {
-          name: plant.name,
-          address: plant.address,
           capacity: plant.capacity_kwp,
-          branchUuid: plant.branch_uuid,
+          schemeType: plant.scheme_type,
+          systemType: plant.system_type,
         };
         setCapacity(snap.capacity);
-        setBranchUuid(snap.branchUuid);
+        setSchemeType(snap.schemeType);
+        setSystemType(snap.systemType);
         setBaseline(snap);
       }
       firstField.current?.focus();
@@ -131,15 +135,15 @@ export function SiteReviewEditDrawer({
   if (baseline && kind === "branch") {
     const snap = baseline as BranchSnapshot;
     if (name.trim() !== snap.name) changes.push("name");
-    if (normalizeMeterInput(meter) !== normalizeMeterInput(snap.meter)) changes.push("meter");
+    if (normalizeBillIdInput(billId) !== normalizeBillIdInput(snap.billId)) changes.push("billId");
     if (address.trim() !== snap.address) changes.push("address");
   } else if (baseline && kind === "plant") {
     const snap = baseline as PlantSnapshot;
-    if (name.trim() !== snap.name) changes.push("name");
-    if (address.trim() !== snap.address) changes.push("address");
     if (normalizeCapacityInput(capacity) !== normalizeCapacityInput(snap.capacity)) {
       changes.push("capacity");
     }
+    if (schemeType !== snap.schemeType) changes.push("scheme");
+    if (systemType !== snap.systemType) changes.push("system");
   }
   const changeCount = changes.length;
   const rejectionNote = item?.review_note?.trim() || "دلیل رد ثبت نشده است.";
@@ -175,7 +179,7 @@ export function SiteReviewEditDrawer({
                 {
                   name: name.trim(),
                   address: address.trim(),
-                  meter_number: latinDigits(meter.trim()),
+                  bill_id: latinDigits(billId.trim()),
                 },
                 item.uuid,
               ),
@@ -184,10 +188,10 @@ export function SiteReviewEditDrawer({
               kind: "plant",
               item: await savePlant(
                 {
-                  name: name.trim(),
-                  address: address.trim(),
-                  branch_uuid: branchUuid,
+                  branch_uuid: (item as Plant).branch_uuid,
                   capacity_kwp: latinDigits(capacity.trim()).replace("٫", "."),
+                  scheme_type: schemeType as SchemeType,
+                  system_type: systemType as SystemType,
                 },
                 item.uuid,
               ),
@@ -205,6 +209,10 @@ export function SiteReviewEditDrawer({
   function onSubmit(event: FormEvent<HTMLFormElement>): void {
     event.preventDefault();
     if (changeCount === 0 || pending) return;
+    if (kind === "plant" && (!isSchemeType(schemeType) || !isSystemType(systemType))) {
+      setError("کاربری طرح و نوع اتصال به شبکه را انتخاب کنید.");
+      return;
+    }
     if (kind === "branch") {
       void loadAffectedAndConfirm();
       return;
@@ -257,57 +265,77 @@ export function SiteReviewEditDrawer({
 
             <form id={`${id}-form`} onSubmit={onSubmit}>
               <fieldset disabled={pending || uncertain}>
-                <Field id={`${id}-name`} label={kind === "branch" ? "نام انشعاب" : "نام نیروگاه"} changed={changes.includes("name")}>
-                  <input
-                    ref={firstField}
-                    id={`${id}-name`}
-                    value={name}
-                    maxLength={150}
-                    required
-                    onChange={(event) => setName(event.target.value)}
-                  />
-                </Field>
-
                 {kind === "branch" ? (
-                  <Field id={`${id}-meter`} label="شماره کنتور" changed={changes.includes("meter")}>
-                    <input
-                      id={`${id}-meter`}
-                      dir="ltr"
-                      inputMode="numeric"
-                      value={meter}
-                      maxLength={64}
-                      required
-                      onChange={(event) => setMeter(normalizeMeterInput(event.target.value))}
-                    />
-                  </Field>
+                  <>
+                    <Field id={`${id}-name`} label="نام انشعاب" changed={changes.includes("name")}>
+                      <input
+                        ref={firstField}
+                        id={`${id}-name`}
+                        value={name}
+                        maxLength={150}
+                        required
+                        onChange={(event) => setName(event.target.value)}
+                      />
+                    </Field>
+                    <Field id={`${id}-bill`} label="شناسه قبض" changed={changes.includes("billId")}>
+                      <input
+                        id={`${id}-bill`}
+                        dir="ltr"
+                        inputMode="numeric"
+                        value={billId}
+                        maxLength={64}
+                        required
+                        onChange={(event) => setBillId(normalizeBillIdInput(event.target.value))}
+                      />
+                    </Field>
+                    <Field id={`${id}-address`} label="نشانی" changed={changes.includes("address")}>
+                      <textarea
+                        id={`${id}-address`}
+                        value={address}
+                        maxLength={500}
+                        required
+                        rows={3}
+                        onChange={(event) => setAddress(event.target.value)}
+                      />
+                    </Field>
+                  </>
                 ) : (
-                  <Field
-                    id={`${id}-capacity`}
-                    label="ظرفیت نصب‌شده (کیلووات)"
-                    changed={changes.includes("capacity")}
-                  >
-                    <input
+                  <>
+                    <Field
                       id={`${id}-capacity`}
-                      dir="ltr"
-                      inputMode="decimal"
-                      value={capacity}
-                      required
-                      pattern="[0-9۰-۹٠-٩]+([.٫][0-9۰-۹٠-٩]{1,3})?"
-                      onChange={(event) => setCapacity(normalizeCapacityInput(event.target.value))}
-                    />
-                  </Field>
+                      label="ظرفیت نصب‌شده (کیلووات)"
+                      changed={changes.includes("capacity")}
+                    >
+                      <input
+                        ref={firstField}
+                        id={`${id}-capacity`}
+                        dir="ltr"
+                        inputMode="decimal"
+                        value={capacity}
+                        required
+                        pattern="[0-9۰-۹٠-٩]+([.٫][0-9۰-۹٠-٩]{1,3})?"
+                        onChange={(event) => setCapacity(normalizeCapacityInput(event.target.value))}
+                      />
+                    </Field>
+                    <div
+                      className="site-review-field"
+                      data-changed={
+                        changes.includes("scheme") || changes.includes("system") ? "true" : undefined
+                      }
+                    >
+                      <PlantSpecChoices
+                        idPrefix={`${id}-spec`}
+                        schemeType={schemeType}
+                        systemType={systemType}
+                        onSchemeChange={setSchemeType}
+                        onSystemChange={setSystemType}
+                        schemeValid={isSchemeType(schemeType)}
+                        systemValid={isSystemType(systemType)}
+                        disabled={pending || uncertain}
+                      />
+                    </div>
+                  </>
                 )}
-
-                <Field id={`${id}-address`} label="نشانی" changed={changes.includes("address")}>
-                  <textarea
-                    id={`${id}-address`}
-                    value={address}
-                    maxLength={500}
-                    required
-                    rows={3}
-                    onChange={(event) => setAddress(event.target.value)}
-                  />
-                </Field>
               </fieldset>
               {error ? (
                 <Alert variant="danger" title={error} className="mt-3" />

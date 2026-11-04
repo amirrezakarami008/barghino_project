@@ -13,7 +13,14 @@ import { isNavActive, userNav, type NavItem } from "@/shared/layout/site-nav";
 import type { WorkspaceAccountDetails } from "@/shared/layout/workspace-types";
 import "./panel-shell.css";
 
-const userPrimaryHrefs = ["/panel", "/panel/contracts", "/panel/plant", "/panel/profile"] as const;
+const userPrimaryHrefs = [
+  "/panel",
+  "/panel/contracts",
+  "/panel/branch",
+  "/panel/plant",
+  "/panel/profile",
+  "/panel/install",
+] as const;
 
 const navAccent: Partial<Record<IconName, string>> = {
   home: "var(--panel-icon-sun)",
@@ -104,7 +111,11 @@ export function AppShell({
                       title="این بخش به‌زودی فعال می‌شود"
                       aria-current={isNavActive(pathname, item) ? "page" : undefined}
                     >
-                      <span className="panel-nav-icon" aria-hidden>
+                      <span
+                        className="panel-nav-icon"
+                        style={iconAccentStyle(item.icon)}
+                        aria-hidden
+                      >
                         {item.icon ? <Icon name={item.icon} className="size-4" /> : null}
                       </span>
                       <span className="panel-nav-label flex-1">{item.label}</span>
@@ -227,9 +238,13 @@ export function PanelShell({ account, onSignOut, children }: PanelShellProps): R
   );
 }
 
+function iconAccentStyle(icon: IconName | undefined): { background: string; color: string } | undefined {
+  const accent = icon ? navAccent[icon] : undefined;
+  return accent ? { background: accent, color: "#fff" } : undefined;
+}
+
 function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
   const active = isNavActive(pathname, item);
-  const accent = item.icon ? navAccent[item.icon] : undefined;
   return (
     <Link
       href={item.href}
@@ -237,11 +252,7 @@ function NavLink({ item, pathname }: { item: NavItem; pathname: string }) {
       className={cn("panel-nav-link", active && "is-active")}
       title={item.label}
     >
-      <span
-        className="panel-nav-icon"
-        style={active && accent ? { background: accent, color: "#fff" } : undefined}
-        aria-hidden
-      >
+      <span className="panel-nav-icon" style={iconAccentStyle(item.icon)} aria-hidden>
         {item.icon ? <Icon name={item.icon} className="size-4" /> : null}
       </span>
       <span className="panel-nav-label">{item.label}</span>

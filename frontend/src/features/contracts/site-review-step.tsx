@@ -8,7 +8,15 @@ import {
   StatusPill,
   useToast,
 } from "@/components/ui";
-import { getBranch, getPlant, type Branch, type Plant } from "@/features/plants";
+import {
+  getBranch,
+  getPlant,
+  schemeTypeLabel,
+  systemTypeLabel,
+  type Branch,
+  type Plant,
+} from "@/features/plants";
+import { PanelArt } from "@/features/panel/panel-art";
 import { Icon, type IconName } from "@/shared/ui/icon";
 import { faNumber } from "@/shared/lib/fa";
 import { ContractEmpty, ContractError } from "./contract-ui";
@@ -30,6 +38,8 @@ type Props = {
   readonly onReady: (option: PlantOption) => void;
 };
 
+type OverallState = "ready" | "pending" | "rejected" | "blocked";
+
 function contractOption(plant: Plant, branch: Branch): PlantOption {
   return {
     plant: {
@@ -43,7 +53,7 @@ function contractOption(plant: Plant, branch: Branch): PlantOption {
     branch: {
       uuid: branch.uuid,
       name: branch.name,
-      meter: branch.meter_number,
+      billId: branch.bill_id,
       address: branch.address,
       status: branch.status,
     },
@@ -90,6 +100,51 @@ function relativeUpdate(at: number | null): string {
   const minutes = Math.round(seconds / 60);
   if (minutes < 60) return `${faNumber(minutes)} دقیقه پیش`;
   return formatWhen(new Date(at).toISOString());
+}
+
+function overallCopy(state: OverallState): {
+  eyebrow: string;
+  title: string;
+  body: string;
+  art: "contracts/approved" | "contracts/pending" | "contracts/rejected" | "contracts/agreement";
+} {
+  if (state === "ready") {
+    return {
+      eyebrow: "آمادهٔ ادامه",
+      title: "انشعاب و نیروگاه تأیید شدند",
+      body: "هر دو مورد از سوی شرکت تأیید شده‌اند. می‌توانید پلن فروش را انتخاب کنید.",
+      art: "contracts/approved",
+    };
+  }
+  if (state === "rejected") {
+    return {
+      eyebrow: "نیاز به اصلاح",
+      title: "یکی از موارد رد شده است",
+      body: "دلیل رد را بخوانید، اطلاعات را اصلاح کنید و دوباره برای بررسی بفرستید.",
+      art: "contracts/rejected",
+    };
+  }
+  if (state === "blocked") {
+    return {
+      eyebrow: "ترتیب بررسی",
+      title: "ابتدا انشعاب باید تأیید شود",
+      body: "بررسی نیروگاه تا تأیید انشعاب آغاز نمی‌شود. وضعیت انشعاب را پیگیری کنید.",
+      art: "contracts/agreement",
+    };
+  }
+  return {
+    eyebrow: "صف بررسی شرکت",
+    title: "در انتظار بررسی انشعاب و نیروگاه",
+    body: "می‌توانید از این صفحه خارج شوید؛ وضعیت در «نیروگاه من» و همین مسیر قرارداد قابل مشاهده است.",
+    art: "contracts/pending",
+  };
+}
+
+function gateState(statusAttr: string): OverallState | "ready" {
+  if (statusAttr === "active") return "ready";
+  if (statusAttr === "inactive") return "rejected";
+  if (statusAttr === "blocked") return "blocked";
+  return "pending";
 }
 
 export function SiteReviewStep({ branchId, plantId, onBack, onReady }: Props): ReactElement {
@@ -208,13 +263,16 @@ export function SiteReviewStep({ branchId, plantId, onBack, onReady }: Props): R
   if (resource.state.status === "loading") {
     return (
       <div className="site-review">
-        <Skeleton className="h-12" />
-        <div className="site-review-chain">
-          <Skeleton className="h-40" />
-          <Skeleton className="h-8 w-10 justify-self-center" />
-          <Skeleton className="h-40" />
+        <Skeleton className="h-40 rounded-[28px]" />
+        <div className="grid gap-3 sm:grid-cols-2">
+          <Skeleton className="h-16 rounded-[14px]" />
+          <Skeleton className="h-16 rounded-[14px]" />
         </div>
-        <Skeleton className="h-28" />
+        <div className="site-review-chain">
+          <Skeleton className="h-56 rounded-[24px]" />
+          <Skeleton className="h-8 w-10 justify-self-center" />
+          <Skeleton className="h-56 rounded-[24px]" />
+        </div>
       </div>
     );
   }
@@ -238,9 +296,6 @@ export function SiteReviewStep({ branchId, plantId, onBack, onReady }: Props): R
   const actions: SiteReviewAlertActions = {
     editBranch: () => setRegistration({ kind: "branch", item: branch }),
     editPlant: () => setRegistration({ kind: "plant", item: plant }),
-    continueToPlan: () => {
-      if (approvedForContinue) onReady(readyOption);
-    },
   };
 
   const alerts = selectSiteReviewAlerts({
@@ -249,7 +304,6 @@ export function SiteReviewStep({ branchId, plantId, onBack, onReady }: Props): R
       plant,
       branchApproved: Boolean(branchApproved),
       plantBlocked: Boolean(plantBlocked),
-      bothApproved,
       anyRejected: Boolean(anyRejected),
       pendingReview,
     },
@@ -267,12 +321,23 @@ export function SiteReviewStep({ branchId, plantId, onBack, onReady }: Props): R
       ? "blocked"
       : "waiting";
 
+  const overallState: OverallState = bothApproved
+    ? "ready"
+    : anyRejected
+      ? "rejected"
+      : plantBlocked && branch.status !== "inactive"
+        ? "blocked"
+        : "pending";
+  const hero = overallCopy(overallState);
+  const branchStatusAttr = branch.status;
+  const plantStatusAttr = plantBlocked ? "blocked" : plant.status;
+
   function renderCard(input: {
     kind: "branch" | "plant";
+    kicker: string;
     title: string;
     icon: IconName;
-    name: string;
-    details: string[];
+    facts: ReadonlyArray<{ label: string; value: string }>;
     statusAttr: string;
     meta: { tone: ReturnType<typeof reviewLabel>["tone"]; label: string };
     actionLine: string;
@@ -291,56 +356,125 @@ export function SiteReviewStep({ branchId, plantId, onBack, onReady }: Props): R
               <Icon name={input.blockedNote ? "lock" : input.icon} className="size-5" />
             </span>
             <div className="min-w-0">
-              <h3 className="site-review-card__title">
-                {input.title}: {input.name}
-              </h3>
-              <div className="site-review-card__details">
-                {input.details.map((line) => (
-                  <span key={line}>{line}</span>
-                ))}
-              </div>
+              <p className="site-review-card__kicker">{input.kicker}</p>
+              <h3 className="site-review-card__title">{input.title}</h3>
             </div>
           </div>
           <StatusPill status={input.meta.tone} label={input.meta.label} />
         </div>
 
-        {input.blockedNote ? <p className="site-review-blocked">{input.blockedNote}</p> : null}
+        <div className="site-review-facts">
+          {input.facts.map((fact) => (
+            <div key={`${input.kind}-${fact.label}`}>
+              <span>{fact.label}</span>
+              <strong>{fact.value}</strong>
+            </div>
+          ))}
+        </div>
 
-        <p className="site-review-card__action">{input.actionLine}</p>
-
-        {input.onEdit ? (
-          <Button variant="secondary" size="sm" onClick={input.onEdit}>
-            اصلاح اطلاعات
-          </Button>
+        {input.blockedNote ? (
+          <p className="site-review-blocked">
+            <Icon name="lock" className="site-review-blocked__icon size-4" />
+            <span>{input.blockedNote}</span>
+          </p>
         ) : null}
+
+        <div className="site-review-card__foot">
+          <p className="site-review-card__action">{input.actionLine}</p>
+          {input.onEdit ? (
+            <Button variant="secondary" size="sm" onClick={input.onEdit}>
+              <Icon name="edit" className="size-3.5" />
+              اصلاح اطلاعات
+            </Button>
+          ) : null}
+        </div>
       </article>
     );
   }
 
   return (
     <div className="site-review">
-      <div className="site-review-toolbar">
-        <p className="site-review-updated" role="status">
-          آخرین بروزرسانی: {relativeUpdate(lastFetchedAt)}
-          {resource.refreshing ? " · در حال دریافت…" : ""}
-        </p>
-        <Button variant="secondary" size="sm" disabled={resource.refreshing} onClick={reload}>
-          {resource.refreshing ? "در حال بروزرسانی…" : "بروزرسانی وضعیت"}
-        </Button>
-      </div>
+      <header
+        className="site-review-hero"
+        data-state={overallState}
+        data-celebrate={celebrate ? "true" : undefined}
+      >
+        <div className="site-review-hero__copy">
+          <p className="site-review-hero__eyebrow">{hero.eyebrow}</p>
+          <h3 className="site-review-hero__title">{hero.title}</h3>
+          <p className="site-review-hero__body">{hero.body}</p>
+          <div className="site-review-hero__toolbar">
+            <p className="site-review-updated" role="status">
+              آخرین بروزرسانی: {relativeUpdate(lastFetchedAt)}
+              {resource.refreshing ? " · در حال دریافت…" : ""}
+            </p>
+            <Button variant="secondary" size="sm" disabled={resource.refreshing} onClick={reload}>
+              {resource.refreshing ? "در حال بروزرسانی…" : "بروزرسانی وضعیت"}
+            </Button>
+          </div>
+        </div>
+        <div className="site-review-hero__art">
+          <PanelArt
+            name={hero.art}
+            width={200}
+            height={200}
+            className="site-review-hero__image"
+          />
+        </div>
+      </header>
 
       {resource.refreshError ? (
         <ContractError message={resource.refreshError} retry={reload} />
       ) : null}
 
+      <ol className="site-review-gates" aria-label="مراحل بررسی شرکت">
+        <li className="site-review-gate" data-state={gateState(branchStatusAttr)}>
+          <span className="site-review-gate__index" aria-hidden>
+            {branchStatusAttr === "active" ? (
+              <Icon name="check" className="size-3.5" />
+            ) : (
+              faNumber(1)
+            )}
+          </span>
+          <span className="site-review-gate__body">
+            <strong>انشعاب</strong>
+            <span>{branchMeta.label}</span>
+          </span>
+          <span className="site-review-gate__glyph" aria-hidden>
+            <Icon name="home" className="size-4" />
+          </span>
+        </li>
+        <li className="site-review-gate" data-state={gateState(plantStatusAttr)}>
+          <span className="site-review-gate__index" aria-hidden>
+            {plantStatusAttr === "active" ? (
+              <Icon name="check" className="size-3.5" />
+            ) : plantBlocked ? (
+              <Icon name="lock" className="size-3.5" />
+            ) : (
+              faNumber(2)
+            )}
+          </span>
+          <span className="site-review-gate__body">
+            <strong>نیروگاه</strong>
+            <span>{plantMeta.label}</span>
+          </span>
+          <span className="site-review-gate__glyph" aria-hidden>
+            <Icon name="solarPanel" className="size-4" />
+          </span>
+        </li>
+      </ol>
+
       <div className="site-review-chain" aria-label="وابستگی انشعاب و نیروگاه">
         {renderCard({
           kind: "branch",
-          title: "انشعاب",
+          kicker: "گام ۱ · انشعاب",
+          title: branch.name,
           icon: "home",
-          name: branch.name,
-          details: [`کنتور ${branch.meter_number}`, branch.address],
-          statusAttr: branch.status,
+          facts: [
+            { label: "شناسه قبض", value: branch.bill_id },
+            { label: "نشانی", value: branch.address },
+          ],
+          statusAttr: branchStatusAttr,
           meta: branchMeta,
           actionLine: lastActionLine(branch),
           onEdit: branch.status === "inactive" ? actions.editBranch : undefined,
@@ -348,18 +482,33 @@ export function SiteReviewStep({ branchId, plantId, onBack, onReady }: Props): R
 
         <div className="site-review-connector" data-state={connectorState} aria-hidden>
           <div className="site-review-connector__line" />
+          <span className="site-review-connector__badge">
+            <Icon
+              name={connectorState === "ready" ? "check" : connectorState === "blocked" ? "close" : "clock"}
+              className="size-3.5"
+            />
+          </span>
           <span className="site-review-connector__label">
-            {connectorState === "ready" ? "انشعاب تأیید شد" : "وابستگی"}
+            {connectorState === "ready"
+              ? "انشعاب تأیید شد"
+              : connectorState === "blocked"
+                ? "مسیر متوقف"
+                : "وابستگی بررسی"}
           </span>
         </div>
 
         {renderCard({
           kind: "plant",
-          title: "نیروگاه",
+          kicker: "گام ۲ · نیروگاه",
+          title: plant.name,
           icon: "solarPanel",
-          name: plant.name,
-          details: [`${plant.capacity_kwp} کیلووات`, plant.address],
-          statusAttr: plantBlocked ? "blocked" : plant.status,
+          facts: [
+            { label: "ظرفیت", value: `${plant.capacity_kwp} کیلووات` },
+            { label: "کاربری طرح", value: schemeTypeLabel(plant.scheme_type) },
+            { label: "اتصال شبکه", value: systemTypeLabel(plant.system_type) },
+            ...(plant.address ? [{ label: "نشانی", value: plant.address }] : []),
+          ],
+          statusAttr: plantStatusAttr,
           meta: plantMeta,
           actionLine: plantBlocked
             ? "آخرین اقدام: بررسی هنوز آغاز نشده"
@@ -373,28 +522,38 @@ export function SiteReviewStep({ branchId, plantId, onBack, onReady }: Props): R
       </div>
 
       <div className="site-review-next" data-celebrate={celebrate ? "true" : undefined}>
-        <AlertSlot placement="review-next" alerts={alerts} />
+        {bothApproved ? (
+          <div className="site-review-ready" role="status">
+            <p className="site-review-ready__title">مسیر برای انتخاب پلن باز است</p>
+            <p className="site-review-ready__body">
+              نرخ و تعهد پلن فقط در پیش‌نویس ذخیره می‌شود و به‌معنی امضا یا شروع خرید نیست.
+            </p>
+          </div>
+        ) : (
+          <AlertSlot placement="review-next" alerts={alerts} />
+        )}
       </div>
 
       <div className="site-review-actions">
-        <Button variant="secondary" onClick={onBack}>
-          مرحلهٔ انشعاب و نیروگاه
-        </Button>
-        {bothApproved ? (
-          <Button
-            disabled={!approvedForContinue}
-            onClick={() => {
-              if (approvedForContinue) onReady(readyOption);
-            }}
-          >
-            ادامه: انتخاب پلن
+        <p className="site-review-actions__note">
+          اصلاح مشخصات تأییدشده یا ردشده، آن‌ها را دوباره به بررسی می‌فرستد. کاربر نمی‌تواند چیزی را تأیید کند.
+        </p>
+        <div className="site-review-actions__buttons">
+          <Button variant="secondary" onClick={onBack}>
+            مرحلهٔ انشعاب و نیروگاه
           </Button>
-        ) : null}
+          {bothApproved ? (
+            <Button
+              disabled={!approvedForContinue}
+              onClick={() => {
+                if (approvedForContinue) onReady(readyOption);
+              }}
+            >
+              ادامه: انتخاب پلن
+            </Button>
+          ) : null}
+        </div>
       </div>
-
-      <p className="text-caption text-foreground-muted">
-        اصلاح مشخصات تأییدشده یا ردشده، آن‌ها را دوباره به بررسی می‌فرستد. کاربر نمی‌تواند چیزی را تأیید کند.
-      </p>
 
       <SiteReviewEditDrawer
         registration={registration}

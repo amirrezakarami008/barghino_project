@@ -31,13 +31,20 @@ import {
   getBranches,
   getPlants,
   PlantRegistrationForm,
+  PlantSpecChoices,
+  schemeTypeLabel,
+  systemTypeLabel,
   type Branch,
   type Plant,
   type Registration,
+  type SchemeType,
+  type SystemType,
 } from "@/features/plants";
+import { isSchemeType, isSystemType } from "@/features/plants/plant-options";
 import { latinDigits, plantError, saveBranch, savePlant } from "@/features/plants/plants-api";
 import { Icon } from "@/shared/ui/icon";
 import { faNumber } from "@/shared/lib/fa";
+import { listOccupiedBranchIds } from "./contracts-api";
 import { ContractError, ContractPagination } from "./contract-ui";
 import { type PlantOption } from "./contract-model";
 import { plantStatusMeta } from "./status-map";
@@ -46,12 +53,7 @@ import {
   selectSiteIntakeAlerts,
   type SiteIntakeAlertActions,
 } from "./site-intake-alerts";
-import {
-  clearIntakeDraft,
-  intakeDraftIsDirty,
-  readIntakeDraft,
-  writeIntakeDraft,
-} from "./site-intake-draft";
+import { clearIntakeDraft, intakeDraftIsDirty } from "./site-intake-draft";
 import { SiteDossier } from "./site-dossier";
 import {
   EMPTY_INTAKE_DRAFT,
@@ -61,15 +63,15 @@ import {
 } from "./site-intake-types";
 import {
   branchSectionValid,
-  collectInvalidFields,
+  collectInvalidBranchFields,
+  collectInvalidPlantFields,
   fieldError,
-  intakeCompleteness,
-  intakeFormValid,
+  normalizeBillIdInput,
   normalizeCapacityInput,
-  normalizeMeterInput,
   plantSectionValid,
   plantsForBranch,
 } from "./site-intake-validation";
+import { type IntakePhase } from "./site-dossier";
 import "./site-intake.css";
 
 type Props = {
@@ -92,7 +94,7 @@ function contractOption(plant: Plant, branch: Branch): PlantOption {
     branch: {
       uuid: branch.uuid,
       name: branch.name,
-      meter: branch.meter_number,
+      billId: branch.bill_id,
       address: branch.address,
       status: branch.status,
     },
@@ -186,10 +188,11 @@ export function SiteIntakeStep({
   const summaryRef = useRef<AlertHandle>(null);
   const plantSectionRef = useRef<HTMLElement>(null);
   const [inFlight, setInFlight] = useState(false);
-  const branchBecameValid = useRef(false);
-  const plantBecameValid = useRef(false);
   const [branchPage, setBranchPage] = useState(1);
   const [plantPage, setPlantPage] = useState(1);
+  const [intakePhase, setIntakePhase] = useState<IntakePhase>(() =>
+    initialBranchId || initialPlantId ? "plant" : "branch",
+  );
   const [draft, setDraft] = useState<SiteIntakeDraft>(() => ({
     ...EMPTY_INTAKE_DRAFT,
     branchId: initialBranchId,
@@ -198,59 +201,29 @@ export function SiteIntakeStep({
     plantMode: initialPlantId ? "existing" : "new",
   }));
   const [touched, setTouched] = useState<Partial<Record<SiteIntakeFieldId, boolean>>>({});
-  const [branchOpen, setBranchOpen] = useState(true);
-  const [plantOpen, setPlantOpen] = useState(false);
   const [submitIssue, setSubmitIssue] = useState<SiteIntakeSubmitIssue>({ kind: "none" });
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [leaveOpen, setLeaveOpen] = useState(false);
-  const [sheetOpen, setSheetOpen] = useState(false);
   const [editRegistration, setEditRegistration] = useState<Registration>();
-  const [draftRestored, setDraftRestored] = useState(false);
-  const [savedAt, setSavedAt] = useState<number | null>(null);
   const [online, setOnline] = useState(true);
-  const [hydrated, setHydrated] = useState(false);
 
   const load = useCallback(
     async (signal: AbortSignal) => {
-      const [branches, plants] = await Promise.all([
+      const [branches, plants, occupiedBranchIds] = await Promise.all([
         getBranches(branchPage, signal),
         getPlants(plantPage, signal),
+        listOccupiedBranchIds(signal),
       ]);
-      return { branches, plants };
+      return { branches, plants, occupiedBranchIds };
     },
     [branchPage, plantPage],
   );
   const resource = useContractResource(`site-intake:${branchPage}:${plantPage}`, load);
 
   useEffect(() => {
-    const saved = readIntakeDraft();
-    queueMicrotask(() => {
-      if (saved && intakeDraftIsDirty(saved)) {
-        setDraft((prev) => ({
-          ...saved,
-          branchId: saved.branchId || prev.branchId,
-          plantId: saved.plantId || prev.plantId,
-        }));
-        setDraftRestored(true);
-      }
-      setHydrated(true);
-    });
+    // Drop any leftover local autosave from older builds; save is explicit only.
+    clearIntakeDraft();
   }, []);
-
-  useEffect(() => {
-    if (!hydrated || !intakeDraftIsDirty(draft)) return;
-    const handle = window.setTimeout(() => {
-      writeIntakeDraft(draft);
-      setSavedAt(Date.now());
-      toast({
-        id: "intake-autosave",
-        tone: "info",
-        title: "پیش‌نویس فرم ذخیره شد",
-        durationMs: 2200,
-      });
-    }, 900);
-    return () => window.clearTimeout(handle);
-  }, [draft, hydrated, toast]);
 
   useEffect(() => {
     function onOnline() {
@@ -281,27 +254,44 @@ export function SiteIntakeStep({
 
   const branches = resource.state.status === "ready" ? resource.state.data.branches : undefined;
   const plants = resource.state.status === "ready" ? resource.state.data.plants : undefined;
+  const occupiedBranchIds =
+    resource.state.status === "ready" ? resource.state.data.occupiedBranchIds : new Set<string>();
+  const validationContext = { occupiedBranchIds };
 
   useEffect(() => {
-    if (!branches || draft.branchId || draftRestored) return;
-    if (branches.results.length === 1) {
-      const only = branches.results[0]!;
+    if (!branches || draft.branchId) return;
+    const available = branches.results.filter((item) => !occupiedBranchIds.has(item.uuid));
+    if (available.length === 0 && branches.results.length > 0 && draft.branchMode === "existing") {
+      queueMicrotask(() => setDraft((prev) => ({ ...prev, branchMode: "new" })));
+      return;
+    }
+    if (available.length === 1) {
+      const only = available[0]!;
       queueMicrotask(() =>
         setDraft((prev) => ({ ...prev, branchMode: "existing", branchId: only.uuid })),
       );
       return;
     }
-    if (branches.results.length > 0 && !initialBranchId && draft.branchMode === "new" && !draft.branchName) {
+    if (available.length > 0 && !initialBranchId && draft.branchMode === "new" && !draft.branchName) {
       queueMicrotask(() => setDraft((prev) => ({ ...prev, branchMode: "existing" })));
     }
-  }, [
-    branches,
-    draft.branchId,
-    draft.branchMode,
-    draft.branchName,
-    draftRestored,
-    initialBranchId,
-  ]);
+  }, [branches, draft.branchId, draft.branchMode, draft.branchName, initialBranchId, occupiedBranchIds]);
+
+  useEffect(() => {
+    if (!draft.branchId || !occupiedBranchIds.has(draft.branchId)) return;
+    if (draft.createdBranchId === draft.branchId) return;
+    queueMicrotask(() => {
+      setDraft((prev) => {
+        if (!prev.branchId || !occupiedBranchIds.has(prev.branchId)) return prev;
+        if (prev.createdBranchId === prev.branchId) return prev;
+        return { ...prev, branchId: "", plantId: "", plantMode: "new" };
+      });
+      const params = new URLSearchParams(window.location.search);
+      params.delete("branch");
+      params.delete("plant");
+      window.history.replaceState(null, "", `/panel/contracts/new${params.size ? `?${params}` : ""}`);
+    });
+  }, [draft.branchId, draft.createdBranchId, occupiedBranchIds]);
 
   const selectedBranch =
     branches?.results.find((item) => item.uuid === draft.branchId) ??
@@ -313,36 +303,18 @@ export function SiteIntakeStep({
     matchingPlants.find((item) => item.uuid === draft.plantId) ??
     plants?.results.find((item) => item.uuid === draft.plantId);
 
-  const branchValid = branchSectionValid(draft);
+  const branchValid = branchSectionValid(draft, validationContext);
   const plantValid = plantSectionValid(draft);
-  const formValid = intakeFormValid(draft);
-
-  useEffect(() => {
-    if (branchValid && !branchBecameValid.current) {
-      branchBecameValid.current = true;
-      setBranchOpen(false);
-      setPlantOpen(true);
-      queueMicrotask(() =>
-        plantSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" }),
-      );
-    }
-    if (!branchValid) branchBecameValid.current = false;
-  }, [branchValid]);
-
-  useEffect(() => {
-    if (plantValid && !plantBecameValid.current) {
-      plantBecameValid.current = true;
-      setPlantOpen(false);
-    }
-    if (!plantValid) plantBecameValid.current = false;
-  }, [plantValid]);
+  const phaseValid = intakePhase === "branch" ? branchValid : plantValid;
+  const branchCtaLabel =
+    draft.branchMode === "new" && !draft.createdBranchId ? "ثبت انشعاب و ادامه" : "ادامه به نیروگاه";
+  const plantCtaLabel =
+    draft.plantMode === "existing" ? "تأیید و ادامه" : "ثبت نیروگاه و ادامه";
+  const primaryCtaLabel = intakePhase === "branch" ? branchCtaLabel : plantCtaLabel;
 
   function patch(next: Partial<SiteIntakeDraft>): void {
     setDraft((prev) => {
       const merged = { ...prev, ...next };
-      if (merged.sameAddress && "branchAddress" in next) {
-        merged.plantAddress = merged.branchAddress;
-      }
       if (merged.branchMode === "new") {
         merged.plantMode = "new";
         merged.plantId = "";
@@ -363,37 +335,31 @@ export function SiteIntakeStep({
 
   const actions: SiteIntakeAlertActions = {
     useExistingBranch: (branchId) => {
+      if (occupiedBranchIds.has(branchId)) return;
       patch({ branchMode: "existing", branchId, plantId: "", plantMode: "new" });
-      setBranchOpen(false);
-      setPlantOpen(true);
     },
     editBranch: () => {
       if (selectedBranch) setEditRegistration({ kind: "branch", item: selectedBranch });
     },
-    pickAnotherBranch: () => {
-      patch({ branchId: "", plantId: "", plantMode: "new" });
-      setBranchOpen(true);
-    },
     editPlant: () => {
       if (selectedPlant) setEditRegistration({ kind: "plant", item: selectedPlant });
     },
+    pickAnotherBranch: () => {
+      patch({ branchId: "", plantId: "", plantMode: "new" });
+      syncUrl("", "");
+    },
     pickAnotherPlant: () => {
       patch({ plantId: "" });
-      setPlantOpen(true);
     },
     ackCapacity: () => patch({ capacityAcked: true }),
-    continueToPlan: () => {
-      if (selectedBranch && selectedPlant) onSkipToPlan(contractOption(selectedPlant, selectedBranch));
-    },
     resetDraft: () => {
       clearIntakeDraft();
       setDraft({
         ...EMPTY_INTAKE_DRAFT,
         branchMode: (branches?.results.length ?? 0) > 0 ? "existing" : "new",
       });
-      setDraftRestored(false);
+      setIntakePhase("branch");
       setDismissedBanners((prev) => new Set([...prev, "draft.restored"]));
-      setSavedAt(null);
     },
     retrySubmit: () => {
       setConfirmOpen(true);
@@ -408,10 +374,11 @@ export function SiteIntakeStep({
       draft,
       branches: branches?.results ?? [],
       plants: plants?.results ?? [],
+      occupiedBranchIds,
       selectedBranch,
       selectedPlant,
       submitIssue,
-      draftRestored,
+      draftRestored: false,
       online,
     },
     actions,
@@ -427,28 +394,94 @@ export function SiteIntakeStep({
 
   function visibleError(field: SiteIntakeFieldId): string | undefined {
     if (!touched[field] && submitIssue.kind !== "validation") return undefined;
-    return fieldError(field, draft);
+    return fieldError(field, draft, validationContext);
   }
 
-  async function performSubmit(): Promise<void> {
+  function showValidation(invalid: readonly SiteIntakeFieldId[]): void {
+    setSubmitIssue({ kind: "validation", fields: [...invalid] });
+    setTouched(Object.fromEntries(invalid.map((field) => [field, true])));
+    setConfirmOpen(false);
+    queueMicrotask(() => {
+      summaryRef.current?.focus();
+      document.getElementById(`intake-${invalid[0]}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+    });
+  }
+
+  async function advanceFromBranch(): Promise<void> {
     if (inFlight) return;
-    const invalid = collectInvalidFields(draft);
+    const invalid = collectInvalidBranchFields(draft, validationContext);
     if (invalid.length) {
-      setSubmitIssue({ kind: "validation", fields: invalid });
-      setTouched(Object.fromEntries(invalid.map((field) => [field, true])));
+      showValidation(invalid);
+      return;
+    }
+
+    if (draft.branchMode === "existing" || draft.createdBranchId) {
+      const branchId = draft.createdBranchId || draft.branchId;
+      if (!branchId) return;
+      if (occupiedBranchIds.has(branchId) && draft.createdBranchId !== branchId) {
+        showValidation(["branch-select"]);
+        return;
+      }
       setConfirmOpen(false);
-      queueMicrotask(() => {
-        summaryRef.current?.focus();
-        document.getElementById(`intake-${invalid[0]}`)?.scrollIntoView({ behavior: "smooth", block: "center" });
+      syncUrl(branchId, draft.plantId);
+      setIntakePhase("plant");
+      queueMicrotask(() => plantSectionRef.current?.focus());
+      return;
+    }
+
+    setInFlight(true);
+    setSubmitIssue({ kind: "none" });
+    try {
+      const branch = await saveBranch({
+        name: draft.branchName.trim(),
+        address: draft.branchAddress.trim(),
+        bill_id: latinDigits(draft.billId.trim()),
       });
+      patch({
+        createdBranchId: branch.uuid,
+        branchId: branch.uuid,
+        branchMode: "existing",
+      });
+      syncUrl(branch.uuid, "");
+      toast({ tone: "success", title: "انشعاب ثبت شد؛ حالا نیروگاه را تعریف کنید" });
+      setConfirmOpen(false);
+      resource.reload();
+      setIntakePhase("plant");
+      queueMicrotask(() => plantSectionRef.current?.focus());
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) {
+        setSubmitIssue({ kind: "session" });
+      } else if (error instanceof ApiError && error.fields.bill_id) {
+        setSubmitIssue({ kind: "conflict" });
+      } else if (error instanceof ApiError && (error.status === 0 || error.code === "network")) {
+        setSubmitIssue({ kind: "network" });
+      } else {
+        setSubmitIssue({ kind: "generic", message: plantError(error) });
+      }
+      setConfirmOpen(false);
+      queueMicrotask(() => summaryRef.current?.focus());
+    } finally {
+      setInFlight(false);
+    }
+  }
+
+  async function performPlantSubmit(): Promise<void> {
+    if (inFlight) return;
+    const invalid = collectInvalidPlantFields(draft);
+    if (invalid.length) {
+      showValidation(invalid);
       return;
     }
 
     if (draft.branchMode === "existing" && draft.plantMode === "existing") {
       if (!selectedBranch || !selectedPlant) return;
+      if (occupiedBranchIds.has(selectedBranch.uuid)) {
+        showValidation(["branch-select"]);
+        setIntakePhase("branch");
+        return;
+      }
       setConfirmOpen(false);
       clearIntakeDraft();
-      setSavedAt(null);
       syncUrl(selectedBranch.uuid, selectedPlant.uuid);
       if (selectedBranch.status === "active" && selectedPlant.status === "active") {
         onSkipToPlan(contractOption(selectedPlant, selectedBranch));
@@ -462,30 +495,19 @@ export function SiteIntakeStep({
     setSubmitIssue({ kind: "none" });
     try {
       let branch = selectedBranch;
-      let branchId = draft.createdBranchId || draft.branchId;
-
-      if (draft.branchMode === "new" && !draft.createdBranchId) {
-        branch = await saveBranch({
-          name: draft.branchName.trim(),
-          address: draft.branchAddress.trim(),
-          meter_number: latinDigits(draft.meter.trim()),
-        });
-        branchId = branch.uuid;
-        patch({ createdBranchId: branch.uuid, branchId: branch.uuid, branchMode: "existing" });
-        syncUrl(branch.uuid, "");
-      } else if (draft.createdBranchId && !branch) {
-        branchId = draft.createdBranchId;
-      }
-
+      const branchId = draft.createdBranchId || draft.branchId;
       if (!branchId) throw new ApiError("انشعاب مشخص نیست.", 400, "invalid", {});
 
       let plant = selectedPlant;
       if (draft.plantMode === "new" && !draft.createdPlantId) {
+        if (!isSchemeType(draft.schemeType) || !isSystemType(draft.systemType)) {
+          throw new ApiError("مشخصات طرح نیروگاه ناقص است.", 400, "invalid", {});
+        }
         plant = await savePlant({
-          name: draft.plantName.trim(),
-          address: draft.plantAddress.trim(),
           branch_uuid: branchId,
           capacity_kwp: latinDigits(draft.capacity.trim()).replace("٫", "."),
+          scheme_type: draft.schemeType,
+          system_type: draft.systemType,
         });
         patch({ createdPlantId: plant.uuid, plantId: plant.uuid, plantMode: "existing" });
         syncUrl(branchId, plant.uuid);
@@ -506,16 +528,13 @@ export function SiteIntakeStep({
       }
 
       clearIntakeDraft();
-      setSavedAt(null);
-      toast({ tone: "success", title: "ثبت شد و برای بررسی ارسال شد" });
+      toast({ tone: "success", title: "نیروگاه ثبت شد و برای بررسی ارسال شد" });
       setConfirmOpen(false);
       resource.reload();
       onContinueReview(contractOption(plant, branch));
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) {
         setSubmitIssue({ kind: "session" });
-      } else if (error instanceof ApiError && error.fields.meter_number) {
-        setSubmitIssue({ kind: "conflict" });
       } else if (error instanceof ApiError && (error.status === 0 || error.code === "network")) {
         setSubmitIssue({ kind: "network" });
       } else if (draft.createdBranchId && !draft.createdPlantId) {
@@ -530,16 +549,26 @@ export function SiteIntakeStep({
     }
   }
 
+  function requestPrimaryAction(): void {
+    if (!phaseValid) {
+      const invalid =
+        intakePhase === "branch"
+          ? collectInvalidBranchFields(draft, validationContext)
+          : collectInvalidPlantFields(draft);
+      showValidation(invalid);
+      return;
+    }
+    if (intakePhase === "branch" && (draft.branchMode === "existing" || draft.createdBranchId)) {
+      void advanceFromBranch();
+      return;
+    }
+    setConfirmOpen(true);
+  }
+
   function onFormKeyDown(event: KeyboardEvent<HTMLFormElement>): void {
     if ((event.ctrlKey || event.metaKey) && event.key === "Enter") {
       event.preventDefault();
-      if (formValid) setConfirmOpen(true);
-      else {
-        const invalid = collectInvalidFields(draft);
-        setSubmitIssue({ kind: "validation", fields: invalid });
-        setTouched(Object.fromEntries(invalid.map((field) => [field, true])));
-        queueMicrotask(() => summaryRef.current?.focus());
-      }
+      requestPrimaryAction();
       return;
     }
     if (event.key !== "Enter" || event.target instanceof HTMLTextAreaElement) return;
@@ -567,19 +596,32 @@ export function SiteIntakeStep({
     return <ContractError message={resource.state.message} retry={resource.reload} />;
   }
 
-  const completeness = intakeCompleteness(draft);
-  const branchCount = branches?.count ?? branches?.results.length ?? 0;
+  const listedBranchCount = branches?.results.length ?? 0;
+  const availableBranchCount = branches
+    ? branches.results.filter((item) => !occupiedBranchIds.has(item.uuid)).length
+    : 0;
+  const branchCount = listedBranchCount;
 
   const branchSummary =
     draft.branchMode === "existing" && selectedBranch
-      ? `${selectedBranch.name} · ${selectedBranch.meter_number}`
-      : [draft.branchName, draft.meter].filter(Boolean).join(" · ") || "انشعاب";
+      ? `${selectedBranch.name} · ${selectedBranch.bill_id}`
+      : [draft.branchName, draft.billId].filter(Boolean).join(" · ") || "انشعاب";
 
   const plantSummary =
     draft.plantMode === "existing" && selectedPlant
-      ? `${selectedPlant.name} · ${selectedPlant.capacity_kwp} کیلووات`
-      : [draft.plantName, draft.capacity ? `${draft.capacity} کیلووات` : ""].filter(Boolean).join(" · ") ||
-        "نیروگاه";
+      ? [
+          selectedPlant.name,
+          `${selectedPlant.capacity_kwp} کیلووات`,
+          schemeTypeLabel(selectedPlant.scheme_type),
+          systemTypeLabel(selectedPlant.system_type),
+        ].join(" · ")
+      : [
+          draft.capacity ? `${draft.capacity} کیلووات` : "",
+          draft.schemeType ? schemeTypeLabel(draft.schemeType) : "",
+          draft.systemType ? systemTypeLabel(draft.systemType) : "",
+        ]
+          .filter(Boolean)
+          .join(" · ") || "نیروگاه";
 
   return (
     <div className="site-intake">
@@ -595,40 +637,15 @@ export function SiteIntakeStep({
         />
       ) : null}
 
-      <button
-        type="button"
-        className="site-intake-mobile-chip"
-        onClick={() => setSheetOpen(true)}
-      >
-        <span>
-          پرونده · {faNumber(completeness.filled)} از {faNumber(completeness.total)} فیلد
-        </span>
-        <Icon name="chevron" className="size-4 -rotate-90" />
-      </button>
+      <SiteDossier
+        draft={draft}
+        branch={selectedBranch}
+        plant={selectedPlant}
+        phase={intakePhase}
+        sectionsValid={{ branch: branchValid, plant: plantValid }}
+      />
 
-      {sheetOpen ? (
-        <>
-          <button
-            type="button"
-            className="site-sheet-backdrop"
-            aria-label="بستن خلاصه پرونده"
-            onClick={() => setSheetOpen(false)}
-          />
-          <div className="site-sheet" role="dialog" aria-label="خلاصه پرونده">
-            <div className="site-sheet__grab" />
-            <SiteDossier
-              draft={draft}
-              branch={selectedBranch}
-              plant={selectedPlant}
-              sectionsValid={{ branch: branchValid, plant: plantValid }}
-              compact
-            />
-          </div>
-        </>
-      ) : null}
-
-      <div className="site-intake-layout">
-        <div className="site-intake-main">
+      <div className="site-intake-main">
           <Alert
             ref={summaryRef}
             variant="danger"
@@ -646,11 +663,11 @@ export function SiteIntakeStep({
             }
             description={
               submitIssue.kind === "network"
-                ? "اطلاعات فرم حفظ شده است."
+                ? "محتوای فرم هنوز روی صفحه است؛ دوباره ذخیره را بزنید."
                 : submitIssue.kind === "partial"
                   ? "اطلاعات انشعاب ذخیره شده است. فقط ثبت نیروگاه را دوباره امتحان کنید."
                   : submitIssue.kind === "session"
-                    ? "پیش‌نویس فرم حفظ شده است."
+                    ? "پس از ورود دوباره، همین فرم را دوباره ذخیره کنید."
                     : submitIssue.kind === "generic"
                       ? submitIssue.message
                       : undefined
@@ -659,8 +676,8 @@ export function SiteIntakeStep({
               submitIssue.kind === "validation"
                 ? submitIssue.fields.map((field) => ({
                     label:
-                      field === "branch-meter"
-                        ? "شماره کنتور"
+                      field === "branch-bill"
+                        ? "شناسه قبض"
                         : field === "plant-capacity"
                           ? "ظرفیت نصب‌شده"
                           : field,
@@ -683,431 +700,404 @@ export function SiteIntakeStep({
             className="space-y-4"
             onSubmit={(event: FormEvent) => {
               event.preventDefault();
-              if (formValid) setConfirmOpen(true);
-              else {
-                const invalid = collectInvalidFields(draft);
-                setSubmitIssue({ kind: "validation", fields: invalid });
-                setTouched(Object.fromEntries(invalid.map((field) => [field, true])));
-                queueMicrotask(() => summaryRef.current?.focus());
-              }
+              requestPrimaryAction();
             }}
             onKeyDown={onFormKeyDown}
           >
-            <section className="site-section-card" aria-labelledby={`${formId}-branch-title`}>
-              {branchValid && !branchOpen ? (
-                <button type="button" className="site-section-chip" onClick={() => setBranchOpen(true)}>
-                  <span className="site-section-chip__check">
-                    <Icon name="check" className="size-3.5" />
-                  </span>
-                  <span className="site-section-chip__meta">
-                    <strong>۱ · انشعاب</strong>
-                    <span>{branchSummary}</span>
-                  </span>
-                  <span className="site-section-chip__edit">ویرایش</span>
-                </button>
-              ) : (
-                <>
-                  <div className="site-section-card__head">
-                    <h3 id={`${formId}-branch-title`} className="site-section-card__title">
-                      <span className="site-section-card__index">{faNumber(1)}</span>
-                      انشعاب
-                    </h3>
-                  </div>
-                  <div className="site-section-card__body">
-                    <AlertSlot placement="section-branch" alerts={alerts} />
-                    <Segmented
-                      value={draft.branchMode}
-                      onChange={(value) => {
-                        if (value === "existing" && branchCount === 0) return;
-                        patch({
-                          branchMode: value as "existing" | "new",
-                          plantMode: value === "new" ? "new" : draft.plantMode,
-                          plantId: value === "new" ? "" : draft.plantId,
-                        });
-                      }}
-                      options={[
-                        {
-                          id: "existing",
-                          label: "انتخاب از انشعاب‌های من",
-                          badge: faNumber(branchCount),
-                          disabled: branchCount === 0,
-                          title:
-                            branchCount === 0
-                              ? "هنوز انشعابی ثبت نکرده‌اید"
-                              : undefined,
-                        },
-                        { id: "new", label: "انشعاب جدید" },
-                      ]}
-                    />
-
-                    {draft.branchMode === "existing" ? (
-                      !branches?.results.length ? (
-                        <EmptyState
-                          title="انشعابی ثبت نشده"
-                          description="با «انشعاب جدید» مشخصات را وارد کنید."
-                        />
-                      ) : (
-                        <fieldset id="intake-branch-select" className="site-select-list">
-                          <legend className="sr-only">انتخاب انشعاب</legend>
-                          {branches.results.map((entry) => {
-                            const meta = plantStatusMeta(entry.status);
-                            return (
-                              <label
-                                key={entry.uuid}
-                                className="site-select-card"
-                                data-selected={draft.branchId === entry.uuid}
-                              >
-                                <input
-                                  type="radio"
-                                  name="intake-branch"
-                                  checked={draft.branchId === entry.uuid}
-                                  onChange={() => {
-                                    patch({
-                                      branchId: entry.uuid,
-                                      plantId: "",
-                                      plantMode: "new",
-                                      plantAddress: draft.sameAddress
-                                        ? entry.address
-                                        : draft.plantAddress,
-                                    });
-                                    syncUrl(entry.uuid, "");
-                                    blurField("branch-select");
-                                  }}
-                                />
-                                <span className="site-select-card__icon" aria-hidden>
-                                  <Icon name="home" className="size-5" />
-                                </span>
-                                <span className="site-select-card__body">
-                                  <strong>{entry.name}</strong>
-                                  <span>
-                                    کنتور: <bdi dir="ltr">{entry.meter_number}</bdi>
-                                  </span>
-                                  <span>{entry.address}</span>
-                                </span>
-                                <span className="site-select-card__end">
-                                  <StatusPill status={meta.tone} label={meta.label} />
-                                  <span className="site-select-card__check" aria-hidden>
-                                    <Icon name="check" className="size-3.5" />
-                                  </span>
-                                </span>
-                              </label>
-                            );
-                          })}
-                        </fieldset>
-                      )
-                    ) : (
-                      <>
-                        <Field
-                          id="intake-branch-name"
-                          label="نام انشعاب"
-                          error={visibleError("branch-name")}
-                          valid={!fieldError("branch-name", draft) && Boolean(draft.branchName.trim())}
-                        >
-                          <input
-                            id="intake-branch-name-control"
-                            value={draft.branchName}
-                            maxLength={150}
-                            required
-                            onBlur={() => blurField("branch-name")}
-                            onChange={(event) => patch({ branchName: event.target.value })}
-                          />
-                        </Field>
-                        <Field
-                          id="intake-branch-meter"
-                          label="شماره کنتور"
-                          error={visibleError("branch-meter")}
-                          valid={!fieldError("branch-meter", draft) && Boolean(draft.meter.trim())}
-                          popover={
-                            <InfoPopover title="شماره کنتور کجاست؟">
-                              معمولاً روی صفحه یا بدنهٔ کنتور برق چاپ شده است. همان شماره‌ای را وارد کنید که روی
-                              قبض یا خود کنتور می‌بینید.
-                            </InfoPopover>
-                          }
-                        >
-                          <input
-                            id="intake-branch-meter-control"
-                            dir="ltr"
-                            inputMode="numeric"
-                            value={draft.meter}
-                            maxLength={64}
-                            required
-                            onBlur={() => blurField("branch-meter")}
-                            onPaste={(event) => {
-                              event.preventDefault();
-                              const text = event.clipboardData.getData("text");
-                              patch({ meter: normalizeMeterInput(text) });
-                            }}
-                            onChange={(event) =>
-                              patch({ meter: normalizeMeterInput(event.target.value) })
-                            }
-                          />
-                        </Field>
-                        <Field
-                          id="intake-branch-address"
-                          label="نشانی انشعاب"
-                          error={visibleError("branch-address")}
-                          valid={
-                            !fieldError("branch-address", draft) && Boolean(draft.branchAddress.trim())
-                          }
-                        >
-                          <textarea
-                            id="intake-branch-address-control"
-                            value={draft.branchAddress}
-                            maxLength={500}
-                            required
-                            rows={3}
-                            onBlur={() => blurField("branch-address")}
-                            onChange={(event) => patch({ branchAddress: event.target.value })}
-                          />
-                        </Field>
-                      </>
-                    )}
-                    {branches && (branches.next || branches.previous) ? (
-                      <ContractPagination page={branchPage} {...branches} onChange={setBranchPage} />
-                    ) : null}
-                  </div>
-                </>
-              )}
-            </section>
-
             <section
               ref={plantSectionRef}
               className="site-section-card"
-              aria-labelledby={`${formId}-plant-title`}
+              tabIndex={-1}
+              aria-labelledby={`${formId}-site-title`}
             >
-              {plantValid && !plantOpen ? (
-                <button type="button" className="site-section-chip" onClick={() => setPlantOpen(true)}>
-                  <span className="site-section-chip__check">
-                    <Icon name="check" className="size-3.5" />
+              <div className="site-section-card__head">
+                <h3 id={`${formId}-site-title`} className="site-section-card__title">
+                  <span className="site-section-card__index">
+                    {faNumber(intakePhase === "branch" ? 1 : 2)}
                   </span>
-                  <span className="site-section-chip__meta">
-                    <strong>۲ · نیروگاه</strong>
-                    <span>{plantSummary}</span>
-                  </span>
-                  <span className="site-section-chip__edit">ویرایش</span>
-                </button>
-              ) : (
-                <>
-                  <div className="site-section-card__head">
-                    <h3 id={`${formId}-plant-title`} className="site-section-card__title">
-                      <span className="site-section-card__index">{faNumber(2)}</span>
-                      نیروگاه
-                    </h3>
-                  </div>
-                  <div className="site-section-card__body">
-                    <AlertSlot placement="section-plant" alerts={alerts} />
-                    <Segmented
-                      value={draft.plantMode}
-                      onChange={(value) => {
-                        if (value === "existing" && draft.branchMode === "new") return;
-                        patch({ plantMode: value as "existing" | "new" });
-                      }}
-                      options={[
-                        {
-                          id: "existing",
-                          label: "انتخاب از نیروگاه‌های این انشعاب",
-                          badge: faNumber(matchingPlants.length),
-                          disabled: draft.branchMode === "new" || !draft.branchId,
-                          title:
-                            draft.branchMode === "new"
-                              ? "برای انشعاب جدید فقط ثبت نیروگاه جدید ممکن است"
-                              : !draft.branchId
-                                ? "ابتدا انشعاب را انتخاب کنید"
-                                : undefined,
-                        },
-                        { id: "new", label: "نیروگاه جدید" },
-                      ]}
-                    />
+                  {intakePhase === "branch" ? "ثبت انشعاب" : "ثبت نیروگاه"}
+                </h3>
+              </div>
+              <div className="site-section-card__body">
+                <p className="site-field__hint" style={{ margin: 0 }}>
+                  {intakePhase === "branch"
+                    ? "اول انشعاب را انتخاب یا ثبت کنید؛ ثبت نیروگاه در مرحلهٔ بعد انجام می‌شود."
+                    : "نیروگاه را روی انشعاب انتخاب‌شده تعریف کنید."}
+                </p>
 
-                    {draft.plantMode === "existing" ? (
-                      !matchingPlants.length ? (
-                        <EmptyState
-                          title="نیروگاهی برای این انشعاب نیست"
-                          description="با «نیروگاه جدید» مشخصات را ثبت کنید."
-                        />
-                      ) : (
-                        <fieldset id="intake-plant-select" className="site-select-list">
-                          <legend className="sr-only">انتخاب نیروگاه</legend>
-                          {matchingPlants.map((entry) => {
-                            const meta = plantStatusMeta(entry.status);
-                            return (
-                              <label
-                                key={entry.uuid}
-                                className="site-select-card"
-                                data-selected={draft.plantId === entry.uuid}
-                              >
-                                <input
-                                  type="radio"
-                                  name="intake-plant"
-                                  checked={draft.plantId === entry.uuid}
-                                  onChange={() => {
-                                    patch({ plantId: entry.uuid });
-                                    syncUrl(draft.branchId, entry.uuid);
-                                    blurField("plant-select");
-                                  }}
-                                />
-                                <span className="site-select-card__icon" aria-hidden>
-                                  <Icon name="solarPanel" className="size-5" />
-                                </span>
-                                <span className="site-select-card__body">
-                                  <strong>{entry.name}</strong>
-                                  <span>
-                                    <bdi dir="ltr">{entry.capacity_kwp}</bdi> کیلووات
-                                  </span>
-                                  <span>{entry.address}</span>
-                                </span>
-                                <span className="site-select-card__end">
-                                  <StatusPill status={meta.tone} label={meta.label} />
-                                  <span className="site-select-card__check" aria-hidden>
-                                    <Icon name="check" className="size-3.5" />
-                                  </span>
-                                </span>
-                              </label>
-                            );
-                          })}
-                        </fieldset>
-                      )
+                {intakePhase === "branch" ? (
+                <div className="site-field-group" aria-labelledby={`${formId}-branch-title`}>
+                  <h4 id={`${formId}-branch-title`} className="site-field-group__title">
+                    انشعاب
+                  </h4>
+                  <AlertSlot placement="section-branch" alerts={alerts} />
+                  <Segmented
+                    value={draft.branchMode}
+                    onChange={(value) => {
+                      if (value === "existing" && branchCount === 0) return;
+                      patch({
+                        branchMode: value as "existing" | "new",
+                        plantMode: value === "new" ? "new" : draft.plantMode,
+                        plantId: value === "new" ? "" : draft.plantId,
+                      });
+                    }}
+                    options={[
+                      {
+                        id: "existing",
+                        label: "انتخاب از انشعاب‌های من",
+                        badge: faNumber(availableBranchCount),
+                        disabled: branchCount === 0,
+                        title:
+                          branchCount === 0
+                            ? "هنوز انشعابی ثبت نکرده‌اید"
+                            : availableBranchCount === 0
+                              ? "همهٔ انشعاب‌ها در قرارداد دیگری هستند"
+                              : undefined,
+                      },
+                      { id: "new", label: "انشعاب جدید" },
+                    ]}
+                  />
+
+                  {draft.branchMode === "existing" ? (
+                    !branches?.results.length ? (
+                      <EmptyState
+                        title="انشعابی ثبت نشده"
+                        description="با «انشعاب جدید» مشخصات را وارد کنید."
+                      />
                     ) : (
-                      <>
-                        <Field
-                          id="intake-plant-name"
-                          label="نام نیروگاه"
-                          error={visibleError("plant-name")}
-                          valid={!fieldError("plant-name", draft) && Boolean(draft.plantName.trim())}
-                        >
-                          <input
-                            id="intake-plant-name-control"
-                            value={draft.plantName}
-                            maxLength={150}
-                            required
-                            onBlur={() => blurField("plant-name")}
-                            onChange={(event) => patch({ plantName: event.target.value })}
-                          />
-                        </Field>
-                        <label className="site-check">
-                          <input
-                            type="checkbox"
-                            checked={draft.sameAddress}
-                            onChange={(event) => {
-                              const checked = event.target.checked;
-                              patch({
-                                sameAddress: checked,
-                                plantAddress: checked
-                                  ? draft.branchMode === "existing"
-                                    ? (selectedBranch?.address ?? draft.branchAddress)
-                                    : draft.branchAddress
-                                  : draft.plantAddress,
-                              });
-                            }}
-                          />
-                          <span>آدرس نیروگاه با آدرس انشعاب یکی است</span>
-                        </label>
-                        <Field
-                          id="intake-plant-address"
-                          label="نشانی محل نیروگاه"
-                          error={visibleError("plant-address")}
-                          valid={
-                            !fieldError("plant-address", draft) && Boolean(draft.plantAddress.trim())
-                          }
-                        >
-                          <textarea
-                            id="intake-plant-address-control"
-                            value={draft.plantAddress}
-                            maxLength={500}
-                            required
-                            rows={3}
-                            disabled={draft.sameAddress}
-                            onBlur={() => blurField("plant-address")}
-                            onChange={(event) => patch({ plantAddress: event.target.value })}
-                          />
-                        </Field>
-                        <Field
-                          id="intake-plant-capacity"
-                          label="ظرفیت نصب‌شده"
-                          error={visibleError("plant-capacity")}
-                          valid={
-                            !fieldError("plant-capacity", draft) && Boolean(draft.capacity.trim())
-                          }
-                          popover={
-                            <InfoPopover title="ظرفیت نصب‌شده">
-                              ظرفیت نصب‌شده، اندازهٔ نیروگاه است؛ با میزان برق تولیدی فرق دارد.
-                            </InfoPopover>
-                          }
-                        >
-                          <div className="site-capacity">
-                            <input
-                              id="intake-plant-capacity-control"
-                              dir="ltr"
-                              inputMode="decimal"
-                              value={draft.capacity}
-                              required
-                              pattern="[0-9۰-۹٠-٩]+([.٫][0-9۰-۹٠-٩]{1,3})?"
-                              onBlur={() => blurField("plant-capacity")}
-                              onChange={(event) =>
-                                patch({
-                                  capacity: normalizeCapacityInput(event.target.value),
-                                  capacityAcked: false,
-                                })
+                      <fieldset id="intake-branch-select" className="site-select-list">
+                        <legend className="sr-only">انتخاب انشعاب</legend>
+                        {branches.results.map((entry) => {
+                          const meta = plantStatusMeta(entry.status);
+                          const occupied = occupiedBranchIds.has(entry.uuid);
+                          return (
+                            <label
+                              key={entry.uuid}
+                              className="site-select-card"
+                              data-selected={!occupied && draft.branchId === entry.uuid}
+                              data-disabled={occupied ? "true" : undefined}
+                              title={
+                                occupied
+                                  ? "این انشعاب در قرارداد دیگری استفاده شده است"
+                                  : undefined
                               }
-                            />
-                            <span className="site-capacity__unit">کیلووات</span>
-                          </div>
-                        </Field>
-                      </>
-                    )}
-                    {plants && (plants.next || plants.previous) ? (
-                      <ContractPagination page={plantPage} {...plants} onChange={setPlantPage} />
-                    ) : null}
+                            >
+                              <input
+                                type="radio"
+                                name="intake-branch"
+                                checked={!occupied && draft.branchId === entry.uuid}
+                                disabled={occupied}
+                                onChange={() => {
+                                  if (occupied) return;
+                                  patch({
+                                    branchId: entry.uuid,
+                                    plantId: "",
+                                    plantMode: "new",
+                                  });
+                                  syncUrl(entry.uuid, "");
+                                  blurField("branch-select");
+                                }}
+                              />
+                              <span className="site-select-card__icon" aria-hidden>
+                                <Icon name="home" className="size-5" />
+                              </span>
+                              <span className="site-select-card__body">
+                                <strong>{entry.name}</strong>
+                                <span>
+                                  شناسه قبض: <bdi dir="ltr">{entry.bill_id}</bdi>
+                                </span>
+                                <span>{entry.address}</span>
+                                {occupied ? (
+                                  <span className="site-select-card__note">
+                                    در قرارداد دیگری استفاده شده
+                                  </span>
+                                ) : null}
+                              </span>
+                              <span className="site-select-card__end">
+                                <StatusPill
+                                  status={occupied ? "closed" : meta.tone}
+                                  label={occupied ? "در قرارداد دیگر" : meta.label}
+                                />
+                                <span className="site-select-card__check" aria-hidden>
+                                  <Icon name="check" className="size-3.5" />
+                                </span>
+                              </span>
+                            </label>
+                          );
+                        })}
+                      </fieldset>
+                    )
+                  ) : (
+                    <>
+                      <Field
+                        id="intake-branch-name"
+                        label="نام انشعاب"
+                        error={visibleError("branch-name")}
+                        valid={!fieldError("branch-name", draft) && Boolean(draft.branchName.trim())}
+                      >
+                        <input
+                          id="intake-branch-name-control"
+                          value={draft.branchName}
+                          maxLength={150}
+                          required
+                          onBlur={() => blurField("branch-name")}
+                          onChange={(event) => patch({ branchName: event.target.value })}
+                        />
+                      </Field>
+                      <Field
+                        id="intake-branch-bill"
+                        label="شناسه قبض"
+                        error={visibleError("branch-bill")}
+                        valid={!fieldError("branch-bill", draft) && Boolean(draft.billId.trim())}
+                        popover={
+                          <InfoPopover title="شناسه قبض کجاست؟">
+                            همان شناسه‌ای را وارد کنید که روی قبض برق چاپ شده است (شناسه قبض).
+                          </InfoPopover>
+                        }
+                      >
+                        <input
+                          id="intake-branch-bill-control"
+                          dir="ltr"
+                          inputMode="numeric"
+                          value={draft.billId}
+                          maxLength={64}
+                          required
+                          onBlur={() => blurField("branch-bill")}
+                          onPaste={(event) => {
+                            event.preventDefault();
+                            const text = event.clipboardData.getData("text");
+                            patch({ billId: normalizeBillIdInput(text) });
+                          }}
+                          onChange={(event) =>
+                            patch({ billId: normalizeBillIdInput(event.target.value) })
+                          }
+                        />
+                      </Field>
+                      <Field
+                        id="intake-branch-address"
+                        label="نشانی انشعاب"
+                        error={visibleError("branch-address")}
+                        valid={
+                          !fieldError("branch-address", draft) && Boolean(draft.branchAddress.trim())
+                        }
+                      >
+                        <textarea
+                          id="intake-branch-address-control"
+                          value={draft.branchAddress}
+                          maxLength={500}
+                          required
+                          rows={3}
+                          onBlur={() => blurField("branch-address")}
+                          onChange={(event) => patch({ branchAddress: event.target.value })}
+                        />
+                      </Field>
+                    </>
+                  )}
+                  {branches && (branches.next || branches.previous) ? (
+                    <ContractPagination page={branchPage} {...branches} onChange={setBranchPage} />
+                  ) : null}
+                </div>
+                ) : (
+                <div className="site-field-group" aria-labelledby={`${formId}-plant-title`}>
+                  <div className="site-branch-summary">
+                    <div>
+                      <p className="site-field-group__title">انشعاب این نیروگاه</p>
+                      <p className="site-field__hint" style={{ margin: 0 }}>
+                        {branchSummary}
+                      </p>
+                    </div>
                   </div>
-                </>
-              )}
+                  <h4 id={`${formId}-plant-title`} className="site-field-group__title">
+                    نیروگاه
+                  </h4>
+                  <AlertSlot placement="section-plant" alerts={alerts} />
+                  <Segmented
+                    value={draft.plantMode}
+                    onChange={(value) => {
+                      if (value === "existing" && draft.branchMode === "new") return;
+                      patch({ plantMode: value as "existing" | "new" });
+                    }}
+                    options={[
+                      {
+                        id: "existing",
+                        label: "انتخاب از نیروگاه‌های این انشعاب",
+                        badge: faNumber(matchingPlants.length),
+                        disabled: draft.branchMode === "new" || !draft.branchId,
+                        title:
+                          draft.branchMode === "new"
+                            ? "برای انشعاب جدید فقط ثبت نیروگاه جدید ممکن است"
+                            : !draft.branchId
+                              ? "ابتدا انشعاب را انتخاب کنید"
+                              : undefined,
+                      },
+                      { id: "new", label: "نیروگاه جدید" },
+                    ]}
+                  />
+
+                  {draft.plantMode === "existing" ? (
+                    !matchingPlants.length ? (
+                      <EmptyState
+                        title="نیروگاهی برای این انشعاب نیست"
+                        description="با «نیروگاه جدید» مشخصات را ثبت کنید."
+                      />
+                    ) : (
+                      <fieldset id="intake-plant-select" className="site-select-list">
+                        <legend className="sr-only">انتخاب نیروگاه</legend>
+                        {matchingPlants.map((entry) => {
+                          const meta = plantStatusMeta(entry.status);
+                          return (
+                            <label
+                              key={entry.uuid}
+                              className="site-select-card"
+                              data-selected={draft.plantId === entry.uuid}
+                            >
+                              <input
+                                type="radio"
+                                name="intake-plant"
+                                checked={draft.plantId === entry.uuid}
+                                onChange={() => {
+                                  patch({ plantId: entry.uuid });
+                                  syncUrl(draft.branchId, entry.uuid);
+                                  blurField("plant-select");
+                                }}
+                              />
+                              <span className="site-select-card__icon" aria-hidden>
+                                <Icon name="solarPanel" className="size-5" />
+                              </span>
+                              <span className="site-select-card__body">
+                                <strong>{entry.name}</strong>
+                                <span>
+                                  <bdi dir="ltr">{entry.capacity_kwp}</bdi> کیلووات ·{" "}
+                                  {schemeTypeLabel(entry.scheme_type)} ·{" "}
+                                  {systemTypeLabel(entry.system_type)}
+                                </span>
+                                {entry.address ? <span>{entry.address}</span> : null}
+                              </span>
+                              <span className="site-select-card__end">
+                                <StatusPill status={meta.tone} label={meta.label} />
+                                <span className="site-select-card__check" aria-hidden>
+                                  <Icon name="check" className="size-3.5" />
+                                </span>
+                              </span>
+                            </label>
+                          );
+                        })}
+                      </fieldset>
+                    )
+                  ) : (
+                    <>
+                      <div id="intake-plant-scheme">
+                        <PlantSpecChoices
+                          idPrefix={`${formId}-plant`}
+                          schemeType={draft.schemeType}
+                          systemType={draft.systemType}
+                          onSchemeChange={(value: SchemeType) => {
+                            patch({ schemeType: value });
+                            blurField("plant-scheme");
+                          }}
+                          onSystemChange={(value: SystemType) => {
+                            patch({ systemType: value });
+                            blurField("plant-system");
+                          }}
+                          schemeError={visibleError("plant-scheme")}
+                          systemError={visibleError("plant-system")}
+                          schemeValid={isSchemeType(draft.schemeType)}
+                          systemValid={isSystemType(draft.systemType)}
+                          disabled={inFlight}
+                        />
+                      </div>
+                      <span id="intake-plant-system" className="sr-only" />
+
+                      <Field
+                        id="intake-plant-capacity"
+                        label="ظرفیت نصب‌شده"
+                        error={visibleError("plant-capacity")}
+                        valid={
+                          !fieldError("plant-capacity", draft) && Boolean(draft.capacity.trim())
+                        }
+                        popover={
+                          <InfoPopover title="ظرفیت نصب‌شده">
+                            ظرفیت نصب‌شده، اندازهٔ نیروگاه است؛ با میزان برق تولیدی فرق دارد.
+                          </InfoPopover>
+                        }
+                      >
+                        <div className="site-capacity">
+                          <input
+                            id="intake-plant-capacity-control"
+                            dir="ltr"
+                            inputMode="decimal"
+                            value={draft.capacity}
+                            required
+                            pattern="[0-9۰-۹٠-٩]+([.٫][0-9۰-۹٠-٩]{1,3})?"
+                            onBlur={() => blurField("plant-capacity")}
+                            onChange={(event) =>
+                              patch({
+                                capacity: normalizeCapacityInput(event.target.value),
+                                capacityAcked: false,
+                              })
+                            }
+                          />
+                          <span className="site-capacity__unit">kWp</span>
+                        </div>
+                      </Field>
+                    </>
+                  )}
+                  {plants && (plants.next || plants.previous) ? (
+                    <ContractPagination page={plantPage} {...plants} onChange={setPlantPage} />
+                  ) : null}
+                </div>
+                )}
+              </div>
             </section>
 
             <div className="site-sticky-actions">
               <div className="site-autosave" role="status">
-                {savedAt
-                  ? `ذخیره شد · لحظاتی پیش`
-                  : intakeDraftIsDirty(draft)
-                    ? "در حال آماده‌سازی ذخیره…"
-                    : "پیش‌نویس فرم"}
+                {intakePhase === "branch"
+                  ? "مرحلهٔ ۱ از ۲ — اول انشعاب، بعد نیروگاه"
+                  : "مرحلهٔ ۲ از ۲ — ثبت نیروگاه روی انشعاب انتخاب‌شده"}
               </div>
-              <div className="flex flex-wrap gap-2">
-                <Button
-                  type="button"
-                  variant="secondary"
-                  onClick={() => {
-                    if (intakeDraftIsDirty(draft)) setLeaveOpen(true);
-                    else router.push("/panel/contracts");
-                  }}
-                >
-                  انصراف
-                </Button>
-                <Button type="submit" disabled={inFlight}>
-                  ادامه
+              <div className="site-sticky-actions__buttons">
+                {intakePhase === "plant" ? (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    disabled={inFlight}
+                    onClick={() => {
+                      setIntakePhase("branch");
+                      setSubmitIssue({ kind: "none" });
+                    }}
+                  >
+                    بازگشت به انشعاب
+                  </Button>
+                ) : (
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    onClick={() => {
+                      if (intakeDraftIsDirty(draft)) setLeaveOpen(true);
+                      else router.push("/panel/contracts");
+                    }}
+                  >
+                    انصراف
+                  </Button>
+                )}
+                <Button type="submit" disabled={inFlight} className="site-sticky-actions__primary">
+                  {primaryCtaLabel}
                 </Button>
               </div>
             </div>
           </form>
-        </div>
-
-        <div className="site-intake-aside">
-          <SiteDossier
-            draft={draft}
-            branch={selectedBranch}
-            plant={selectedPlant}
-            sectionsValid={{ branch: branchValid, plant: plantValid }}
-          />
-        </div>
       </div>
 
       <ConfirmDialog
         open={confirmOpen}
         onClose={() => setConfirmOpen(false)}
         onConfirm={() => {
-          void performSubmit();
+          if (intakePhase === "branch") void advanceFromBranch();
+          else void performPlantSubmit();
         }}
         variant="info"
-        title="ثبت انشعاب و نیروگاه"
+        title={intakePhase === "branch" ? "ثبت انشعاب" : "ثبت نیروگاه"}
         description="پیش از ارسال، خلاصه را بررسی کنید."
         confirmLabel="ثبت و ادامه"
       >
@@ -1116,15 +1106,27 @@ export function SiteIntakeStep({
             <dt className="text-foreground-muted">انشعاب</dt>
             <dd className="font-semibold">{branchSummary}</dd>
           </div>
-          <div>
-            <dt className="text-foreground-muted">نیروگاه</dt>
-            <dd className="font-semibold">{plantSummary}</dd>
-          </div>
+          {intakePhase === "plant" ? (
+            <div>
+              <dt className="text-foreground-muted">نیروگاه</dt>
+              <dd className="font-semibold">{plantSummary}</dd>
+            </div>
+          ) : null}
         </dl>
         <ol className="site-timeline mt-4">
-          <li>ثبت اطلاعات در سامانه</li>
-          <li>بررسی شرکت</li>
-          <li>ادامهٔ قرارداد پس از تأیید لازم</li>
+          {intakePhase === "branch" ? (
+            <>
+              <li>ثبت انشعاب در سامانه</li>
+              <li>تعریف نیروگاه در مرحلهٔ بعد</li>
+              <li>بررسی شرکت</li>
+            </>
+          ) : (
+            <>
+              <li>ثبت نیروگاه در سامانه</li>
+              <li>بررسی شرکت</li>
+              <li>ادامهٔ قرارداد پس از تأیید لازم</li>
+            </>
+          )}
         </ol>
       </ConfirmDialog>
 
@@ -1137,7 +1139,7 @@ export function SiteIntakeStep({
         }}
         variant="warning"
         title="تغییرات ذخیره‌نشده"
-        description="با خروج، می‌توانید بعداً از پیش‌نویس محلی ادامه دهید."
+        description="با خروج، اطلاعات واردشده در این فرم ذخیره نمی‌شود."
         confirmLabel="خروج"
         cancelLabel="ماندن"
       />

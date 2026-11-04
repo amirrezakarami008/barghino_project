@@ -2,8 +2,9 @@
 
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { ApiError, apiRequest } from "@/features/auth/lib/api";
-import { clearSession, readSession, userFromApi, writeSession, type AuthUser, type Session } from "@/features/auth/lib/session";
+import { ApiError } from "@/features/auth/lib/api";
+import { getMe } from "@/features/auth/lib/profile-api";
+import { clearSession, readSession, writeSession, type AuthUser, type Session } from "@/features/auth/lib/session";
 import { useAuth } from "@/features/auth/session-provider";
 import { Button } from "@/shared/ui/button";
 
@@ -25,21 +26,22 @@ export function RequireSession({ area, children }: { area: "user" | "admin"; chi
   if (!ready) return <SessionLoading />;
   if (!session) return null;
 
+  // Stable key: token refresh must NOT remount the whole panel (that re-fires page effects).
   return (
-    <VerifiedSession
-      key={`${area}:${session.access}:${session.refresh}`}
-      area={area}
-      session={session}
-      pathname={pathname}
-    >
+    <VerifiedSession area={area} userKey={session.user.uuid || session.user.phone} pathname={pathname}>
       {children}
     </VerifiedSession>
   );
 }
 
-function VerifiedSession({ area, session, pathname, children }: {
+function VerifiedSession({
+  area,
+  userKey,
+  pathname,
+  children,
+}: {
   area: "user" | "admin";
-  session: Session;
+  userKey: string;
   pathname: string;
   children: ReactNode;
 }) {
@@ -48,7 +50,6 @@ function VerifiedSession({ area, session, pathname, children }: {
   const pathnameRef = useRef(pathname);
   const [attempt, setAttempt] = useState(0);
   const [verification, setVerification] = useState<Verification | null>(null);
-  const { access, refresh } = session;
 
   useEffect(() => {
     pathnameRef.current = pathname;
@@ -59,43 +60,50 @@ function VerifiedSession({ area, session, pathname, children }: {
 
     async function verify() {
       try {
-        const profile = await apiRequest<{ uuid: string; phone: string; role: string }>("/auth/me/", { auth: true });
+        const user = await getMe();
         if (!active) return;
         const current = readSession();
-        // Refreshing or switching accounts remounts the guard with new tokens.
-        if (!current || current.access !== access || current.refresh !== refresh) return;
-        if (!profile.uuid || !profile.phone || (profile.role !== "user" && profile.role !== "admin")) {
+        if (!current) return;
+        if (!user.uuid || !user.phone || (user.role !== "user" && user.role !== "admin")) {
           throw new ApiError("نشست معتبر نیست. دوباره وارد شوید.", 401, "invalid_session", {});
         }
 
-        const user = userFromApi(profile);
         hydrateProfile(user);
-        if (current.user.role !== user.role) writeSession({ ...current, user: { ...current.user, role: user.role } });
+        if (!sameUser(current.user, user)) {
+          writeSession({ ...current, user });
+        }
         setVerification({ attempt, user });
         if (area === "admin" && user.role !== "admin") router.replace("/panel");
       } catch (error) {
         if (!active) return;
-        const current = readSession();
-        if (!current || current.access !== access || current.refresh !== refresh) return;
         if (error instanceof ApiError && (error.status === 401 || error.status === 403)) {
           clearSession();
           router.replace(`/login?next=${encodeURIComponent(pathnameRef.current)}`);
           return;
         }
-        setVerification({ attempt, error: "بررسی نشست انجام نشد. اتصال را بررسی کنید و دوباره تلاش کنید." });
+        setVerification({
+          attempt,
+          error: "بررسی نشست انجام نشد. اتصال را بررسی کنید و دوباره تلاش کنید.",
+        });
       }
     }
 
     void verify();
-    return () => { active = false; };
-  }, [access, refresh, area, attempt, router, hydrateProfile]);
+    return () => {
+      active = false;
+    };
+  }, [area, attempt, hydrateProfile, router, userKey]);
 
   if (!verification || verification.attempt !== attempt) return <SessionLoading />;
   if (verification.error) {
     return (
       <div className="grid min-h-dvh place-content-center gap-4 p-6 text-center">
-        <p role="alert" className="text-sm leading-7 text-muted-foreground">{verification.error}</p>
-        <Button type="button" onClick={() => setAttempt((current) => current + 1)}>تلاش دوباره</Button>
+        <p role="alert" className="text-sm leading-7 text-muted-foreground">
+          {verification.error}
+        </p>
+        <Button type="button" onClick={() => setAttempt((current) => current + 1)}>
+          تلاش دوباره
+        </Button>
       </div>
     );
   }
@@ -103,6 +111,26 @@ function VerifiedSession({ area, session, pathname, children }: {
   return children;
 }
 
+function sameUser(a: AuthUser, b: AuthUser): boolean {
+  return (
+    a.uuid === b.uuid &&
+    a.phone === b.phone &&
+    a.role === b.role &&
+    a.firstName === b.firstName &&
+    a.lastName === b.lastName &&
+    (a.email ?? "") === (b.email ?? "") &&
+    a.path === b.path &&
+    a.accountType === b.accountType &&
+    a.isPhoneVerified === b.isPhoneVerified &&
+    JSON.stringify(a.identityProfile ?? null) === JSON.stringify(b.identityProfile ?? null) &&
+    JSON.stringify(a.identityProfileCompletion ?? null) === JSON.stringify(b.identityProfileCompletion ?? null)
+  );
+}
+
 function SessionLoading() {
-  return <p role="status" className="p-6 text-sm text-muted-foreground">در حال بررسی نشست…</p>;
+  return (
+    <p role="status" className="p-6 text-sm text-muted-foreground">
+      در حال بررسی نشست…
+    </p>
+  );
 }

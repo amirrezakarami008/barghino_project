@@ -6,7 +6,6 @@ export type SiteReviewAlertState = {
   readonly plant: Plant;
   readonly branchApproved: boolean;
   readonly plantBlocked: boolean;
-  readonly bothApproved: boolean;
   readonly anyRejected: boolean;
   readonly pendingReview: boolean;
 };
@@ -14,7 +13,6 @@ export type SiteReviewAlertState = {
 export type SiteReviewAlertActions = {
   editBranch: () => void;
   editPlant: () => void;
-  continueToPlan: () => void;
 };
 
 function rejectionMeta(item: Branch | Plant): { who: string; when: string } {
@@ -76,26 +74,17 @@ export const selectSiteReviewAlerts = createAlertSelector(
       });
     }
 
-    if (state.bothApproved) {
-      alerts.push({
-        id: "review.next.approved",
-        variant: "success",
-        placement: "review-next",
-        priority: 70,
-        title: "انشعاب و نیروگاه تأیید شده‌اند",
-        description: "می‌توانید پلن را انتخاب و پیش‌نویس قرارداد را ادامه دهید.",
-        actions: [{ label: "ادامه: انتخاب پلن", variant: "primary", onClick: actions.continueToPlan }],
-      });
-    } else if (state.pendingReview && !state.anyRejected) {
+    if (state.pendingReview && !state.anyRejected) {
       alerts.push({
         id: "review.next.pending",
         variant: "info",
         placement: "review-next",
         priority: 30,
         consequenceKey: "review-wait",
-        title: "در انتظار بررسی شرکت",
-        description:
-          "می‌توانید از این صفحه خارج شوید؛ وضعیت در «نیروگاه من» و همین قرارداد قابل مشاهده است.",
+        title: "در صف بررسی شرکت هستید",
+        description: state.plantBlocked
+          ? "انشعاب هنوز تأیید نشده؛ بررسی نیروگاه بعد از آن شروع می‌شود. می‌توانید صفحه را ترک کنید و بعداً برگردید."
+          : "می‌توانید از این صفحه خارج شوید؛ وضعیت در «نیروگاه من» و همین مسیر قرارداد قابل مشاهده است.",
       });
     }
 

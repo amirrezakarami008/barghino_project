@@ -27,12 +27,15 @@ export function parseIntakeDraft(value: unknown): SiteIntakeDraft | null {
     branchId: text(value.branchId),
     plantId: text(value.plantId),
     branchName: text(value.branchName),
-    meter: text(value.meter),
+    billId: text(value.billId || value.meter),
     branchAddress: text(value.branchAddress),
     plantName: text(value.plantName),
-    plantAddress: text(value.plantAddress),
     capacity: text(value.capacity),
-    sameAddress: bool(value.sameAddress),
+    schemeType:
+      value.schemeType === "residential" || value.schemeType === "non_residential"
+        ? value.schemeType
+        : "",
+    systemType: value.systemType === "on_grid" || value.systemType === "off_grid" ? value.systemType : "",
     capacityAcked: bool(value.capacityAcked),
     createdBranchId: text(value.createdBranchId),
     createdPlantId: text(value.createdPlantId),
@@ -50,13 +53,9 @@ export function readIntakeDraft(): SiteIntakeDraft | null {
   }
 }
 
-export function writeIntakeDraft(draft: SiteIntakeDraft): void {
-  if (typeof window === "undefined") return;
-  try {
-    window.localStorage.setItem(INTAKE_DRAFT_STORAGE_KEY, JSON.stringify(draft));
-  } catch {
-    /* quota / private mode */
-  }
+/** Local draft persistence is disabled; save happens only via explicit submit. */
+export function writeIntakeDraft(_draft: SiteIntakeDraft): void {
+  /* no-op */
 }
 
 export function clearIntakeDraft(): void {
@@ -72,11 +71,12 @@ export function intakeDraftIsDirty(draft: SiteIntakeDraft): boolean {
   const empty = EMPTY_INTAKE_DRAFT;
   return (
     draft.branchName !== empty.branchName ||
-    draft.meter !== empty.meter ||
+    draft.billId !== empty.billId ||
     draft.branchAddress !== empty.branchAddress ||
     draft.plantName !== empty.plantName ||
-    draft.plantAddress !== empty.plantAddress ||
     draft.capacity !== empty.capacity ||
+    draft.schemeType !== empty.schemeType ||
+    draft.systemType !== empty.systemType ||
     draft.branchId !== empty.branchId ||
     draft.plantId !== empty.plantId ||
     Boolean(draft.createdBranchId) ||

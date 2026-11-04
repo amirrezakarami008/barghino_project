@@ -1,4 +1,4 @@
-import type { Branch, Plant } from "@/features/plants";
+import type { Branch, Plant, SchemeType, SystemType } from "@/features/plants";
 
 /** TODO(product): confirm suspicious capacity threshold with product. */
 export const SUSPICIOUS_CAPACITY_KW = 1000;
@@ -13,12 +13,12 @@ export type SiteIntakeDraft = {
   branchId: string;
   plantId: string;
   branchName: string;
-  meter: string;
+  billId: string;
   branchAddress: string;
   plantName: string;
-  plantAddress: string;
   capacity: string;
-  sameAddress: boolean;
+  schemeType: SchemeType | "";
+  systemType: SystemType | "";
   /** User confirmed a high capacity value is intentional. */
   capacityAcked: boolean;
   /** Idempotent retry: branch already created on a prior attempt. */
@@ -28,11 +28,12 @@ export type SiteIntakeDraft = {
 
 export type SiteIntakeFieldId =
   | "branch-name"
-  | "branch-meter"
+  | "branch-bill"
   | "branch-address"
   | "plant-name"
-  | "plant-address"
   | "plant-capacity"
+  | "plant-scheme"
+  | "plant-system"
   | "branch-select"
   | "plant-select";
 
@@ -49,6 +50,7 @@ export type SiteIntakeAlertState = {
   readonly draft: SiteIntakeDraft;
   readonly branches: readonly Branch[];
   readonly plants: readonly Plant[];
+  readonly occupiedBranchIds: ReadonlySet<string>;
   readonly selectedBranch: Branch | undefined;
   readonly selectedPlant: Plant | undefined;
   readonly submitIssue: SiteIntakeSubmitIssue;
@@ -62,12 +64,12 @@ export const EMPTY_INTAKE_DRAFT: SiteIntakeDraft = {
   branchId: "",
   plantId: "",
   branchName: "",
-  meter: "",
+  billId: "",
   branchAddress: "",
   plantName: "",
-  plantAddress: "",
   capacity: "",
-  sameAddress: false,
+  schemeType: "",
+  systemType: "",
   capacityAcked: false,
   createdBranchId: "",
   createdPlantId: "",

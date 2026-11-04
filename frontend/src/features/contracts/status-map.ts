@@ -4,7 +4,7 @@ const map: Record<string, { tone: StatusTone; label: string; next: string }> = {
   draft: {
     tone: "draft",
     label: "پیش‌نویس",
-    next: "شرایط را مرور کنید؛ امضا وقتی سند رسمی آماده شود فعال می‌شود.",
+    next: "سند را بخوانید، امضا کنید و برای بررسی شرکت بفرستید.",
   },
   pending: {
     tone: "pending",

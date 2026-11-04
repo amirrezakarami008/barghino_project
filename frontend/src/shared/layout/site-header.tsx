@@ -18,6 +18,7 @@ import {
   type RefObject,
 } from "react";
 import { ButtonLink } from "@/components/ui";
+import { destinationFor, useAuth } from "@/features/auth/session-provider";
 import { cn } from "@/shared/lib/cn";
 import {
   isNavActive,
@@ -30,6 +31,27 @@ import { Logo } from "@/shared/ui/logo";
 import "./site-header.css";
 
 const SCROLL_SHRINK_AT = 24;
+
+function AuthCta({ className }: { className?: string }) {
+  const { session, ready } = useAuth();
+  if (ready && session) {
+    return (
+      <ButtonLink
+        href={destinationFor(session.user, null)}
+        size="sm"
+        className={className}
+      >
+        ورود به داشبورد
+      </ButtonLink>
+    );
+  }
+
+  return (
+    <ButtonLink href="/login" size="sm" className={className}>
+      ورود / ثبت‌نام
+    </ButtonLink>
+  );
+}
 
 function useScrolledPast(threshold: number) {
   const [scrolled, setScrolled] = useState(false);
@@ -431,9 +453,7 @@ function MobileDrawer({
             </nav>
 
             <div className="border-t border-border p-4">
-              <ButtonLink href="/login" size="sm" className="site-header-cta-shine w-full justify-center">
-                ورود / ثبت‌نام
-              </ButtonLink>
+              <AuthCta className="site-header-cta-shine w-full justify-center" />
             </div>
           </motion.div>
         </div>
@@ -470,9 +490,7 @@ export function SiteHeader() {
                 setServicesOpen={setServicesOpen}
               />
               <div className="site-header-actions">
-                <ButtonLink href="/login" size="sm" className="site-header-cta-shine whitespace-nowrap px-4">
-                  ورود / ثبت‌نام
-                </ButtonLink>
+                <AuthCta className="site-header-cta-shine whitespace-nowrap px-4" />
                 <ThemeToggle />
               </div>
             </div>
@@ -494,9 +512,7 @@ export function SiteHeader() {
       <MobileDrawer open={mobileOpen} onClose={() => setMobileOpen(false)} pathname={pathname} />
 
       <div className="site-header-mobile-cta lg:hidden">
-        <ButtonLink href="/login" size="sm" className="site-header-cta-shine w-full justify-center">
-          ورود / ثبت‌نام
-        </ButtonLink>
+        <AuthCta className="site-header-cta-shine w-full justify-center" />
       </div>
     </>
   );
