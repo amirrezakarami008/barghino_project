@@ -22,6 +22,7 @@ type QueueState =
       readonly plants: number;
       readonly contracts: number;
       readonly renewals: number;
+      readonly installs: number;
     };
 
 const fadeUp = {
@@ -89,6 +90,7 @@ export function AdminDashboard({ guides }: { readonly guides: readonly Guide[] }
             <Skeleton className="h-28 rounded-[22px]" />
             <Skeleton className="h-28 rounded-[22px]" />
             <Skeleton className="h-28 rounded-[22px]" />
+            <Skeleton className="h-28 rounded-[22px]" />
           </div>
         ) : queues.status === "error" ? (
           <Alert tone="danger" title="خطا در دریافت صف">
@@ -118,6 +120,11 @@ export function AdminDashboard({ guides }: { readonly guides: readonly Guide[] }
               <span>تمدیدها</span>
               <strong>{faNumber(queues.renewals)}</strong>
               <em>درخواست تمدید یک‌ساله</em>
+            </Link>
+            <Link href="/admin/reviews?tab=installs" className="admin-ws-stat">
+              <span>نصب‌ها</span>
+              <strong>{faNumber(queues.installs)}</strong>
+              <em>منتظر بررسی رسانه</em>
             </Link>
           </div>
         )}
@@ -209,6 +216,7 @@ export function AdminDashboard({ guides }: { readonly guides: readonly Guide[] }
               { href: "/admin/reviews", label: "صف بررسی", icon: "shield" as const },
               { href: "/admin/plans", label: "پلن‌های فروش", icon: "plan" as const },
               { href: "/admin/plants", label: "نیروگاه‌ها", icon: "solarPanel" as const },
+              { href: "/admin/equipment", label: "تجهیزات", icon: "solarPanel" as const },
               { href: "/admin/journal", label: "راهنماها", icon: "book" as const },
             ] as const
           ).map((item) => (

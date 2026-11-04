@@ -6,7 +6,7 @@ import { adminNav } from "@/shared/layout/site-nav";
 import type { WorkspaceAccountDetails } from "@/shared/layout/workspace-types";
 import "./admin.css";
 
-const adminPrimaryHrefs = ["/admin", "/admin/reviews", "/admin/plans", "/admin/plants"] as const;
+const adminPrimaryHrefs = ["/admin", "/admin/reviews", "/admin/plans", "/admin/plants", "/admin/equipment"] as const;
 
 type AdminShellProps = {
   account: WorkspaceAccountDetails;

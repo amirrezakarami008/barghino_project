@@ -242,7 +242,6 @@
 
 .profile-field-row--editing {
   align-items: start;
-  background: color-mix(in srgb, var(--sun-100) 35%, transparent);
 }
 
 .profile-field-label {

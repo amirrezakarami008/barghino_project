@@ -1,0 +1,88 @@
+.admin-install-media-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.75rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-install-media-card {
+  overflow: hidden;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+  background: color-mix(in srgb, var(--surface) 80%, transparent);
+}
+
+.admin-install-media-card img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  object-fit: cover;
+  background: #fff;
+}
+
+.admin-install-media-load {
+  display: grid;
+  place-items: center;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  border: 0;
+  background: color-mix(in srgb, var(--card) 90%, transparent);
+  color: var(--foreground-muted, var(--muted));
+  font: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.admin-install-media-load:disabled {
+  opacity: 0.7;
+  cursor: wait;
+}
+
+.admin-install-media-card figcaption {
+  display: grid;
+  gap: 0.15rem;
+  padding: 0.55rem 0.7rem 0.7rem;
+}
+
+.admin-install-history {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.admin-install-history li {
+  display: grid;
+  gap: 0.15rem;
+  padding-block: 0.45rem;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+}
+
+.admin-install-history li:last-child {
+  border-bottom: 0;
+}
+
+.admin-install-history strong {
+  font-size: 0.875rem;
+}
+
+.admin-install-history span {
+  font-size: 0.75rem;
+  color: var(--foreground-muted, var(--muted));
+}
+
+.admin-install-actions {
+  display: grid;
+  gap: 0.55rem;
+  padding-top: 0.25rem;
+}
+
+.admin-install-actions-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}

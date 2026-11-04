@@ -1,0 +1,161 @@
+.plant-calc {
+  min-height: 70vh;
+}
+
+.plant-calc-hero {
+  border-bottom: 1px solid var(--border);
+  background:
+    radial-gradient(ellipse 80% 70% at 100% 0%, color-mix(in srgb, var(--accent, #ffb800) 18%, transparent), transparent 55%),
+    linear-gradient(
+      135deg,
+      color-mix(in srgb, var(--card) 92%, transparent),
+      color-mix(in srgb, var(--surface) 88%, transparent)
+    );
+}
+
+.plant-calc-hero-inner {
+  margin-inline: auto;
+  max-width: 72rem;
+  padding: 3.5rem 1rem 2.75rem;
+}
+
+@media (min-width: 640px) {
+  .plant-calc-hero-inner {
+    padding-inline: 1.5rem;
+    padding-block: 4rem 3rem;
+  }
+}
+
+.plant-calc-eyebrow {
+  font-size: var(--text-caption, 0.75rem);
+  font-weight: 800;
+  color: var(--accent, var(--sun-700, #b45309));
+}
+
+.plant-calc-title {
+  margin-top: 0.5rem;
+  max-width: 18ch;
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  line-height: 1.25;
+  text-wrap: balance;
+}
+
+.plant-calc-lead {
+  margin-top: 1rem;
+  max-width: 42rem;
+  color: var(--foreground-muted);
+  font-size: 1rem;
+  line-height: 1.8;
+}
+
+.plant-calc-body {
+  margin-inline: auto;
+  max-width: 72rem;
+  display: grid;
+  gap: 1.5rem;
+  padding: 2rem 1rem 3.5rem;
+}
+
+@media (min-width: 640px) {
+  .plant-calc-body {
+    padding-inline: 1.5rem;
+  }
+}
+
+.plant-calc-form {
+  display: grid;
+  gap: 1rem;
+  max-width: 28rem;
+  align-items: end;
+}
+
+@media (min-width: 640px) {
+  .plant-calc-form {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+
+.plant-calc-submit {
+  min-height: 2.75rem;
+}
+
+.plant-calc-result {
+  display: grid;
+  gap: 1.25rem;
+}
+
+.plant-calc-summary {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+}
+
+.plant-calc-summary > div {
+  display: grid;
+  gap: 0.35rem;
+  padding: 1rem 1.1rem;
+  border-radius: 1rem;
+  border: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+  background: color-mix(in srgb, var(--card) 96%, transparent);
+  box-shadow: var(--shadow-soft);
+}
+
+.plant-calc-summary span {
+  font-size: 0.75rem;
+  font-weight: 750;
+  color: var(--foreground-muted);
+}
+
+.plant-calc-summary strong {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.plant-calc-lines {
+  display: grid;
+  gap: 0.65rem;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.plant-calc-lines li {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem 1.25rem;
+  padding: 0.9rem 1rem;
+  border-radius: 1rem;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+}
+
+.plant-calc-lines h3 {
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+
+.plant-calc-lines p {
+  margin-top: 0.25rem;
+  font-size: 0.8rem;
+  line-height: 1.6;
+  color: var(--foreground-muted);
+}
+
+.plant-calc-lines strong {
+  font-variant-numeric: tabular-nums;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.plant-calc-note {
+  max-width: 42rem;
+  font-size: 0.85rem;
+  line-height: 1.75;
+  color: var(--foreground-muted);
+}

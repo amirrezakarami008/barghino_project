@@ -1,0 +1,231 @@
+/* Signed contracts in admin — ticket language (aligned with panel contracts) */
+
+.admin-contract-list {
+  display: grid;
+  gap: 0.9rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.admin-contract-ticket {
+  position: relative;
+  display: grid;
+  gap: 0.95rem;
+  width: 100%;
+  overflow: hidden;
+  border-radius: 24px;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  background:
+    radial-gradient(120% 90% at 100% 0%, rgb(25 227 177 / 0.12), transparent 42%),
+    linear-gradient(
+      160deg,
+      color-mix(in srgb, var(--card) 96%, transparent),
+      color-mix(in srgb, var(--surface) 50%, transparent)
+    );
+  box-shadow: var(--panel-card-glow, var(--shadow-soft));
+  padding: 1.05rem 1.1rem 0.95rem;
+  text-align: start;
+  color: inherit;
+  cursor: pointer;
+  transition:
+    transform var(--motion-fast, 160ms) ease,
+    box-shadow var(--motion-fast, 160ms) ease,
+    border-color var(--motion-fast, 160ms) ease;
+}
+
+.admin-contract-ticket::before {
+  content: "";
+  position: absolute;
+  inset-block: 0.85rem;
+  inset-inline-start: 0;
+  width: 0.28rem;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #34d399, #0d9488);
+}
+
+.admin-contract-ticket:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--panel-float, var(--shadow-soft));
+  border-color: color-mix(in srgb, var(--accent, #ffb800) 30%, var(--border));
+}
+
+.admin-contract-ticket:focus-visible {
+  outline: 2px solid var(--ring);
+  outline-offset: 2px;
+}
+
+.admin-contract-top {
+  display: grid;
+  gap: 0.35rem;
+  padding-inline-start: 0.55rem;
+}
+
+.admin-contract-kicker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.45rem;
+  margin-bottom: 0.25rem;
+}
+
+.admin-contract-date {
+  font-size: var(--text-caption);
+  font-weight: 700;
+  color: var(--foreground-muted);
+}
+
+.admin-contract-title {
+  font-size: clamp(1.05rem, 2vw, 1.2rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.4;
+}
+
+.admin-contract-sub {
+  font-size: 0.8125rem;
+  font-weight: 650;
+  color: var(--foreground-muted);
+}
+
+.admin-contract-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.55rem;
+  padding-inline-start: 0.55rem;
+}
+
+.admin-contract-metric {
+  display: grid;
+  gap: 0.15rem;
+  border-radius: 16px;
+  border: 1px solid color-mix(in srgb, var(--border) 82%, transparent);
+  background: color-mix(in srgb, var(--card) 92%, transparent);
+  padding: 0.7rem 0.8rem;
+}
+
+.admin-contract-metric--rate {
+  border-color: color-mix(in srgb, var(--accent, #ffb800) 22%, var(--border));
+  background:
+    linear-gradient(145deg, rgb(255 184 0 / 0.14), transparent 55%),
+    color-mix(in srgb, var(--card) 92%, transparent);
+}
+
+.admin-contract-metric span {
+  font-size: var(--text-caption);
+  font-weight: 800;
+  color: var(--foreground-muted);
+}
+
+.admin-contract-metric--rate span {
+  color: var(--sun-800, #996000);
+}
+
+.dark .admin-contract-metric--rate span {
+  color: var(--sun-200, #ffe08a);
+}
+
+.admin-contract-metric strong {
+  font-size: 1.05rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.25;
+}
+
+.admin-contract-metric em {
+  font-style: normal;
+  font-size: 0.72rem;
+  color: var(--foreground-muted);
+}
+
+.admin-contract-facts {
+  display: grid;
+  gap: 0.45rem;
+  padding-inline-start: 0.55rem;
+}
+
+.admin-contract-fact {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  min-width: 0;
+}
+
+.admin-contract-fact-icon {
+  display: grid;
+  place-items: center;
+  width: 2.05rem;
+  height: 2.05rem;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--surface-2, var(--surface)) 88%, transparent);
+  color: var(--foreground-muted);
+  flex-shrink: 0;
+}
+
+.admin-contract-fact-icon--mint {
+  color: var(--emerald, #0d9488);
+  background: color-mix(in srgb, var(--emerald, #0d9488) 14%, transparent);
+}
+
+.admin-contract-fact .label {
+  display: block;
+  font-size: var(--text-caption);
+  font-weight: 700;
+  color: var(--foreground-muted);
+}
+
+.admin-contract-fact .value {
+  display: block;
+  margin-top: 0.1rem;
+  font-size: 0.875rem;
+  font-weight: 650;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.admin-contract-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.55rem;
+  padding-inline-start: 0.55rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid color-mix(in srgb, var(--border) 75%, transparent);
+}
+
+.admin-contract-cta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.8125rem;
+  font-weight: 800;
+  color: var(--sun-800, #996000);
+}
+
+.dark .admin-contract-cta {
+  color: var(--sun-200, #ffe08a);
+}
+
+@media (min-width: 760px) {
+  .admin-contract-facts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 560px) {
+  .admin-contract-metrics {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .admin-contract-ticket {
+    transition: none;
+  }
+
+  .admin-contract-ticket:hover {
+    transform: none;
+  }
+}

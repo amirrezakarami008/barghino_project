@@ -20,6 +20,7 @@ import { faNumber } from "@/shared/lib/fa";
 import { cn } from "@/shared/lib/cn";
 import { Icon, type IconName } from "@/shared/ui/icon";
 import { AdminAuditLine } from "./admin-page";
+import { InstallReviewExtras } from "./admin-install-review";
 import {
   getReviewQueue,
   processRenewal,
@@ -30,12 +31,14 @@ import {
   type ReviewPage,
 } from "./reviews-api";
 import "./admin-workspace.css";
+import "./admin-reviews-contracts.css";
 
 const labels: Record<ReviewKind, string> = {
   branches: "انشعاب‌ها",
   plants: "نیروگاه‌ها",
   contracts: "قراردادهای امضاشده",
   renewals: "درخواست‌های تمدید",
+  installs: "درخواست‌های نصب",
 };
 
 const kindMeta: Record<ReviewKind, { readonly label: string; readonly icon: IconName }> = {
@@ -43,6 +46,7 @@ const kindMeta: Record<ReviewKind, { readonly label: string; readonly icon: Icon
   plants: { label: "نیروگاه", icon: "plant" },
   contracts: { label: "قرارداد", icon: "file" },
   renewals: { label: "تمدید", icon: "file" },
+  installs: { label: "نصب", icon: "sun" },
 };
 
 type State =
@@ -109,15 +113,28 @@ export function AdminReviews(): ReactElement {
     return () => controller.abort();
   }, [kind, page, key]);
 
-  function saved(decision: "approved" | "rejected" | "renewed"): void {
+  function saved(decision: "approved" | "rejected" | "renewed" | "staff"): void {
     setModal(undefined);
     setNotice(
       decision === "approved"
-        ? "درخواست تأیید شد."
+        ? kind === "installs"
+          ? "رسانهٔ درخواست نصب تأیید شد."
+          : "درخواست تأیید شد."
         : decision === "rejected"
-          ? "درخواست با ثبت دلیل رد شد."
-          : "تمدید قرارداد اعمال شد.",
+          ? kind === "installs"
+            ? "رسانهٔ درخواست نصب رد شد."
+            : "درخواست با ثبت دلیل رد شد."
+          : decision === "renewed"
+            ? "تمدید قرارداد اعمال شد."
+            : "اقدام کارکنان ثبت شد.",
     );
+    setPage(1);
+    setAttempt((value) => value + 1);
+  }
+
+  function staffSaved(message: string): void {
+    setModal(undefined);
+    setNotice(message);
     setPage(1);
     setAttempt((value) => value + 1);
   }
@@ -141,7 +158,7 @@ export function AdminReviews(): ReactElement {
             <p className="admin-ws-hero-eyebrow">تصمیم‌گیری</p>
             <h2 className="admin-ws-hero-title">صف بررسی درخواست‌ها</h2>
             <p className="admin-ws-hero-body">
-              انشعاب، نیروگاه، قرارداد امضاشده و تمدید را ببینید و مستقیم تأیید یا رد کنید.
+              انشعاب، نیروگاه، قرارداد امضاشده، تمدید و درخواست نصب را ببینید و مستقیم تأیید یا رد کنید.
             </p>
             <div className="mt-4">
               <Button variant="secondary" onClick={() => setAttempt((value) => value + 1)}>
@@ -198,6 +215,7 @@ export function AdminReviews(): ReactElement {
           onApprove={() => setModal({ kind: "approve", item: modal.item })}
           onReject={() => setModal({ kind: "reject", item: modal.item })}
           onRenew={() => setModal({ kind: "renew", item: modal.item })}
+          onStaffSaved={staffSaved}
         />
       ) : null}
 
@@ -271,8 +289,20 @@ function ReviewQueuePanel({
         <EmptyState
           hideIcon
           className="border-0 bg-transparent p-0 shadow-none"
-          title="درخواستی در این صف نیست"
-          description="صف را تازه‌سازی کنید یا بخش دیگری را باز کنید."
+          title={
+            kind === "contracts"
+              ? "قرارداد امضاشده‌ای نیست"
+              : kind === "installs"
+                ? "درخواست نصبی برای بررسی رسانه نیست"
+                : "درخواستی در این صف نیست"
+          }
+          description={
+            kind === "contracts"
+              ? "هنوز قراردادی از مسیر /contracts برنگشته است."
+              : kind === "installs"
+                ? "وقتی کاربر درخواست نصب را ارسال کند، اینجا برای تأیید رسانه دیده می‌شود."
+                : "صف را تازه‌سازی کنید یا بخش دیگری را باز کنید."
+          }
           icon="shield"
         />
       </div>
@@ -282,19 +312,27 @@ function ReviewQueuePanel({
   return (
     <div className="space-y-4">
       <p className="admin-ws-result">
-        {faNumber(state.data.count)} مورد در صف {labels[kind]}
+        {faNumber(state.data.count)}{" "}
+        {kind === "contracts" ? "قرارداد" : kind === "installs" ? "درخواست نصب" : "مورد"} · {labels[kind]}
       </p>
-      <ul className="admin-ws-list" aria-label={`کارت‌های ${labels[kind]}`}>
+      <ul
+        className={kind === "contracts" ? "admin-contract-list" : "admin-ws-list"}
+        aria-label={`کارت‌های ${labels[kind]}`}
+      >
         {state.data.results.map((item) => (
           <li key={item.uuid} className="min-w-0">
-            <ReviewCard
-              kind={kind}
-              item={item}
-              onDetail={() => onDetail(item)}
-              onApprove={() => onApprove(item)}
-              onReject={() => onReject(item)}
-              onRenew={() => onRenew(item)}
-            />
+            {kind === "contracts" ? (
+              <ContractSignedCard item={item} onDetail={() => onDetail(item)} />
+            ) : (
+              <ReviewCard
+                kind={kind}
+                item={item}
+                onDetail={() => onDetail(item)}
+                onApprove={() => onApprove(item)}
+                onReject={() => onReject(item)}
+                onRenew={() => onRenew(item)}
+              />
+            )}
           </li>
         ))}
       </ul>
@@ -318,6 +356,98 @@ function ReviewQueuePanel({
   );
 }
 
+function fieldValue(item: ReviewItem, label: string): string {
+  return item.fields.find(([key]) => key === label)?.[1]?.trim() || "";
+}
+
+function ContractSignedCard({
+  item,
+  onDetail,
+}: {
+  readonly item: ReviewItem;
+  readonly onDetail: () => void;
+}): ReactElement {
+  const seller = fieldValue(item, "فروشنده");
+  const billId = fieldValue(item, "شناسه قبض");
+  const address = fieldValue(item, "نشانی");
+  const plan = fieldValue(item, "پلن");
+  const rate = fieldValue(item, "نرخ خرید");
+  const commitment = fieldValue(item, "تعهد انرژی");
+  const signedLabel = item.lastAction;
+
+  return (
+    <button type="button" className="admin-contract-ticket" onClick={onDetail}>
+      <div className="admin-contract-top">
+        <div className="admin-contract-kicker">
+          <StatusPill status={item.statusTone ?? "active"} label={item.statusLabel ?? "امضاشده"} />
+          {item.subtitle ? <span className="admin-contract-date">{item.subtitle}</span> : null}
+        </div>
+        <h3 className="admin-contract-title">{item.title}</h3>
+        {plan ? <p className="admin-contract-sub">پلن · {plan}</p> : null}
+      </div>
+
+      <div className="admin-contract-metrics" aria-label="اعداد قرارداد">
+        <div className="admin-contract-metric admin-contract-metric--rate">
+          <span>نرخ خرید</span>
+          <strong dir="ltr">{rate || "—"}</strong>
+          <em>تومان / kWh</em>
+        </div>
+        <div className="admin-contract-metric">
+          <span>تعهد انرژی</span>
+          <strong dir="ltr">{commitment || "—"}</strong>
+          <em>کیلووات‌ساعت</em>
+        </div>
+      </div>
+
+      <div className="admin-contract-facts">
+        {seller ? (
+          <div className="admin-contract-fact">
+            <span className="admin-contract-fact-icon" aria-hidden>
+              <Icon name="user" className="size-4" />
+            </span>
+            <p>
+              <span className="label">فروشنده</span>
+              <span className="value">{seller}</span>
+            </p>
+          </div>
+        ) : null}
+        {billId ? (
+          <div className="admin-contract-fact">
+            <span className="admin-contract-fact-icon admin-contract-fact-icon--mint" aria-hidden>
+              <Icon name="bolt" className="size-4" />
+            </span>
+            <p>
+              <span className="label">شناسه قبض</span>
+              <span className="value" dir="ltr">
+                {billId}
+              </span>
+            </p>
+          </div>
+        ) : null}
+        {address ? (
+          <div className="admin-contract-fact" style={{ gridColumn: "1 / -1" }}>
+            <span className="admin-contract-fact-icon" aria-hidden>
+              <Icon name="home" className="size-4" />
+            </span>
+            <p>
+              <span className="label">نشانی</span>
+              <span className="value">{address}</span>
+            </p>
+          </div>
+        ) : null}
+      </div>
+
+      <div className="admin-contract-foot">
+        <AdminAuditLine text={signedLabel} />
+        <span className="admin-contract-cta">
+          مشاهده جزئیات
+          <Icon name="arrow" className="size-3.5 rotate-180" />
+        </span>
+      </div>
+    </button>
+  );
+}
+
 function ReviewCard({
   kind,
   item,
@@ -337,6 +467,7 @@ function ReviewCard({
   const previewFields = item.fields.slice(0, PREVIEW_FIELD_COUNT);
   const extraCount = Math.max(0, item.fields.length - previewFields.length);
   const isRenewals = kind === "renewals";
+  const isInstalls = kind === "installs";
 
   return (
     <article className="admin-ws-card">
@@ -348,11 +479,22 @@ function ReviewCard({
               {meta.label}
             </span>
             <StatusPill
-              status="pending"
-              label={isRenewals ? "در انتظار تمدید" : "در انتظار بررسی"}
+              status={isInstalls ? (item.statusTone ?? "pending") : "pending"}
+              label={
+                isRenewals
+                  ? "در انتظار تمدید"
+                  : isInstalls
+                    ? (item.statusLabel ?? "در انتظار بررسی رسانه")
+                    : "در انتظار بررسی"
+              }
             />
           </div>
           <h3 className="admin-ws-card-title">{item.title}</h3>
+          {isInstalls && item.subtitle ? (
+            <p className="text-sm text-foreground-muted" dir="ltr">
+              {item.subtitle}
+            </p>
+          ) : null}
         </div>
       </div>
 
@@ -366,12 +508,6 @@ function ReviewCard({
           </div>
         ))}
       </dl>
-
-      {item.signature ? (
-        <div className="overflow-hidden rounded-xl border border-border bg-surface p-2 ms-2">
-          <SignaturePreview uuid={item.signature} />
-        </div>
-      ) : null}
 
       {extraCount > 0 ? (
         <p className="admin-ws-card-hint ps-2">و {faNumber(extraCount)} مورد جزئیات بیشتر</p>
@@ -390,10 +526,10 @@ function ReviewCard({
           ) : (
             <>
               <Button variant="primary" size="sm" onClick={onApprove}>
-                تأیید
+                {isInstalls ? "تأیید رسانه" : "تأیید"}
               </Button>
               <Button variant="danger" size="sm" onClick={onReject}>
-                رد
+                {isInstalls ? "رد رسانه" : "رد"}
               </Button>
             </>
           )}
@@ -410,6 +546,7 @@ function ReviewDetailDrawer({
   onApprove,
   onReject,
   onRenew,
+  onStaffSaved,
 }: {
   readonly kind: ReviewKind;
   readonly item: ReviewItem;
@@ -417,19 +554,26 @@ function ReviewDetailDrawer({
   readonly onApprove: () => void;
   readonly onReject: () => void;
   readonly onRenew: () => void;
+  readonly onStaffSaved: (message: string) => void;
 }): ReactElement {
   const meta = kindMeta[kind];
   const isRenewals = kind === "renewals";
+  const isContracts = kind === "contracts";
+  const isInstalls = kind === "installs";
 
   return (
     <Drawer
       open
       onClose={onClose}
-      title={`بررسی ${item.title}`}
+      title={isContracts ? item.title : `بررسی ${item.title}`}
       description={
-        isRenewals
-          ? `جزئیات درخواست تمدید ${meta.label} را ببینید؛ سپس تمدید را اعمال کنید.`
-          : `جزئیات کامل ${meta.label} را ببینید؛ سپس تأیید یا رد کنید.`
+        isContracts
+          ? "جزئیات قرارداد امضاشده — فقط مشاهده."
+          : isRenewals
+            ? `جزئیات درخواست تمدید ${meta.label} را ببینید؛ سپس تمدید را اعمال کنید.`
+            : isInstalls
+              ? "رسانه را بررسی کنید؛ در صورت نیاز بازدید، پیشنهاد یا پیشبرد مرحله را ثبت کنید."
+              : `جزئیات کامل ${meta.label} را ببینید؛ سپس تأیید یا رد کنید.`
       }
       className="ms-auto max-w-lg"
       footer={
@@ -437,17 +581,17 @@ function ReviewDetailDrawer({
           <Button variant="ghost" onClick={onClose}>
             بستن
           </Button>
-          {isRenewals ? (
+          {isContracts ? null : isRenewals ? (
             <Button variant="primary" onClick={onRenew}>
               اعمال تمدید
             </Button>
           ) : (
             <>
               <Button variant="danger" onClick={onReject}>
-                رد با دلیل
+                {isInstalls ? "رد رسانه" : "رد با دلیل"}
               </Button>
               <Button variant="primary" onClick={onApprove}>
-                تأیید
+                {isInstalls ? "تأیید رسانه" : "تأیید"}
               </Button>
             </>
           )}
@@ -460,8 +604,26 @@ function ReviewDetailDrawer({
             <Icon name={meta.icon} className="size-3.5" aria-hidden />
             {meta.label}
           </span>
-          <StatusPill status="pending" label={isRenewals ? "در انتظار تمدید" : "در انتظار بررسی"} />
+          <StatusPill
+            status={
+              isContracts || isInstalls ? (item.statusTone ?? (isContracts ? "active" : "pending")) : "pending"
+            }
+            label={
+              isContracts
+                ? (item.statusLabel ?? "امضاشده")
+                : isRenewals
+                  ? "در انتظار تمدید"
+                  : isInstalls
+                    ? (item.statusLabel ?? "در انتظار بررسی رسانه")
+                    : "در انتظار بررسی"
+            }
+          />
         </div>
+        {item.subtitle ? (
+          <p className="text-sm text-foreground-muted" dir={isInstalls ? "ltr" : "auto"}>
+            {item.subtitle}
+          </p>
+        ) : null}
         <AdminAuditLine text={item.lastAction} />
         <dl className="grid gap-3">
           {item.fields.map(([label, value]) => (
@@ -474,6 +636,7 @@ function ReviewDetailDrawer({
           ))}
         </dl>
         {item.signature ? <SignaturePreview uuid={item.signature} /> : null}
+        {isInstalls ? <InstallReviewExtras item={item} onSaved={onStaffSaved} /> : null}
       </div>
     </Drawer>
   );
@@ -527,11 +690,21 @@ function ReviewDecisionDialog({
       onConfirm={() => {
         void confirm();
       }}
-      title={isReject ? "رد درخواست" : "تأیید این درخواست؟"}
+      title={
+        isReject
+          ? kind === "installs"
+            ? "رد رسانه نصب"
+            : "رد درخواست"
+          : kind === "installs"
+            ? "تأیید رسانه نصب؟"
+            : "تأیید این درخواست؟"
+      }
       description={
         isReject
           ? `دلیل رد برای کاربر نمایش داده می‌شود (حداقل ${faNumber(REJECT_MIN)} نویسه).`
-          : `«${item.title}» تأیید می‌شود و وضعیت برای کاربر به‌روز می‌گردد.`
+          : kind === "installs"
+            ? `رسانهٔ درخواست «${item.title}» تأیید می‌شود و مسیر بازدید/پیشنهاد ادامه می‌یابد.`
+            : `«${item.title}» تأیید می‌شود و وضعیت برای کاربر به‌روز می‌گردد.`
       }
       confirmLabel={isReject ? "ثبت رد" : "تأیید نهایی"}
       pending={pending}

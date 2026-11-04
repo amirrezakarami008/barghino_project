@@ -1,0 +1,424 @@
+/* Compact equipment inventory — mirrors plans row density */
+
+.admin-equipment-page .admin-ws-hero {
+  padding: 1rem 1.15rem;
+  gap: 0.85rem;
+}
+
+.admin-equipment-page .admin-ws-hero-art {
+  width: min(100%, 9.5rem);
+}
+
+.admin-equipment-page .admin-ws-hero-body {
+  max-width: 36rem;
+  margin-top: 0.35rem;
+}
+
+.admin-equipment-page .admin-ws-list {
+  gap: 0.65rem;
+}
+
+.admin-equipment-filters {
+  display: grid;
+  gap: 0.75rem;
+  grid-template-columns: minmax(0, 1.4fr) repeat(3, minmax(0, 0.7fr));
+  align-items: end;
+}
+
+.admin-equipment-filters-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  grid-column: 1 / -1;
+}
+
+.admin-equipment-row {
+  display: grid;
+  gap: 0.75rem;
+  align-items: center;
+  border-radius: 18px;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  background: color-mix(in srgb, var(--card) 96%, transparent);
+  box-shadow: var(--panel-card-glow, var(--shadow-soft));
+  padding: 0.85rem 1rem;
+  transition:
+    border-color var(--motion-fast, 160ms) ease,
+    box-shadow var(--motion-fast, 160ms) ease;
+}
+
+.admin-equipment-row:hover {
+  border-color: color-mix(in srgb, var(--accent, #ffb800) 30%, var(--border));
+  box-shadow: var(--panel-float, var(--shadow-soft));
+}
+
+.admin-equipment-row-title {
+  font-size: 1rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.4;
+}
+
+.admin-equipment-row-meta {
+  margin-top: 0.3rem;
+  font-size: 0.8125rem;
+  line-height: 1.55;
+  color: var(--foreground-muted);
+}
+
+.admin-equipment-row-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  margin-top: 0.45rem;
+}
+
+.admin-equipment-row-metrics {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.5rem;
+}
+
+.admin-equipment-metric {
+  display: grid;
+  gap: 0.1rem;
+  border-radius: 14px;
+  border: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+  background: color-mix(in srgb, var(--surface) 70%, transparent);
+  padding: 0.55rem 0.7rem;
+}
+
+.admin-equipment-metric span {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: var(--foreground-muted);
+}
+
+.admin-equipment-metric strong {
+  font-size: 0.95rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.admin-equipment-row-foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.65rem;
+  padding-top: 0.15rem;
+  border-top: 1px solid color-mix(in srgb, var(--border) 75%, transparent);
+}
+
+.admin-equipment-toggles {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem;
+  font-size: 0.8125rem;
+  font-weight: 650;
+}
+
+.admin-equipment-toggles label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.admin-equipment-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+}
+
+.admin-equipment-editor-grid {
+  display: grid;
+  gap: 1rem;
+}
+
+.admin-equipment-dialog {
+  position: fixed;
+  inset: auto;
+  top: 50%;
+  inset-inline-start: 50%;
+  transform: translate(-50%, -50%);
+  width: min(44rem, calc(100vw - 1.5rem));
+  max-height: min(92dvh, 52rem);
+  margin: 0;
+  padding: 0;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  border-radius: 1.5rem;
+  background: color-mix(in srgb, var(--card) 96%, transparent);
+  color: var(--foreground);
+  box-shadow:
+    0 28px 70px rgb(8 18 28 / 0.34),
+    0 0 0 1px color-mix(in srgb, var(--accent, #ffb800) 18%, transparent);
+  overflow: hidden;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr) auto;
+}
+
+.admin-equipment-dialog::backdrop {
+  background:
+    radial-gradient(ellipse 70% 50% at 50% 20%, color-mix(in srgb, var(--accent, #ffb800) 18%, transparent), transparent 60%),
+    color-mix(in srgb, #071018 72%, transparent);
+  backdrop-filter: blur(10px) saturate(1.15);
+}
+
+.admin-equipment-dialog[open]:not([data-reduced-motion="true"]) {
+  animation: admin-equipment-dialog-in 220ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.admin-equipment-dialog[open]:not([data-reduced-motion="true"])::backdrop {
+  animation: admin-equipment-backdrop-in 200ms ease-out;
+}
+
+@keyframes admin-equipment-dialog-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, calc(-50% + 18px)) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+}
+
+@keyframes admin-equipment-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.admin-equipment-dialog-hero {
+  position: relative;
+  overflow: hidden;
+  border-bottom: 1px solid color-mix(in srgb, var(--border) 75%, transparent);
+  background:
+    linear-gradient(
+      125deg,
+      color-mix(in srgb, var(--accent, #ffb800) 16%, var(--card)),
+      color-mix(in srgb, var(--card) 92%, transparent) 55%,
+      color-mix(in srgb, var(--surface) 88%, transparent)
+    );
+}
+
+.admin-equipment-dialog-hero-glow {
+  position: absolute;
+  inset-inline-end: -12%;
+  top: -40%;
+  width: 14rem;
+  height: 14rem;
+  border-radius: 999px;
+  background: radial-gradient(circle, color-mix(in srgb, var(--accent, #ffb800) 35%, transparent), transparent 68%);
+  pointer-events: none;
+}
+
+.admin-equipment-dialog-hero-main {
+  position: relative;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 0.85rem;
+  align-items: start;
+  padding: 1.15rem 1.2rem 0.85rem;
+}
+
+.admin-equipment-dialog-icon {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 0.95rem;
+  border: 1px solid color-mix(in srgb, var(--accent, #ffb800) 35%, var(--border));
+  background: color-mix(in srgb, var(--accent, #ffb800) 18%, var(--card));
+  color: var(--accent, #d97706);
+  box-shadow: 0 8px 18px color-mix(in srgb, var(--accent, #ffb800) 18%, transparent);
+}
+
+.admin-equipment-dialog-eyebrow {
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--accent, #d97706);
+}
+
+.admin-equipment-dialog-hero h2 {
+  margin-top: 0.2rem;
+  font-size: 1.2rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1.35;
+}
+
+.admin-equipment-dialog-hero-main p:last-child {
+  margin-top: 0.35rem;
+  font-size: 0.8rem;
+  line-height: 1.65;
+  color: var(--foreground-muted);
+}
+
+.admin-equipment-dialog-close {
+  display: grid;
+  place-items: center;
+  width: 2.25rem;
+  height: 2.25rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--border) 85%, transparent);
+  background: color-mix(in srgb, var(--card) 88%, transparent);
+  color: var(--foreground-muted);
+  transition:
+    background var(--motion-fast, 160ms) ease,
+    color var(--motion-fast, 160ms) ease,
+    border-color var(--motion-fast, 160ms) ease;
+}
+
+.admin-equipment-dialog-close:hover:not(:disabled) {
+  color: var(--foreground);
+  border-color: color-mix(in srgb, var(--accent, #ffb800) 35%, var(--border));
+  background: color-mix(in srgb, var(--accent, #ffb800) 10%, var(--card));
+}
+
+.admin-equipment-dialog-close:disabled {
+  opacity: 0.55;
+}
+
+.admin-equipment-dialog-preview {
+  position: relative;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  padding: 0 1.2rem 1rem;
+}
+
+.admin-equipment-dialog-preview span {
+  display: inline-flex;
+  align-items: center;
+  max-width: 100%;
+  padding: 0.3rem 0.65rem;
+  border-radius: 999px;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  background: color-mix(in srgb, var(--surface) 78%, transparent);
+  color: var(--foreground-muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.admin-equipment-dialog-preview span:first-child {
+  color: var(--foreground);
+  border-color: color-mix(in srgb, var(--accent, #ffb800) 28%, var(--border));
+  background: color-mix(in srgb, var(--accent, #ffb800) 12%, var(--card));
+}
+
+.admin-equipment-dialog-body {
+  overflow: auto;
+  padding: 1.15rem 1.2rem;
+  display: grid;
+  gap: 1rem;
+}
+
+.admin-equipment-dialog-flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.85rem 1.25rem;
+  padding: 0.85rem 1rem;
+  border-radius: 1rem;
+  border: 1px solid color-mix(in srgb, var(--border) 80%, transparent);
+  background: color-mix(in srgb, var(--surface) 72%, transparent);
+  font-size: 0.85rem;
+  font-weight: 650;
+}
+
+.admin-equipment-dialog-flags label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+}
+
+.admin-equipment-dialog-foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.55rem;
+  padding: 0.95rem 1.2rem;
+  border-top: 1px solid color-mix(in srgb, var(--border) 75%, transparent);
+  background: color-mix(in srgb, var(--surface) 78%, var(--card));
+}
+
+@media (min-width: 900px) {
+  .admin-equipment-row {
+    grid-template-columns: minmax(0, 1.4fr) minmax(14rem, 0.9fr);
+    gap: 1rem;
+  }
+
+  .admin-equipment-row-foot {
+    grid-column: 1 / -1;
+  }
+
+  .admin-equipment-editor-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .admin-equipment-filters {
+    grid-template-columns: 1fr 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .admin-equipment-page .admin-ws-hero-art {
+    display: none;
+  }
+
+  .admin-equipment-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-equipment-row-metrics {
+    grid-template-columns: 1fr;
+  }
+
+  .admin-equipment-row-foot {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-equipment-actions > * {
+    flex: 1 1 auto;
+  }
+
+  .admin-equipment-dialog {
+    top: auto;
+    bottom: 0;
+    inset-inline-start: 50%;
+    width: 100%;
+    max-height: min(94dvh, 100%);
+    border-radius: 1.35rem 1.35rem 0 0;
+    transform: translate(-50%, 0);
+  }
+
+  .admin-equipment-dialog[open]:not([data-reduced-motion="true"]) {
+    animation: admin-equipment-sheet-in 240ms cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  @keyframes admin-equipment-sheet-in {
+    from {
+      opacity: 0;
+      transform: translate(-50%, 24px);
+    }
+    to {
+      opacity: 1;
+      transform: translate(-50%, 0);
+    }
+  }
+
+  .admin-equipment-dialog-foot > * {
+    flex: 1 1 auto;
+  }
+}

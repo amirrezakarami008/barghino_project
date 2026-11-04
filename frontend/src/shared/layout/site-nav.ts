@@ -12,6 +12,7 @@ export type NavItem = {
 export const publicNav = [
   { href: "/", label: "خانه", end: true },
   { href: "/services", label: "خدمات" },
+  { href: "/calculator", label: "ماشین حساب" },
   { href: "/learn", label: "آموزش" },
   { href: "/contact", label: "تماس" },
 ] as const satisfies readonly NavItem[];
@@ -52,7 +53,7 @@ export const adminNav = [
   { href: "/admin/plans", label: "پلن‌های فروش", icon: "plan", summary: "نرخ و حجم تعهد پلن‌های فروش." },
   { href: "/admin/plants", label: "نیروگاه‌ها", icon: "solarPanel", summary: "ثبت، ویرایش، حذف و تأیید نیروگاه‌های کاربران." },
   { href: "/admin/reviews", label: "بررسی درخواست‌ها", icon: "shield", summary: "تأیید انشعاب، نیروگاه، قراردادهای امضاشده و تمدید." },
-  { href: "/admin/equipment", label: "تجهیزات", icon: "solarPanel", summary: "قیمت و اقلام کاتالوگ نصب.", disabled: true },
+  { href: "/admin/equipment", label: "تجهیزات", icon: "solarPanel", summary: "قیمت و اقلام کاتالوگ نصب." },
   { href: "/admin/journal", label: "راهنماها", icon: "book", summary: "جست‌وجو و مشاهده راهنماهای منتشرشدهٔ سایت." },
   { href: "/admin/profile", label: "پروفایل", icon: "user", summary: "اطلاعات حساب و مشخصات مدیر." },
 ] as const satisfies readonly NavItem[];

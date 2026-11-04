@@ -11,6 +11,7 @@ const columns = [
     links: [
       { href: "/services#sell", label: "فروش برق" },
       { href: "/services#install", label: "نصب نیروگاه" },
+      { href: "/calculator", label: "ماشین حساب نیروگاه" },
       { href: "/services", label: "همه خدمات" },
     ],
   },

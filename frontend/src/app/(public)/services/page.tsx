@@ -77,9 +77,14 @@ export default function ServicesPage() {
             <p className="mt-3 text-body text-foreground-muted">
               نیروگاه ندارید؟ درخواست نصب بدهید، پیشنهاد و قرارداد نصب را ببینید و بعد از بهره‌برداری وارد فروش شوید.
             </p>
-            <ButtonLink href="/register?path=install" variant="secondary" className="mt-6">
-              درخواست نصب
-            </ButtonLink>
+            <div className="mt-6 flex flex-wrap gap-3">
+              <ButtonLink href="/register?path=install" variant="secondary">
+                درخواست نصب
+              </ButtonLink>
+              <ButtonLink href="/calculator" variant="ghost">
+                ماشین حساب نیروگاه
+              </ButtonLink>
+            </div>
           </div>
           <ol className="grid gap-3 sm:grid-cols-2">
             {installSteps.map((step, index) => (

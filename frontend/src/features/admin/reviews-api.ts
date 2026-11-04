@@ -7,9 +7,36 @@ import {
   localDate,
   contractDisplayTitle,
 } from "@/features/contracts";
+import { contractStatusMeta } from "@/features/contracts/status-map";
+import {
+  formatArea,
+  formatMoney,
+  localDate as installLocalDate,
+  type InstallMedia,
+  type InstallRequest,
+} from "@/features/installs/install-model";
+import { installStatusMeta } from "@/features/installs/status-map";
+import type { StatusTone } from "@/components/ui";
 import { formatLastAction } from "./admin-audit";
+import { getInstallReviewQueue, submitInstallMediaReview } from "./admin-installs-api";
 
-export type ReviewKind = "branches" | "plants" | "contracts" | "renewals";
+export type ReviewKind = "branches" | "plants" | "contracts" | "renewals" | "installs";
+
+export type ReviewMedia = {
+  readonly uuid: string;
+  readonly storedFileUuid: string;
+  readonly originalName: string;
+  readonly contentType: string;
+  readonly sizeBytes: number;
+};
+
+export type ReviewHistoryEvent = {
+  readonly uuid: string;
+  readonly fromStage: string;
+  readonly toStage: string;
+  readonly createdAt: string;
+  readonly event: string;
+};
 
 export type ReviewItem = {
   readonly uuid: string;
@@ -25,6 +52,15 @@ export type ReviewItem = {
   readonly reviewedAt?: string;
   readonly reviewDecision?: string;
   readonly reviewNote?: string;
+  readonly statusLabel?: string;
+  readonly statusTone?: StatusTone;
+  readonly subtitle?: string;
+  readonly stage?: string;
+  readonly media?: readonly ReviewMedia[];
+  readonly history?: readonly ReviewHistoryEvent[];
+  readonly note?: string;
+  readonly visitAt?: string;
+  readonly visitSummary?: string;
 };
 
 export type ReviewPage = {
@@ -51,10 +87,80 @@ function record(value: unknown): Record<string, unknown> {
   return value as Record<string, unknown>;
 }
 
-function queuePath(kind: ReviewKind): string {
+function queuePath(kind: Exclude<ReviewKind, "installs">): string {
   if (kind === "contracts") return "/contracts/";
   if (kind === "renewals") return "/staff/contracts/renewals/";
   return `/staff/${kind}/`;
+}
+
+function mapInstallMedia(entry: InstallMedia): ReviewMedia {
+  return {
+    uuid: entry.uuid,
+    storedFileUuid: entry.storedFileUuid,
+    originalName: entry.originalName,
+    contentType: entry.contentType,
+    sizeBytes: entry.sizeBytes,
+  };
+}
+
+function mapInstallReviewItem(entry: InstallRequest): ReviewItem {
+  const status = installStatusMeta(entry.stage);
+  const mediaDecision =
+    entry.mediaReviewDecision === "approved"
+      ? "تأییدشده"
+      : entry.mediaReviewDecision === "rejected"
+        ? "ردشده"
+        : entry.mediaReviewDecision || "در انتظار";
+
+  return {
+    uuid: entry.uuid,
+    title: entry.address,
+    subtitle: entry.phone ? `موبایل ${entry.phone}` : undefined,
+    stage: entry.stage,
+    statusLabel: status.label,
+    statusTone: status.tone,
+    createdAt: entry.createdAt,
+    updatedAt: entry.updatedAt,
+    reviewedAt: entry.mediaReviewedAt,
+    reviewDecision: entry.mediaReviewDecision,
+    reviewNote: entry.mediaReviewNote,
+    note: entry.note,
+    visitAt: entry.visitAt,
+    visitSummary: entry.visitSummary,
+    media: entry.media.map(mapInstallMedia),
+    history: entry.history.map((event) => ({
+      uuid: event.uuid,
+      fromStage: event.fromStage,
+      toStage: event.toStage,
+      createdAt: event.createdAt,
+      event: event.event,
+    })),
+    lastAction: entry.mediaReviewedAt
+      ? formatLastAction({
+          reviewedAt: entry.mediaReviewedAt,
+          reviewDecision: entry.mediaReviewDecision,
+          reviewNote: entry.mediaReviewNote,
+          updatedAt: entry.updatedAt,
+          createdAt: entry.createdAt,
+        })
+      : `ارسال‌شده · ${installLocalDate(entry.createdAt)}`,
+    fields: [
+      ["مرحله", status.label],
+      ["موبایل", entry.phone || "—"],
+      ["مساحت نصب", `${formatArea(entry.areaM2)} متر مربع`],
+      ["بررسی رسانه", mediaDecision],
+      ["زمان بازدید", entry.visitAt ? installLocalDate(entry.visitAt) : "—"],
+      ["ظرفیت پیشنهادی", entry.proposalCapacityKwp ? `${formatArea(entry.proposalCapacityKwp)} kWp` : "—"],
+      ["تعداد پنل", entry.proposalPanelCount === null ? "—" : String(entry.proposalPanelCount)],
+      ["هزینه پیشنهادی", formatMoney(entry.proposalCostToman)],
+      ["تولید ماهانه", entry.proposalMonthlyKwh ? `${formatArea(entry.proposalMonthlyKwh)} kWh` : "—"],
+      ["درآمد ماهانه", formatMoney(entry.proposalMonthlyIncomeToman)],
+      ["برآورد کاتالوگ", formatMoney(entry.catalogEstimateTotalToman)],
+      ["تعداد رسانه", String(entry.media.length)],
+      ["یادداشت کاربر", entry.note.trim() || "—"],
+      ["خلاصه بازدید", entry.visitSummary.trim() || "—"],
+    ],
+  };
 }
 
 function calendarDate(value: string): string {
@@ -70,35 +176,50 @@ function calendarDate(value: string): string {
 function mapContractReviewItem(entry: ReturnType<typeof parseContract>): ReviewItem {
   const snapshot = signedSnapshot(entry);
   const seller = snapshot?.seller;
+  const status = contractStatusMeta(entry.status);
+  const sellerName =
+    seller?.company_name?.trim() ||
+    [seller?.first_name, seller?.last_name].filter(Boolean).join(" ").trim() ||
+    "—";
+  const planName = snapshot?.terms.planName || entry.planName || "—";
+  const billId = snapshot?.branch.billId || entry.billId || "—";
+  const address = snapshot?.branch.address || entry.address || "—";
+  const rate = formatDecimal(snapshot?.terms.rate ?? entry.rate);
+  const commitment = formatDecimal(snapshot?.terms.commitment ?? entry.commitment);
+
   return {
     uuid: entry.uuid,
     title: snapshot?.plant.name || contractDisplayTitle(entry),
-    signature: entry.signatureUuid,
+    subtitle: entry.contractNumber ? `شماره ${entry.contractNumber}` : undefined,
+    signature: entry.signatureUuid || undefined,
+    statusLabel: status.label,
+    statusTone: status.tone,
     createdAt: entry.createdAt,
     updatedAt: entry.updatedAt,
     reviewedAt: entry.reviewedAt,
     reviewDecision: entry.reviewDecision,
     reviewNote: entry.reviewNote,
-    lastAction: formatLastAction({
-      reviewedAt: entry.reviewedAt,
-      reviewDecision: entry.reviewDecision,
-      reviewNote: entry.reviewNote,
-      updatedAt: entry.updatedAt,
-      createdAt: entry.createdAt,
-    }),
+    lastAction: entry.signedAt
+      ? `امضا شده · ${localDate(entry.signedAt)}`
+      : formatLastAction({
+          reviewedAt: entry.reviewedAt,
+          reviewDecision: entry.reviewDecision,
+          reviewNote: entry.reviewNote,
+          updatedAt: entry.updatedAt,
+          createdAt: entry.createdAt,
+        }),
     fields: [
-      ["نسخهٔ اطلاعات", snapshot ? "ثبت‌شده هنگام امضا" : "نسخهٔ امضا در دسترس نیست؛ قبل از تصمیم بررسی کنید"],
-      [
-        "فروشنده",
-        seller?.company_name ?? [seller?.first_name, seller?.last_name].filter(Boolean).join(" "),
-      ],
-      ["شناسه قبض", snapshot?.branch.billId ?? entry.billId],
-      ["نشانی", snapshot?.branch.address ?? entry.address],
-      ["پلن", snapshot?.terms.planName ?? entry.planName],
-      ["نرخ خرید / تومان", formatDecimal(snapshot?.terms.rate ?? entry.rate)],
-      ["تعهد / kWh", formatDecimal(snapshot?.terms.commitment ?? entry.commitment)],
-      ["نسخه سند", entry.termsVersion],
-      ["هش سند", entry.termsHash],
+      ["وضعیت", status.label],
+      ["فروشنده", sellerName],
+      ["شناسه قبض", billId],
+      ["نشانی", address],
+      ["پلن", planName],
+      ["نرخ خرید", rate],
+      ["تعهد انرژی", commitment],
+      ["شروع", calendarDate(entry.startsOn) || "—"],
+      ["پایان", calendarDate(entry.endsOn) || "—"],
+      ["نسخه سند", entry.termsVersion || "—"],
+      ["هش سند", entry.termsHash || "—"],
     ],
   };
 }
@@ -140,6 +261,16 @@ export async function getReviewQueue(
   search: string,
   signal: AbortSignal,
 ): Promise<ReviewPage> {
+  if (kind === "installs") {
+    const result = await getInstallReviewQueue(page, signal);
+    return {
+      count: result.count,
+      next: result.next,
+      previous: result.previous,
+      results: result.results.map(mapInstallReviewItem),
+    };
+  }
+
   const params = new URLSearchParams({ page: String(page), page_size: "12" });
   if (search.trim()) params.set("search", search.trim());
   const raw = await apiRequest<unknown>(`${queuePath(kind)}?${params}`, { auth: true, signal });
@@ -253,6 +384,10 @@ export async function submitReview(
   decision: "approved" | "rejected",
   reason: string,
 ): Promise<void> {
+  if (kind === "installs") {
+    await submitInstallMediaReview(uuid, { decision, reason });
+    return;
+  }
   await apiRequest<unknown>(`/staff/${kind}/${encodeURIComponent(uuid)}/review/`, {
     auth: true,
     method: "POST",
@@ -272,17 +407,20 @@ export async function getQueueCounts(signal: AbortSignal): Promise<{
   plants: number;
   contracts: number;
   renewals: number;
+  installs: number;
 }> {
-  const [branches, plants, contracts, renewals] = await Promise.all([
+  const [branches, plants, contracts, renewals, installs] = await Promise.all([
     getReviewQueue("branches", 1, "", signal),
     getReviewQueue("plants", 1, "", signal),
     getReviewQueue("contracts", 1, "", signal),
     getReviewQueue("renewals", 1, "", signal),
+    getReviewQueue("installs", 1, "", signal),
   ]);
   return {
     branches: branches.count,
     plants: plants.count,
     contracts: contracts.count,
     renewals: renewals.count,
+    installs: installs.count,
   };
 }

@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
-import { AdminLockedSection } from "@/features/admin/admin-locked-section";
+import { AdminEquipment } from "@/features/admin/admin-equipment";
 
 export const metadata: Metadata = { title: "تجهیزات" };
 
 export default function EquipmentPage() {
-  return <AdminLockedSection title="کاتالوگ تجهیزات" />;
+  return <AdminEquipment />;
 }

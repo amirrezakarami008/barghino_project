@@ -128,13 +128,18 @@ export function parseInstallMedia(value: unknown): InstallMedia {
 
 function parseHistoryEvent(value: unknown): InstallHistoryEvent {
   const raw = record(value);
-  const details = isRecord(raw.details) ? raw.details : {};
+  const details = raw.details;
+  const event = isRecord(details)
+    ? text(details.event)
+    : typeof details === "string"
+      ? details
+      : "";
   return {
     uuid: required(raw.uuid),
     fromStage: text(raw.from_stage),
     toStage: text(raw.to_stage),
     actorUuid: text(raw.actor_uuid),
-    event: text(details.event),
+    event,
     createdAt: required(raw.created_at),
   };
 }
