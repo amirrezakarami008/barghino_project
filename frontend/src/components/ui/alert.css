@@ -198,7 +198,7 @@
   pointer-events: none;
   position: fixed;
   inset-inline: 0;
-  inset-block-end: calc(1rem + env(safe-area-inset-bottom, 0px) + var(--toast-mobile-offset, 0px));
+  inset-block-end: calc(1rem + env(safe-area-inset-bottom, 0px) + var(--toast-mobile-offset, 4.5rem));
   z-index: 60;
   display: flex;
   flex-direction: column;
@@ -209,10 +209,15 @@
 
 @media (min-width: 640px) {
   .ui-toast-stack {
-    --toast-mobile-offset: 0px;
     inset-inline-end: 1rem;
     inset-inline-start: auto;
     align-items: flex-end;
+  }
+}
+
+@media (min-width: 1024px) {
+  .ui-toast-stack {
+    --toast-mobile-offset: 0px;
   }
 }
 

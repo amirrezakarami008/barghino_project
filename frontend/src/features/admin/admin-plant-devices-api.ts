@@ -1,6 +1,4 @@
 import { ApiError, apiRequest } from "@/features/auth/lib/api";
-import { parsePage } from "@/features/plants";
-import type { InventoryPage } from "./admin-plants-api";
 
 export type PlantDevice = {
   readonly uuid: string;
@@ -54,26 +52,17 @@ function parsePlantDeviceSecret(value: unknown): PlantDeviceSecret {
   return { ...device, apiKey };
 }
 
-function parseDeviceList(value: unknown): InventoryPage<PlantDevice> {
-  if (Array.isArray(value)) {
-    return {
-      count: value.length,
-      next: false,
-      previous: false,
-      results: value.map(parsePlantDevice),
-    };
-  }
-  return parsePage(value, parsePlantDevice);
+function parseDeviceList(value: unknown): readonly PlantDevice[] {
+  if (!Array.isArray(value)) throw new Error("فهرست بوردها قابل خواندن نیست.");
+  return value.map(parsePlantDevice);
 }
 
 export async function getPlantDevices(
   plantUuid: string,
-  page: number,
   signal: AbortSignal,
-): Promise<InventoryPage<PlantDevice>> {
-  const params = new URLSearchParams({ page: String(page), page_size: "20" });
+): Promise<readonly PlantDevice[]> {
   return parseDeviceList(
-    await apiRequest<unknown>(`/plants/${encodeURIComponent(plantUuid)}/devices/?${params}`, {
+    await apiRequest<unknown>(`/staff/plants/${encodeURIComponent(plantUuid)}/devices/`, {
       auth: true,
       signal,
     }),
@@ -85,7 +74,7 @@ export async function createPlantDevice(
   input: { readonly device_id: string; readonly name?: string },
 ): Promise<PlantDeviceSecret> {
   return parsePlantDeviceSecret(
-    await apiRequest<unknown>(`/plants/${encodeURIComponent(plantUuid)}/devices/`, {
+    await apiRequest<unknown>(`/staff/plants/${encodeURIComponent(plantUuid)}/devices/`, {
       auth: true,
       method: "POST",
       body: input,
@@ -95,7 +84,7 @@ export async function createPlantDevice(
 
 export async function rotatePlantDeviceKey(deviceUuid: string): Promise<PlantDeviceSecret> {
   return parsePlantDeviceSecret(
-    await apiRequest<unknown>(`/devices/${encodeURIComponent(deviceUuid)}/rotate-key/`, {
+    await apiRequest<unknown>(`/staff/devices/${encodeURIComponent(deviceUuid)}/rotate-key/`, {
       auth: true,
       method: "POST",
     }),
@@ -107,7 +96,7 @@ export async function setPlantDeviceActive(
   isActive: boolean,
 ): Promise<PlantDevice> {
   return parsePlantDevice(
-    await apiRequest<unknown>(`/devices/${encodeURIComponent(deviceUuid)}/active/`, {
+    await apiRequest<unknown>(`/staff/devices/${encodeURIComponent(deviceUuid)}/active/`, {
       auth: true,
       method: "POST",
       body: { is_active: isActive },

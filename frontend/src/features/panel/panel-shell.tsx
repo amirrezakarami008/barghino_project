@@ -18,6 +18,7 @@ const userPrimaryHrefs = [
   "/panel/contracts",
   "/panel/branch",
   "/panel/plant",
+  "/panel/payments",
   "/panel/profile",
   "/panel/install",
 ] as const;

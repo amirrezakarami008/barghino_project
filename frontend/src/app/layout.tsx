@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import { AuthProvider } from "@/features/auth/session-provider";
+import { ToastProvider } from "@/components/ui/toast";
 import { ThemeProvider, ThemeScript } from "@/shared/theme";
 import "./globals.css";
 import "@/shared/ui/product-design.css";
@@ -39,7 +40,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           رفتن به محتوا
         </a>
         <ThemeProvider>
-          <AuthProvider>{children}</AuthProvider>
+          <ToastProvider>
+            <AuthProvider>{children}</AuthProvider>
+          </ToastProvider>
         </ThemeProvider>
       </body>
     </html>

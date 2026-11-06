@@ -19,7 +19,6 @@ import {
   ConfirmDialog,
   Input,
   Textarea,
-  ToastProvider,
   useToast,
 } from "@/components/ui";
 import { PanelArt } from "@/features/panel/panel-art";
@@ -92,11 +91,7 @@ function validate(address: string, phone: string, areaM2: string): FormErrors {
 }
 
 export function InstallCreate(): ReactElement {
-  return (
-    <ToastProvider mobileOffsetClassName="ui-toast-stack--above-actions">
-      <InstallCreateForm />
-    </ToastProvider>
-  );
+  return <InstallCreateForm />;
 }
 
 function InstallCreateForm(): ReactElement {

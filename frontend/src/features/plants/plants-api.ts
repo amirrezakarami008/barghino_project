@@ -41,6 +41,19 @@ export type Plant = {
   readonly review_decision: string;
   readonly reviewed_by_uuid: string;
 };
+export type TodayProduction = {
+  readonly productionDate: string;
+  readonly energyKwh: number;
+  readonly measuredAt: string | null;
+};
+export type TodayEarnings = {
+  readonly productionDate: string;
+  readonly energyKwh: number;
+  readonly rateTomanPerKwh: number | null;
+  readonly estimatedAmountToman: number | null;
+  readonly contractUuid: string | null;
+  readonly measuredAt: string | null;
+};
 export type Page<T> = { readonly count: number; readonly next: boolean; readonly previous: boolean; readonly results: readonly T[] };
 export type BranchInput = Pick<Branch, "name" | "bill_id" | "address">;
 export type PlantInput = Pick<Plant, "branch_uuid" | "capacity_kwp" | "scheme_type" | "system_type">;
@@ -140,4 +153,104 @@ export async function getBranch(uuid: string, signal: AbortSignal): Promise<Bran
 }
 export async function getPlant(uuid: string, signal: AbortSignal): Promise<Plant> {
   return parsePlant(await apiRequest<unknown>(`/plants/${encodeURIComponent(uuid)}/`, { auth: true, signal }));
+}
+
+function isoDate(value: unknown): string {
+  const productionDate = text(value);
+  const parsedDate = new Date(`${productionDate}T00:00:00Z`);
+  if (
+    !/^\d{4}-\d{2}-\d{2}$/.test(productionDate) ||
+    Number.isNaN(parsedDate.getTime()) ||
+    parsedDate.toISOString().slice(0, 10) !== productionDate
+  ) {
+    throw new Error("تاریخ تولید معتبر نیست.");
+  }
+  return productionDate;
+}
+
+function finiteNumber(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return value;
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) return parsed;
+  }
+  return null;
+}
+
+function measuredAtField(value: unknown): string | null {
+  if (value === null || value === undefined || value === "") return null;
+  if (typeof value !== "string" || Number.isNaN(Date.parse(value))) {
+    throw new Error("زمان اندازه‌گیری معتبر نیست.");
+  }
+  return value;
+}
+
+export function parseTodayProduction(value: unknown): TodayProduction {
+  const raw = record(value);
+  const energyKwh = finiteNumber(raw.energy_kwh);
+  if (energyKwh === null) throw new Error("اطلاعات تولید امروز قابل خواندن نیست.");
+  return {
+    productionDate: isoDate(raw.production_date),
+    energyKwh,
+    measuredAt: measuredAtField(raw.measured_at),
+  };
+}
+
+export function parseTodayEarnings(value: unknown): TodayEarnings {
+  const raw = record(value);
+  const energyKwh = finiteNumber(raw.energy_kwh);
+  if (energyKwh === null) throw new Error("اطلاعات درآمد امروز قابل خواندن نیست.");
+
+  const rate = raw.rate_toman_per_kwh;
+  const amount = raw.estimated_amount_toman;
+  const rateTomanPerKwh = rate === null || rate === undefined ? null : finiteNumber(rate);
+  const estimatedAmountToman = amount === null || amount === undefined ? null : finiteNumber(amount);
+  if (rate !== null && rate !== undefined && rateTomanPerKwh === null) {
+    throw new Error("نرخ قرارداد قابل خواندن نیست.");
+  }
+  if (amount !== null && amount !== undefined && estimatedAmountToman === null) {
+    throw new Error("مبلغ برآوردی قابل خواندن نیست.");
+  }
+
+  const contractRaw = raw.contract_uuid;
+  const contractUuid =
+    contractRaw === null || contractRaw === undefined || contractRaw === ""
+      ? null
+      : text(contractRaw);
+  if (contractRaw !== null && contractRaw !== undefined && contractRaw !== "" && !contractUuid) {
+    throw new Error("شناسه قرارداد معتبر نیست.");
+  }
+
+  return {
+    productionDate: isoDate(raw.production_date),
+    energyKwh,
+    rateTomanPerKwh,
+    estimatedAmountToman,
+    contractUuid,
+    measuredAt: measuredAtField(raw.measured_at),
+  };
+}
+
+export async function getPlantTodayProduction(
+  uuid: string,
+  signal: AbortSignal,
+): Promise<TodayProduction> {
+  return parseTodayProduction(
+    await apiRequest<unknown>(`/plants/${encodeURIComponent(uuid)}/production/today/`, {
+      auth: true,
+      signal,
+    }),
+  );
+}
+
+export async function getPlantTodayEarnings(
+  uuid: string,
+  signal: AbortSignal,
+): Promise<TodayEarnings> {
+  return parseTodayEarnings(
+    await apiRequest<unknown>(`/plants/${encodeURIComponent(uuid)}/earnings/today/`, {
+      auth: true,
+      signal,
+    }),
+  );
 }

@@ -7,8 +7,8 @@ import {
   ConfirmDialog,
   Input,
   StatusPill,
+  useToast,
 } from "@/components/ui";
-import { faNumber } from "@/shared/lib/fa";
 import { Icon } from "@/shared/ui/icon";
 import { formatJalaliDisplay } from "@/shared/ui/jalali-date-field";
 import {
@@ -21,12 +21,12 @@ import {
   type PlantDevice,
   type PlantDeviceSecret,
 } from "./admin-plant-devices-api";
-import type { AdminPlant, InventoryPage } from "./admin-plants-api";
+import type { AdminPlant } from "./admin-plants-api";
 
 type ListState =
   | { readonly status: "loading" }
   | { readonly status: "error"; readonly message: string }
-  | { readonly status: "ready"; readonly data: InventoryPage<PlantDevice> };
+  | { readonly status: "ready"; readonly data: readonly PlantDevice[] };
 
 type ConfirmKind =
   | { readonly kind: "rotate"; readonly device: PlantDevice }
@@ -37,34 +37,48 @@ function formatSeen(iso: string): string {
   return formatJalaliDisplay(iso, { withTime: true });
 }
 
+function copyTextFallback(value: string): boolean {
+  const textarea = document.createElement("textarea");
+  textarea.value = value;
+  textarea.setAttribute("readonly", "");
+  textarea.style.position = "fixed";
+  textarea.style.opacity = "0";
+  document.body.appendChild(textarea);
+  textarea.select();
+  let copied = false;
+  try {
+    copied = document.execCommand("copy");
+  } finally {
+    textarea.remove();
+  }
+  return copied;
+}
+
 export function AdminPlantDevicesPanel({
   plant,
 }: {
   readonly plant: AdminPlant;
 }): ReactElement {
+  const { push: toast } = useToast();
   const formId = useId();
   const createLock = useRef(false);
   const actionLock = useRef(false);
-  const [page, setPage] = useState(1);
   const [attempt, setAttempt] = useState(0);
   const [result, setResult] = useState<{ readonly key: string; readonly state: ListState }>();
   const [deviceId, setDeviceId] = useState("");
   const [name, setName] = useState("");
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
-  const [actionError, setActionError] = useState("");
   const [busyUuid, setBusyUuid] = useState("");
   const [secret, setSecret] = useState<PlantDeviceSecret>();
-  const [copied, setCopied] = useState(false);
   const [confirm, setConfirm] = useState<ConfirmKind>();
   const [confirmPending, setConfirmPending] = useState(false);
-  const canRegister = plant.status === "active";
-  const key = `${plant.uuid}:${page}:${attempt}`;
+  const key = `${plant.uuid}:${attempt}`;
   const state: ListState = result?.key === key ? result.state : { status: "loading" };
 
   useEffect(() => {
     const controller = new AbortController();
-    void getPlantDevices(plant.uuid, page, controller.signal)
+    void getPlantDevices(plant.uuid, controller.signal)
       .then((data) => {
         if (!controller.signal.aborted) setResult({ key, state: { status: "ready", data } });
       })
@@ -74,7 +88,7 @@ export function AdminPlantDevicesPanel({
         }
       });
     return () => controller.abort();
-  }, [key, page, plant.uuid, attempt]);
+  }, [key, plant.uuid, attempt]);
 
   function reload(): void {
     setAttempt((value) => value + 1);
@@ -82,8 +96,8 @@ export function AdminPlantDevicesPanel({
 
   async function submitCreate(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
-    if (createLock.current || !canRegister) return;
-    const normalizedId = deviceId.trim().toUpperCase();
+    if (createLock.current) return;
+    const normalizedId = deviceId.trim();
     if (!normalizedId) {
       setCreateError("شناسهٔ بورد الزامی است.");
       return;
@@ -91,17 +105,15 @@ export function AdminPlantDevicesPanel({
     createLock.current = true;
     setCreating(true);
     setCreateError("");
-    setActionError("");
     try {
       const created = await createPlantDevice(plant.uuid, {
         device_id: normalizedId,
         name: name.trim() || undefined,
       });
       setSecret(created);
-      setCopied(false);
+      toast({ tone: "success", title: "بورد جدید ثبت شد." });
       setDeviceId("");
       setName("");
-      setPage(1);
       reload();
     } catch (failure) {
       setCreateError(plantDeviceError(failure));
@@ -114,12 +126,20 @@ export function AdminPlantDevicesPanel({
 
   async function copyKey(): Promise<void> {
     if (!secret) return;
+    let copied = false;
     try {
-      await navigator.clipboard.writeText(secret.apiKey);
-      setCopied(true);
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(secret.apiKey);
+        copied = true;
+      }
     } catch {
-      setCopied(false);
-      setActionError("کپی خودکار ممکن نشد؛ کلید را دستی انتخاب و کپی کنید.");
+      copied = false;
+    }
+    if (!copied) copied = copyTextFallback(secret.apiKey);
+    if (copied) {
+      toast({ tone: "success", title: "کلید کپی شد." });
+    } else {
+      toast({ tone: "danger", title: "کپی خودکار ممکن نشد؛ کلید را دستی انتخاب و کپی کنید." });
     }
   }
 
@@ -127,19 +147,19 @@ export function AdminPlantDevicesPanel({
     if (!confirm || actionLock.current) return;
     actionLock.current = true;
     setConfirmPending(true);
-    setActionError("");
     try {
       if (confirm.kind === "rotate") {
         const rotated = await rotatePlantDeviceKey(confirm.device.uuid);
         setSecret(rotated);
-        setCopied(false);
+        toast({ tone: "success", title: "کلید بورد نوسازی شد." });
       } else {
         await setPlantDeviceActive(confirm.device.uuid, confirm.nextActive);
+        toast({ tone: "success", title: "وضعیت بورد ذخیره شد." });
       }
       setConfirm(undefined);
       reload();
     } catch (failure) {
-      setActionError(plantDeviceError(failure));
+      toast({ tone: "danger", title: plantDeviceError(failure) });
       setConfirm(undefined);
       if (uncertainDeviceMutation(failure)) reload();
     } finally {
@@ -152,12 +172,6 @@ export function AdminPlantDevicesPanel({
   return (
     <>
       <div className="space-y-4">
-        {!canRegister ? (
-          <Alert tone="warning" title="نیروگاه هنوز تأیید نشده">
-            ثبت بورد فقط برای نیروگاه با وضعیت «تأییدشده» ممکن است. فهرست بوردهای قبلی را می‌توانید ببینید.
-          </Alert>
-        ) : null}
-
         {secret ? (
           <Alert tone="warning" title="کلید API را همین حالا ذخیره کنید">
             <p className="mb-2 text-sm">
@@ -172,7 +186,7 @@ export function AdminPlantDevicesPanel({
                 {secret.apiKey}
               </code>
               <Button variant="secondary" onClick={() => void copyKey()}>
-                {copied ? "کپی شد" : "کپی کلید"}
+                کپی کلید
               </Button>
             </div>
             <Button variant="ghost" className="mt-2" onClick={() => setSecret(undefined)}>
@@ -181,8 +195,7 @@ export function AdminPlantDevicesPanel({
           </Alert>
         ) : null}
 
-        {canRegister ? (
-          <form
+        <form
             id={formId}
             className="space-y-3 rounded-md border border-border p-3"
             onSubmit={(event) => void submitCreate(event)}
@@ -197,13 +210,13 @@ export function AdminPlantDevicesPanel({
                 required
                 maxLength={64}
                 disabled={creating}
-                helperText="سراسری یکتا؛ هنگام ذخیره به حروف بزرگ تبدیل می‌شود."
+                helperText="شناسهٔ یکتای بورد، حداکثر ۶۴ نویسه"
               />
               <Input
                 label="نام نمایشی (اختیاری)"
                 value={name}
                 onChange={(event) => setName(event.target.value)}
-                maxLength={120}
+                maxLength={150}
                 disabled={creating}
               />
             </div>
@@ -214,10 +227,7 @@ export function AdminPlantDevicesPanel({
                 {creating ? "در حال ثبت…" : "ثبت بورد"}
               </Button>
             </div>
-          </form>
-        ) : null}
-
-        {actionError ? <Alert tone="danger" title={actionError} /> : null}
+        </form>
 
         {state.status === "loading" ? (
           <p className="text-sm text-foreground-muted">در حال بارگذاری بوردها…</p>
@@ -227,13 +237,13 @@ export function AdminPlantDevicesPanel({
               تلاش دوباره
             </Button>
           </Alert>
-        ) : !state.data.results.length ? (
+        ) : !state.data.length ? (
           <Alert tone="info" title="بوردی ثبت نشده">
             هنوز بوردی برای این نیروگاه تعریف نشده است.
           </Alert>
         ) : (
           <ul className="space-y-3" aria-label="فهرست بوردها">
-            {state.data.results.map((device) => {
+            {state.data.map((device) => {
               const busy = busyUuid === device.uuid;
               return (
                 <li key={device.uuid} className="space-y-2 rounded-md border border-border px-3 py-3">
@@ -288,23 +298,6 @@ export function AdminPlantDevicesPanel({
           </ul>
         )}
 
-        {state.status === "ready" && (state.data.next || state.data.previous) ? (
-          <nav className="flex items-center justify-between gap-2 text-sm" aria-label="صفحه‌بندی بوردها">
-            <Button
-              variant="ghost"
-              disabled={!state.data.previous}
-              onClick={() => setPage((value) => Math.max(1, value - 1))}
-            >
-              قبلی
-            </Button>
-            <span>
-              صفحهٔ {faNumber(page)} · {faNumber(state.data.count)} بورد
-            </span>
-            <Button variant="ghost" disabled={!state.data.next} onClick={() => setPage((value) => value + 1)}>
-              بعدی
-            </Button>
-          </nav>
-        ) : null}
       </div>
 
       {confirm ? (

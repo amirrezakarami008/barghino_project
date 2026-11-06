@@ -42,7 +42,7 @@ export const userNav = [
 
   { href: "/panel/production", label: "تولید و درآمد", icon: "chart", summary: "نمودار تولید وقتی قرائت واقعی برسد.", disabled: true },
   { href: "/panel/invoices", label: "صورت‌حساب‌ها", icon: "card", summary: "دوره‌های فروش و سررسید تسویه.", disabled: true },
-  { href: "/panel/payments", label: "پرداخت‌ها", icon: "coins", summary: "واریز، شبا و کیف پول.", disabled: true },
+  { href: "/panel/payments", label: "کیف پول", icon: "coins", summary: "موجودی تومان، تاریخچه و انتقال." },
   { href: "/panel/documents", label: "مدارک", icon: "file", summary: "اسناد هویتی و فایل‌های قرارداد.", disabled: true },
   { href: "/panel/notifications", label: "اعلان‌ها", icon: "bell", summary: "رویدادهای حساب، بدون عدد ساختگی.", disabled: true },
   { href: "/panel/support", label: "پشتیبانی", icon: "headset", summary: "تیکت فروش، نصب، پرداخت یا قرارداد.", disabled: true },
@@ -53,6 +53,7 @@ export const adminNav = [
   { href: "/admin/plans", label: "پلن‌های فروش", icon: "plan", summary: "نرخ و حجم تعهد پلن‌های فروش." },
   { href: "/admin/plants", label: "نیروگاه‌ها", icon: "solarPanel", summary: "ثبت، ویرایش، حذف و تأیید نیروگاه‌های کاربران." },
   { href: "/admin/reviews", label: "بررسی درخواست‌ها", icon: "shield", summary: "تأیید انشعاب، نیروگاه، قراردادهای امضاشده و تمدید." },
+  { href: "/admin/wallets", label: "کیف پول‌ها", icon: "coins", summary: "واریز، برداشت، اصلاح، مسدودسازی و برگشت تراکنش." },
   { href: "/admin/equipment", label: "تجهیزات", icon: "solarPanel", summary: "قیمت و اقلام کاتالوگ نصب." },
   { href: "/admin/journal", label: "راهنماها", icon: "book", summary: "جست‌وجو و مشاهده راهنماهای منتشرشدهٔ سایت." },
   { href: "/admin/profile", label: "پروفایل", icon: "user", summary: "اطلاعات حساب و مشخصات مدیر." },

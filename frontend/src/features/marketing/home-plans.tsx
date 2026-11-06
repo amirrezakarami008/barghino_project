@@ -33,15 +33,7 @@ export function HomePlans() {
               recommended={plan.recommended}
               sample
               footer={
-                <ButtonLink
-                  href="/services#sell"
-                  variant={plan.recommended ? "primary" : "ghost"}
-                  className={
-                    plan.recommended
-                      ? "home-plans__cta-primary w-full"
-                      : "home-plans__cta-outline w-full"
-                  }
-                >
+                <ButtonLink href="/services#sell" variant="secondary" className="w-full">
                   شروع از خدمات
                   <Icon name="arrow" className="size-4 -scale-x-100" />
                 </ButtonLink>

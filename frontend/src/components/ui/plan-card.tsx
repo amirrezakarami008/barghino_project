@@ -44,37 +44,56 @@ export function PlanCard({
   const commitment = displayCommitment(energyCommitment, sample);
   const rows = Array.from({ length: BENEFIT_ROWS }, (_, index) => benefits[index] ?? null);
 
-  const inner = (
-    <>
-      {recommended ? (
-        <span className="plan-card__ribbon" aria-hidden={false}>
-          پیشنهادی
-        </span>
-      ) : null}
+  return (
+    <article
+      className={cn(
+        "plan-card",
+        recommended && "plan-card--recommended",
+        selected && "plan-card--selected",
+        className,
+      )}
+      data-selected={selected || undefined}
+      data-recommended={recommended || undefined}
+      aria-label={recommended ? `${name} · پیشنهادی` : name}
+    >
+      <div className="plan-card__accent" aria-hidden />
 
-      {sample ? (
-        <span className="plan-card__sample-chip">
-          <Badge tone="soft">نمونه</Badge>
-        </span>
-      ) : null}
-
-      <div className={cn("flex items-start justify-between gap-3", sample && "pe-14")}>
-        <div className="min-w-0">
-          <h3 className="text-h3">{name}</h3>
+      <div className="plan-card__top">
+        <div className="plan-card__identity">
+          <span className="plan-card__glyph" aria-hidden>
+            <Icon name="bolt" className="size-4" />
+          </span>
+          <div className="min-w-0">
+            <div className="plan-card__tags">
+              {recommended ? (
+                <span className="plan-card__recommended-chip">
+                  <Icon name="star" className="size-3.5" />
+                  پیشنهادی
+                </span>
+              ) : null}
+              {sample ? <Badge tone="soft">نمونه</Badge> : null}
+              {selected ? <Badge status="active">انتخاب‌شده</Badge> : null}
+            </div>
+            <h3 className="plan-card__name">{name}</h3>
+          </div>
         </div>
-        {selected ? <Badge status="active">انتخاب‌شده</Badge> : null}
       </div>
 
-      <p className="mt-4 flex flex-wrap items-baseline gap-x-1.5 gap-y-1">
-        <span className="plan-card__price tabular-nums">{formatFa(buyRate)}</span>
-        <span className="text-caption text-foreground-muted">تومان / کیلووات‌ساعت</span>
-      </p>
+      <div className="plan-card__metrics">
+        <div className="plan-card__metric plan-card__metric--rate">
+          <span className="plan-card__metric-label">نرخ خرید</span>
+          <p className="plan-card__price tabular-nums">
+            <span>{formatFa(buyRate)}</span>
+            <span className="plan-card__price-unit">تومان / kWh</span>
+          </p>
+        </div>
+        <div className="plan-card__metric">
+          <span className="plan-card__metric-label">تعهد انرژی</span>
+          <p className="plan-card__commitment">{commitment}</p>
+        </div>
+      </div>
 
-      <p className="mt-2 text-sm leading-6 text-foreground-muted">
-        تعهد انرژی: <span className="font-semibold text-foreground">{commitment}</span>
-      </p>
-
-      <ul className="plan-card__benefits mt-5 flex-1">
+      <ul className="plan-card__benefits">
         {rows.map((benefit, index) => (
           <li
             key={benefit ?? `empty-${index}`}
@@ -83,7 +102,7 @@ export function PlanCard({
           >
             {benefit ? (
               <>
-                <Icon name="check" className="mt-0.5 size-4 shrink-0 text-energy-600 dark:text-energy-400" />
+                <Icon name="check" className="size-3.5 shrink-0" />
                 <span>{benefit}</span>
               </>
             ) : (
@@ -93,46 +112,25 @@ export function PlanCard({
         ))}
       </ul>
 
-      <div className="mt-6 space-y-3">
+      <div className="plan-card__footer">
         {onSelect ? (
           <Button
-            variant={recommended || selected ? "primary" : "ghost"}
-            className={cn(
-              "w-full",
-              recommended && "bg-grad-sun text-primary-foreground shadow-sun",
-              !recommended && !selected && "border border-border bg-transparent",
-            )}
+            variant={selected ? "primary" : "secondary"}
+            className="plan-card__action w-full"
             onClick={onSelect}
           >
-            {selected ? "انتخاب شده" : actionLabel}
+            {selected ? (
+              <>
+                <Icon name="check" className="size-4" />
+                انتخاب شده
+              </>
+            ) : (
+              actionLabel
+            )}
           </Button>
         ) : null}
         {footer}
       </div>
-    </>
-  );
-
-  if (recommended) {
-    return (
-      <article
-        className={cn("plan-card plan-card--recommended relative h-full", className)}
-        data-selected={selected || undefined}
-      >
-        <div className="plan-card__recommended-inner">{inner}</div>
-      </article>
-    );
-  }
-
-  return (
-    <article
-      className={cn(
-        "plan-card plan-card--quiet relative flex h-full flex-col rounded-xl border border-border bg-surface p-5 shadow-soft transition-[transform,box-shadow] duration-fast ease-out hover:-translate-y-0.5 hover:shadow-lifted",
-        selected && "border-energy-400 shadow-energy-glow ring-2 ring-energy-400/40",
-        className,
-      )}
-      data-selected={selected || undefined}
-    >
-      {inner}
     </article>
   );
 }

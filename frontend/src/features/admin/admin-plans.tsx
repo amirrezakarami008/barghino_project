@@ -10,6 +10,7 @@ import {
   Input,
   PlanCard,
   Skeleton,
+  useToast,
   Textarea,
 } from "@/components/ui";
 import { ApiError } from "@/features/auth/lib/api";
@@ -68,11 +69,11 @@ const fadeUp = {
 };
 
 export function AdminPlans(): ReactElement {
+  const { push: toast } = useToast();
   const reduceMotion = useReducedMotion();
   const [plans, setPlans] = useState<readonly SellPlan[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
-  const [notice, setNotice] = useState("");
   const [editing, setEditing] = useState<SellPlan | null | undefined>(undefined);
   const [deleting, setDeleting] = useState<SellPlan | null>(null);
   const [deletePending, setDeletePending] = useState(false);
@@ -104,9 +105,9 @@ export function AdminPlans(): ReactElement {
     try {
       const updated = await patchPlan(plan.uuid, { [field]: value });
       setPlans((current) => current.map((entry) => (entry.uuid === plan.uuid ? { ...entry, ...updated } : entry)));
-      setNotice("تغییر وضعیت پلن ذخیره شد.");
+      toast({ tone: "success", title: "تغییر وضعیت پلن ذخیره شد." });
     } catch (error) {
-      setNotice(error instanceof ApiError ? error.message : "ذخیره وضعیت انجام نشد.");
+      toast({ tone: "danger", title: error instanceof ApiError ? error.message : "ذخیره وضعیت انجام نشد." });
     }
   }
 
@@ -115,9 +116,9 @@ export function AdminPlans(): ReactElement {
     try {
       await Promise.all(next.map((plan, index) => patchPlan(plan.uuid, { sort_order: index + 1 })));
       setPlans(next.map((plan, index) => ({ ...plan, sort_order: index + 1 })));
-      setNotice("ترتیب نمایش به‌روز شد.");
+      toast({ tone: "success", title: "ترتیب نمایش به‌روز شد." });
     } catch (error) {
-      setNotice(error instanceof ApiError ? error.message : "ذخیره ترتیب انجام نشد.");
+      toast({ tone: "danger", title: error instanceof ApiError ? error.message : "ذخیره ترتیب انجام نشد." });
       setAttempt((value) => value + 1);
     } finally {
       setReorderPending(false);
@@ -171,8 +172,6 @@ export function AdminPlans(): ReactElement {
             <PanelArt name="energy-bulb" width={160} height={160} className="admin-ws-hero-image" />
           </div>
         </motion.section>
-
-        {notice ? <Alert tone="success" title={notice} /> : null}
 
         {loading ? (
           <div className="admin-ws-list">
@@ -296,7 +295,7 @@ export function AdminPlans(): ReactElement {
           nextSortOrder={plans.length + 1}
           onClose={() => setEditing(undefined)}
           onSaved={async () => {
-            setNotice(editing ? "تغییرات پلن ذخیره شد." : "پلن جدید ساخته شد.");
+            toast({ tone: "success", title: editing ? "تغییرات پلن ذخیره شد." : "پلن جدید ساخته شد." });
             setEditing(undefined);
             await load();
           }}
@@ -313,7 +312,7 @@ export function AdminPlans(): ReactElement {
           setDeletePending(true);
           void deletePlan(deleting.uuid)
             .then(async () => {
-              setNotice(`پلن «${deleting.name}» حذف شد.`);
+              toast({ tone: "success", title: `پلن «${deleting.name}» حذف شد.` });
               setDeleting(null);
               await load();
             })

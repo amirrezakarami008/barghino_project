@@ -65,7 +65,7 @@ export function Stepper({ steps, className }: StepperProps) {
             <div className="min-w-0 space-y-0.5 pb-2 md:pb-0">
               <p
                 className={cn(
-                  "text-sm font-semibold",
+                  "text-sm font-semibold md:text-[0.8125rem] md:leading-5 lg:text-sm lg:leading-6",
                   step.state === "blocked" && "text-foreground-muted",
                   step.state === "rejected" && "text-status-rejected",
                   step.state === "current" && "text-foreground",

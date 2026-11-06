@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { Alert, Button, Input, Textarea } from "@/components/ui";
+import { Button, Input, Textarea, useToast } from "@/components/ui";
 
 type Errors = {
   name?: string;
@@ -10,8 +10,8 @@ type Errors = {
 };
 
 export function ContactForm() {
+  const { push: toast } = useToast();
   const [errors, setErrors] = useState<Errors>({});
-  const [ready, setReady] = useState(false);
 
   function onSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -24,16 +24,13 @@ export function ContactForm() {
     if (contact.length < 5) next.contact = "موبایل یا ایمیل را بنویسید.";
     if (message.length < 10) next.message = "پیام را کمی روشن‌تر بنویسید.";
     setErrors(next);
-    setReady(Object.keys(next).length === 0);
-  }
-
-  if (ready) {
-    return (
-      <Alert tone="success" title="پیام از نظر فرم کامل است">
-        ارسال به صندوق پشتیبانی هنوز به سرویس وصل نیست. تا آن زمان می‌توانید با تلفن{" "}
-        <bdi dir="ltr">۰۲۱-۴۴۰۰۰۶۶۴</bdi> تماس بگیرید.
-      </Alert>
-    );
+    if (Object.keys(next).length === 0) {
+      toast({
+        tone: "info",
+        title: "پیام از نظر فرم کامل است",
+        description: "ارسال به پشتیبانی هنوز فعال نیست. می‌توانید با ۰۲۱-۴۴۰۰۰۶۶۴ تماس بگیرید.",
+      });
+    }
   }
 
   return (

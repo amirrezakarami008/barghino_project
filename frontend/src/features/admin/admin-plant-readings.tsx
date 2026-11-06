@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, type FormEvent, type ReactElement } from "react";
-import { Alert, Button, Input, StatusPill } from "@/components/ui";
+import { Alert, Button, Input, StatusPill, useToast } from "@/components/ui";
 import { formatDecimal } from "@/features/contracts";
 import { faNumber } from "@/shared/lib/fa";
 import { Icon } from "@/shared/ui/icon";
@@ -45,6 +45,7 @@ export function AdminPlantReadingsPanel({
 }: {
   readonly plant: AdminPlant;
 }): ReactElement {
+  const { push: toast } = useToast();
   const formId = useId();
   const createLock = useRef(false);
   const [page, setPage] = useState(1);
@@ -55,7 +56,6 @@ export function AdminPlantReadingsPanel({
   const [energy, setEnergy] = useState("");
   const [creating, setCreating] = useState(false);
   const [createError, setCreateError] = useState("");
-  const [notice, setNotice] = useState("");
   const key = `${plant.uuid}:${page}:${attempt}`;
   const state: ListState = result?.key === key ? result.state : { status: "loading" };
 
@@ -92,7 +92,6 @@ export function AdminPlantReadingsPanel({
     createLock.current = true;
     setCreating(true);
     setCreateError("");
-    setNotice("");
     try {
       await createManualReading(plant.uuid, {
         period_start: periodStart,
@@ -102,7 +101,7 @@ export function AdminPlantReadingsPanel({
       setPeriodStart("");
       setPeriodEnd("");
       setEnergy("");
-      setNotice("قرائت دستی ثبت شد.");
+      toast({ tone: "success", title: "قرائت دستی ثبت شد." });
       setPage(1);
       reload();
     } catch (failure) {
@@ -154,7 +153,6 @@ export function AdminPlantReadingsPanel({
           />
         </div>
         {createError ? <Alert tone="danger" title={createError} /> : null}
-        {notice ? <Alert tone="success" title={notice} /> : null}
         <div className="flex justify-end">
           <Button type="submit" variant="primary" disabled={creating}>
             <Icon name="plus" className="size-4" />

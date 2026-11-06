@@ -1,7 +1,4 @@
-"use client";
-
 import Image from "next/image";
-import { motion, useReducedMotion } from "framer-motion";
 import { Badge, ButtonLink, StatusPill } from "@/components/ui";
 import { formatFa } from "@/shared/lib/fa";
 import { Icon } from "@/shared/ui/icon";
@@ -18,19 +15,7 @@ const timelineSteps = [
   { label: "پیش‌نویس", state: "todo" as const, meta: "آماده نشده" },
 ];
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 14 },
-  show: { opacity: 1, y: 0 },
-};
-
-const easeOut = [0.22, 1, 0.36, 1] as const;
-
 export function HomeHero() {
-  const reduceMotion = useReducedMotion();
-  const transition = reduceMotion
-    ? { duration: 0 }
-    : { duration: 0.28, ease: easeOut };
-
   return (
     <section className="home-hero" aria-labelledby="home-hero-title">
       <div className="home-hero__grid" aria-hidden />
@@ -38,41 +23,22 @@ export function HomeHero() {
       <div className="home-hero__fade" aria-hidden />
 
       <div className="home-hero__inner">
-        <motion.div
-          className="min-w-0"
-          initial="hidden"
-          whileInView="show"
-          viewport={{ once: true, amount: 0.35 }}
-          variants={{
-            hidden: {},
-            show: {
-              transition: {
-                staggerChildren: reduceMotion ? 0 : 0.08,
-                delayChildren: reduceMotion ? 0 : 0.04,
-              },
-            },
-          }}
-        >
-          <motion.span className="home-hero__badge" variants={fadeUp} transition={transition}>
+        <div className="min-w-0">
+          <span className="home-hero__badge">
             <span className="home-hero__badge-dot" aria-hidden />
             پلتفرم خدمات انرژی خورشیدی
-          </motion.span>
+          </span>
 
-          <motion.h1
-            id="home-hero-title"
-            className="home-hero__title"
-            variants={fadeUp}
-            transition={transition}
-          >
+          <h1 id="home-hero-title" className="home-hero__title">
             نیروگاه خورشیدی‌ات را به{" "}
             <span className="home-hero__title-accent">مسیر فروش شفاف</span> و قابل‌پیگیری وصل کن
-          </motion.h1>
+          </h1>
 
-          <motion.p className="home-hero__subtitle" variants={fadeUp} transition={transition}>
+          <p className="home-hero__subtitle">
             از ثبت انشعاب تا پیش‌نویس قرارداد، وضعیت‌ها دیده می‌شوند.
-          </motion.p>
+          </p>
 
-          <motion.div className="home-hero__actions" variants={fadeUp} transition={transition}>
+          <div className="home-hero__actions">
             <ButtonLink
               href="/register?path=sell"
               size="lg"
@@ -89,31 +55,20 @@ export function HomeHero() {
             >
               نیروگاه ندارم، می‌خواهم نصب کنم
             </ButtonLink>
-          </motion.div>
+          </div>
 
-          <motion.p className="home-hero__note" variants={fadeUp} transition={transition}>
-            بدون وعدهٔ درآمد تضمینی
-          </motion.p>
+          <p className="home-hero__note">بدون وعدهٔ درآمد تضمینی</p>
 
-          <motion.ul className="home-hero__chips" variants={fadeUp} transition={transition}>
+          <ul className="home-hero__chips">
             {trustChips.map((chip) => (
               <li key={chip} className="home-hero__chip">
                 {chip}
               </li>
             ))}
-          </motion.ul>
-        </motion.div>
+          </ul>
+        </div>
 
-        <motion.div
-          className="home-hero__visual"
-          aria-label="پیش‌نمایش نمونه وضعیت قرارداد"
-          initial={reduceMotion ? false : { opacity: 0, scale: 0.96 }}
-          whileInView={{ opacity: 1, scale: 1 }}
-          viewport={{ once: true, amount: 0.3 }}
-          transition={
-            reduceMotion ? { duration: 0 } : { duration: 0.3, delay: 0.08, ease: easeOut }
-          }
-        >
+        <div className="home-hero__visual" aria-label="پیش‌نمایش نمونه وضعیت قرارداد">
           <div className="home-hero__media">
             <span className="home-hero__media-frame" aria-hidden />
             <Image
@@ -183,7 +138,7 @@ export function HomeHero() {
               </p>
             </article>
           </div>
-        </motion.div>
+        </div>
       </div>
     </section>
   );

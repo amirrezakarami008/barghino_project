@@ -52,9 +52,9 @@ export function Select({
             className={cn(controlClass, isFloating && "pt-5 pb-2")}
             {...props}
           >
-            <option value="" disabled>
+            {!options.some((option) => option.value === "") ? <option value="" disabled>
               {isFloating ? " " : placeholder}
-            </option>
+            </option> : null}
             {options.map((option) => (
               <option key={option.value} value={option.value} disabled={option.disabled}>
                 {option.label}

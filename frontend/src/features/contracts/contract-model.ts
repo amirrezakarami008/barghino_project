@@ -48,7 +48,17 @@ export type Contract = {
 };
 export type Plant = { readonly uuid: string; readonly name: string; readonly branchUuid: string; readonly capacity: Decimal | null; readonly status: string; readonly reviewNote: string };
 export type Branch = { readonly uuid: string; readonly name: string; readonly billId: string; readonly address: string; readonly status: string };
-export type Plan = { readonly uuid: string; readonly name: string; readonly description: string; readonly rate: Decimal | null; readonly commitment: Decimal | null; readonly benefits: readonly string[]; readonly recommended: boolean; readonly active: boolean };
+export type Plan = {
+  readonly uuid: string;
+  readonly name: string;
+  readonly description: string;
+  readonly rate: Decimal | null;
+  readonly commitment: Decimal | null;
+  readonly savingsText: string;
+  readonly benefits: readonly string[];
+  readonly recommended: boolean;
+  readonly active: boolean;
+};
 export type PlantOption = { readonly plant: Plant; readonly branch: Branch | null };
 export type Remote<T> = { readonly status: "loading" } | { readonly status: "error"; readonly message: string } | { readonly status: "ready"; readonly data: T };
 
@@ -191,7 +201,17 @@ export function parsePlan(value: unknown): Plan {
   if (typeof raw.is_active !== "boolean" || typeof raw.is_recommended !== "boolean" || !Array.isArray(raw.benefits) || !raw.benefits.every((item) => typeof item === "string")) throw new ContractDataError();
   const rate = decimal(raw.rate_toman_per_kwh), commitment = decimal(raw.commitment_kwh);
   if (!rate || !commitment || rate.startsWith("-") || commitment.startsWith("-") || !/[1-9]/.test(rate) || !/[1-9]/.test(commitment)) throw new ContractDataError();
-  return { uuid: required(raw.uuid), name: required(raw.name), description: text(raw.description), rate, commitment, benefits: raw.benefits, recommended: raw.is_recommended, active: raw.is_active };
+  return {
+    uuid: required(raw.uuid),
+    name: required(raw.name),
+    description: text(raw.description),
+    rate,
+    commitment,
+    savingsText: text(raw.savings_text),
+    benefits: raw.benefits,
+    recommended: raw.is_recommended,
+    active: raw.is_active,
+  };
 }
 export function parsePage<T>(value: unknown, parse: (item: unknown) => T): Page<T> {
   const raw = record(value);

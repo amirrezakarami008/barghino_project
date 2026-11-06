@@ -30,7 +30,6 @@ import {
   TabsTrigger,
   Textarea,
   Timeline,
-  ToastProvider,
   createAlertSelector,
   dedupeAlerts,
   useAlertBanner,
@@ -609,7 +608,7 @@ function InteractiveDemo() {
         </div>
       </Section>
 
-      <Section id="plan-card" title="PlanCard" lede="چیدمان هم‌ارتفاع برای مقایسه؛ روبان پیشنهادی و حالت انتخاب.">
+      <Section id="plan-card" title="PlanCard" lede="چیدمان هم‌ارتفاع برای مقایسه؛ پیشنهاد با نشان کارت، دکمهٔ یکسان برای همه.">
         <div className="grid gap-4 md:grid-cols-3">
           <PlanCard
             name="پایه"
@@ -644,10 +643,8 @@ function InteractiveDemo() {
 
 export function ComponentsPreview() {
   return (
-    <ToastProvider>
-      <AlertBannerProvider>
-        <InteractiveDemo />
-      </AlertBannerProvider>
-    </ToastProvider>
+    <AlertBannerProvider>
+      <InteractiveDemo />
+    </AlertBannerProvider>
   );
 }

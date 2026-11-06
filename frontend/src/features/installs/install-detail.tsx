@@ -12,7 +12,6 @@ import {
   Skeleton,
   StatusPill,
   Timeline,
-  ToastProvider,
   useToast,
 } from "@/components/ui";
 import { PanelArt } from "@/features/panel/panel-art";
@@ -44,11 +43,7 @@ const fadeUp = {
 };
 
 export function InstallDetail(): ReactElement {
-  return (
-    <ToastProvider>
-      <InstallDetailInner />
-    </ToastProvider>
-  );
+  return <InstallDetailInner />;
 }
 
 function InstallDetailInner(): ReactElement {

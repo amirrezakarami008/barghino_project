@@ -20,6 +20,8 @@ export type DataTableProps<T> = {
   getRowId: (row: T) => string;
   statusAccessor?: (row: T) => StatusTone | undefined;
   onRowClick?: (row: T) => void;
+  /** Highlights the matching row for master–detail selection. */
+  selectedRowId?: string | null;
   loading?: boolean;
   emptyTitle?: string;
   emptyDescription?: string;
@@ -32,6 +34,7 @@ export function DataTable<T>({
   getRowId,
   statusAccessor,
   onRowClick,
+  selectedRowId = null,
   loading = false,
   emptyTitle = "موردی یافت نشد",
   emptyDescription = "هنوز داده‌ای برای نمایش وجود ندارد.",
@@ -87,11 +90,15 @@ export function DataTable<T>({
           <tbody>
             {rows.map((row) => {
               const status = statusAccessor?.(row);
+              const rowId = getRowId(row);
+              const isSelected = selectedRowId !== null && selectedRowId === rowId;
               return (
                 <tr
-                  key={getRowId(row)}
+                  key={rowId}
+                  aria-selected={isSelected || undefined}
                   className={cn(
                     "border-t border-border transition-colors duration-fast ease-out hover:bg-surface/80",
+                    isSelected && "bg-sun-50/80 hover:bg-sun-50",
                     onRowClick &&
                       "cursor-pointer focus-visible:bg-surface focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-ring",
                   )}
@@ -130,10 +137,17 @@ export function DataTable<T>({
         {rows.map((row) => {
           const status = statusAccessor?.(row);
           const primary = columns.find((column) => column.mobilePrimary) ?? columns[0];
+          const rowId = getRowId(row);
+          const isSelected = selectedRowId !== null && selectedRowId === rowId;
           return (
             <li
-              key={getRowId(row)}
-              className={cn("space-y-3 p-4", onRowClick && "cursor-pointer")}
+              key={rowId}
+              aria-selected={isSelected || undefined}
+              className={cn(
+                "space-y-3 p-4",
+                isSelected && "bg-sun-50/80",
+                onRowClick && "cursor-pointer",
+              )}
               onClick={onRowClick ? () => onRowClick(row) : undefined}
               onKeyDown={
                 onRowClick

@@ -95,6 +95,7 @@
 }
 
 .site-review-hero__art {
+  display: none;
   position: relative;
   justify-self: center;
   width: min(100%, 10.5rem);
@@ -690,6 +691,10 @@
     align-items: center;
     gap: 1.25rem;
     padding: 1.4rem 1.35rem;
+  }
+
+  .site-review-hero__art {
+    display: block;
   }
 
   .site-review-facts {

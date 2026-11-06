@@ -13,6 +13,7 @@ export type AdminPlant = Plant & {
 };
 
 export type AdminBranch = Branch & { readonly ownerUuid: string };
+export type AdminPlantStatus = "active" | "pending" | "maintenance" | "inactive";
 export type InventoryPage<T> = {
   readonly count: number;
   readonly next: boolean;
@@ -81,9 +82,11 @@ export async function getAdminPlants(
   page: number,
   signal: AbortSignal,
   search = "",
+  status?: AdminPlantStatus,
 ): Promise<InventoryPage<AdminPlant>> {
   const params = new URLSearchParams({ page: String(page), page_size: "12" });
   if (search.trim()) params.set("search", search.trim());
+  if (status) params.set("status", status);
   return parsePage(await apiRequest<unknown>(`/staff/plants/?${params}`, { auth: true, signal }), parseAdminPlant);
 }
 
@@ -93,7 +96,7 @@ export async function getAdminBranches(
   owner: string | undefined,
   signal: AbortSignal,
 ): Promise<InventoryPage<AdminBranch>> {
-  const params = new URLSearchParams({ page: String(page), page_size: "12", status: "all" });
+  const params = new URLSearchParams({ page: String(page), page_size: "12" });
   if (search.trim()) params.set("search", search.trim());
   if (owner) params.set("owner_uuid", owner);
   return parsePage(

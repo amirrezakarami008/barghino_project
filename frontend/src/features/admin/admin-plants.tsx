@@ -8,7 +8,9 @@ import {
   ConfirmDialog,
   EmptyState,
   Skeleton,
+  useToast,
   StatusPill,
+  Select,
   Textarea,
 } from "@/components/ui";
 import { formatDecimal } from "@/features/contracts";
@@ -27,6 +29,7 @@ import {
   plantStatusTone,
   reviewAdminPlant,
   uncertainPlantMutation,
+  type AdminPlantStatus,
   type AdminPlant,
   type InventoryPage,
 } from "./admin-plants-api";
@@ -63,7 +66,7 @@ const fadeUp = {
 
 function nextHint(plant: AdminPlant): string {
   if (plant.status === "pending") return "این پرونده در صف بررسی است؛ تأیید یا رد را مشخص کنید.";
-  if (plant.status === "active") return "نیروگاه تأیید شده؛ بورد، قرائت و تولید را از مانیتورینگ ببینید.";
+  if (plant.status === "active") return "نیروگاه تأیید شده؛ بوردهای متصل را مدیریت کنید.";
   if (plant.status === "inactive") return "رد یا غیرفعال شده؛ در صورت نیاز ویرایش و ارسال دوباره به بررسی.";
   if (plant.status === "maintenance") return "در حال تعمیر است؛ پس از آماده‌شدن وضعیت را به‌روز کنید.";
   return plant.lastAction;
@@ -77,18 +80,19 @@ function cardArt(status: string): string {
 }
 
 export function AdminPlants(): ReactElement {
+  const { push: toast } = useToast();
   const reduceMotion = useReducedMotion();
   const [page, setPage] = useState(1);
+  const [status, setStatus] = useState<AdminPlantStatus | "">("");
   const [attempt, setAttempt] = useState(0);
   const [modal, setModal] = useState<Modal>();
-  const [notice, setNotice] = useState("");
   const [result, setResult] = useState<{ readonly key: string; readonly state: State }>();
-  const key = `${page}:${attempt}`;
+  const key = `${page}:${status}:${attempt}`;
   const state: State = result?.key === key ? result.state : { status: "loading" };
 
   useEffect(() => {
     const controller = new AbortController();
-    void getAdminPlants(page, controller.signal)
+    void getAdminPlants(page, controller.signal, "", status || undefined)
       .then((data) => {
         if (!controller.signal.aborted) setResult({ key, state: { status: "ready", data } });
       })
@@ -98,14 +102,14 @@ export function AdminPlants(): ReactElement {
         }
       });
     return () => controller.abort();
-  }, [key, page, attempt]);
+  }, [key, page, status, attempt]);
 
   function reload(): void {
     setAttempt((value) => value + 1);
   }
 
   function saved(message: string): void {
-    setNotice(message);
+    toast({ tone: "success", title: message });
     setModal(undefined);
     setPage(1);
     reload();
@@ -130,7 +134,7 @@ export function AdminPlants(): ReactElement {
             <p className="admin-ws-hero-eyebrow">عملیات نیروگاه</p>
             <h2 className="admin-ws-hero-title">مدیریت نیروگاه‌های خورشیدی</h2>
             <p className="admin-ws-hero-body">
-              از ثبت تا تأیید و مانیتورینگ بورد؛ فقط دادهٔ واقعی، بدون عدد ساختگی.
+              از ثبت نیروگاه تا مدیریت بوردهای متصل.
             </p>
             <div className="mt-4 flex flex-wrap gap-2">
               <Button variant="primary" className="admin-ws-hero-cta" onClick={() => setModal({ kind: "new" })}>
@@ -159,7 +163,23 @@ export function AdminPlants(): ReactElement {
           ))}
         </motion.ol>
 
-        {notice ? <Alert tone="success" title={notice} /> : null}
+        <div className="admin-ws-toolbar">
+          <Select
+            label="وضعیت نیروگاه‌ها"
+            value={status}
+            onChange={(event) => {
+              setStatus(event.target.value as AdminPlantStatus | "");
+              setPage(1);
+            }}
+            options={[
+              { value: "", label: "همهٔ وضعیت‌ها" },
+              { value: "active", label: "فعال" },
+              { value: "pending", label: "در انتظار بررسی" },
+              { value: "maintenance", label: "در حال تعمیر" },
+              { value: "inactive", label: "غیرفعال" },
+            ]}
+          />
+        </div>
 
         {state.status === "ready" ? (
           <p className="admin-ws-result">{faNumber(state.data.count)} نیروگاه ثبت‌شده</p>
@@ -344,12 +364,12 @@ function PlantCard({
                 رد
               </Button>
               <Button variant="secondary" size="sm" onClick={onMonitor}>
-                مانیتورینگ
+                مدیریت بوردها
               </Button>
             </>
           ) : (
             <Button variant="primary" size="sm" onClick={onMonitor}>
-              مانیتورینگ
+              مدیریت بوردها
             </Button>
           )}
           <Button variant="ghost" size="sm" onClick={onEdit}>

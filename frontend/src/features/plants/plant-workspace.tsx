@@ -5,7 +5,6 @@ import {
   Alert,
   Button,
   ButtonLink,
-  Card,
   EmptyState,
   Skeleton,
   StatusPill,
@@ -13,11 +12,91 @@ import {
 import { formatDecimal } from "@/features/contracts";
 import { plantStatusMeta } from "@/features/contracts/status-map";
 import { PanelArt } from "@/features/panel/panel-art";
+import { cn } from "@/shared/lib/cn";
 import { faNumber } from "@/shared/lib/fa";
 import { Icon } from "@/shared/ui/icon";
 import { schemeTypeLabel, systemTypeLabel } from "./plant-options";
+import { PlantTodayMetrics } from "./plant-today-metrics";
 import { usePlantInventory } from "./use-plant-inventory";
+import type { Plant } from "./plants-api";
 import "./plants.css";
+
+function plantStageClass(status: string): string | undefined {
+  if (status === "active") return "plant-ticket--active";
+  if (status === "pending") return "plant-ticket--pending";
+  if (status === "inactive") return "plant-ticket--closed";
+  if (status === "maintenance") return "plant-ticket--draft";
+  return undefined;
+}
+
+function PlantCard({
+  plant,
+  branchName,
+}: {
+  readonly plant: Plant;
+  readonly branchName: string | null;
+}): ReactElement {
+  const meta = plantStatusMeta(plant.status);
+
+  return (
+    <article className={cn("plant-ticket", plantStageClass(plant.status))}>
+      <div className="plant-ticket-top">
+        <div className="min-w-0">
+          <div className="plant-ticket-kicker">
+            <StatusPill status={meta.tone} label={meta.label} />
+            <span className="plant-ticket-capacity tabular-nums">
+              ظرفیت <bdi dir="ltr">{formatDecimal(plant.capacity_kwp)}</bdi> kWp
+            </span>
+          </div>
+          <h3 className="plant-ticket-title">{plant.name}</h3>
+          <div className="plant-ticket-chips" aria-label="مشخصات نیروگاه">
+            <span className="plant-ticket-chip">{schemeTypeLabel(plant.scheme_type)}</span>
+            <span className="plant-ticket-chip">{systemTypeLabel(plant.system_type)}</span>
+          </div>
+        </div>
+        <PanelArt
+          name="stat-plants"
+          width={96}
+          height={96}
+          className="plant-ticket-art"
+        />
+      </div>
+
+      <div className="plant-ticket-body">
+        <PlantTodayMetrics plantUuid={plant.uuid} />
+
+        <div className="plant-ticket-facts">
+          {branchName ? (
+            <div className="plant-ticket-fact">
+              <span className="plant-ticket-fact-icon" aria-hidden>
+                <Icon name="bolt" className="size-4" />
+              </span>
+              <p>
+                <span className="label">انشعاب</span>
+                <span className="value">{branchName}</span>
+              </p>
+            </div>
+          ) : null}
+          {plant.address ? (
+            <div className="plant-ticket-fact">
+              <span className="plant-ticket-fact-icon plant-ticket-fact-icon--mint" aria-hidden>
+                <Icon name="home" className="size-4" />
+              </span>
+              <p>
+                <span className="label">نشانی</span>
+                <span className="value plant-ticket-fact-value--wrap">{plant.address}</span>
+              </p>
+            </div>
+          ) : null}
+        </div>
+
+        {plant.review_note ? (
+          <p className="plant-ticket-note">نتیجهٔ بررسی: {plant.review_note}</p>
+        ) : null}
+      </div>
+    </article>
+  );
+}
 
 export function PlantWorkspace(): ReactElement {
   const [page, setPage] = useState(1);
@@ -29,7 +108,7 @@ export function PlantWorkspace(): ReactElement {
         <div>
           <h2 className="text-h2 tracking-tight">نیروگاه من</h2>
           <p className="mt-2 text-body text-foreground-muted">
-            ظرفیت، نشانی و وضعیت بررسی — فقط دادهٔ واقعی حساب شما.
+            تولید و درآمد امروز، ظرفیت و وضعیت بررسی — فقط دادهٔ واقعی حساب شما.
           </p>
         </div>
         <Button variant="secondary" onClick={reload}>
@@ -38,9 +117,9 @@ export function PlantWorkspace(): ReactElement {
       </header>
 
       {state.status === "loading" ? (
-        <div className="grid gap-3 md:grid-cols-2">
-          <Skeleton className="h-40" />
-          <Skeleton className="h-40" />
+        <div className="grid gap-4 md:grid-cols-2">
+          <Skeleton className="h-64 rounded-[26px]" />
+          <Skeleton className="h-64 rounded-[26px]" />
         </div>
       ) : state.status === "error" ? (
         <Alert tone="danger" title="دریافت نیروگاه‌ها ممکن نشد">
@@ -71,43 +150,12 @@ export function PlantWorkspace(): ReactElement {
           <p className="text-caption text-foreground-muted">
             {faNumber(state.data.plants.count)} نیروگاه ثبت‌شده
           </p>
-          <ul className="grid gap-4 md:grid-cols-2">
+          <ul className="plant-ticket-list">
             {state.data.plants.results.map((plant) => {
-              const meta = plantStatusMeta(plant.status);
               const branch = state.data.branches.results.find((item) => item.uuid === plant.branch_uuid);
               return (
                 <li key={plant.uuid}>
-                  <Card className="h-full">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="flex gap-3">
-                        <span className="grid size-11 place-items-center rounded-md bg-grad-energy text-secondary-foreground">
-                          <Icon name="solarPanel" className="size-5" />
-                        </span>
-                        <div>
-                          <h3 className="text-h4">{plant.name}</h3>
-                          <p className="mt-1 text-sm tabular-nums text-foreground-muted">
-                            ظرفیت · <bdi dir="ltr">{formatDecimal(plant.capacity_kwp)}</bdi> kWp
-                          </p>
-                        </div>
-                      </div>
-                      <StatusPill status={meta.tone} label={meta.label} />
-                    </div>
-                    <div className="plant-meta-chips">
-                      <span className="plant-meta-chip">{schemeTypeLabel(plant.scheme_type)}</span>
-                      <span className="plant-meta-chip">{systemTypeLabel(plant.system_type)}</span>
-                    </div>
-                    {plant.address ? (
-                      <p className="mt-4 text-sm leading-7 text-foreground-muted">{plant.address}</p>
-                    ) : null}
-                    {branch ? (
-                      <p className="mt-2 text-caption text-foreground-muted">انشعاب: {branch.name}</p>
-                    ) : null}
-                    {plant.review_note ? (
-                      <p className="mt-3 rounded-md bg-status-pending-bg px-3 py-2 text-sm text-status-pending">
-                        نتیجهٔ بررسی: {plant.review_note}
-                      </p>
-                    ) : null}
-                  </Card>
+                  <PlantCard plant={plant} branchName={branch?.name ?? null} />
                 </li>
               );
             })}

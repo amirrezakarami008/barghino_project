@@ -54,6 +54,87 @@ const fieldErrorKeys: Partial<Record<keyof Draft, string>> = {
   terms: "terms_accepted",
 };
 
+const individualErrorKeys = ["first_name", "firstName", "last_name", "lastName", "national_id", "nationalId"] as const;
+const legalErrorKeys = [
+  "company_name",
+  "companyName",
+  "company_national_id",
+  "companyNationalId",
+  "representative_first_name",
+  "representative_last_name",
+  "representative_national_id",
+  "registration_number",
+  "economic_code",
+] as const;
+const contactErrorKeys = ["phone", "terms_accepted", "terms"] as const;
+
+const fieldLabels: Record<string, string> = {
+  first_name: "نام",
+  firstName: "نام",
+  last_name: "نام خانوادگی",
+  lastName: "نام خانوادگی",
+  national_id: "کد ملی",
+  nationalId: "کد ملی",
+  company_name: "نام شرکت",
+  companyName: "نام شرکت",
+  company_national_id: "شناسه ملی شرکت",
+  companyNationalId: "شناسه ملی شرکت",
+  representative_first_name: "نام نماینده",
+  representative_last_name: "نام خانوادگی نماینده",
+  representative_national_id: "کد ملی نماینده",
+  registration_number: "شماره ثبت",
+  economic_code: "کد اقتصادی",
+  phone: "شماره موبایل",
+  terms_accepted: "شرایط و قوانین",
+  terms: "شرایط و قوانین",
+  account_type: "نوع حساب",
+  path: "مسیر",
+  birth_certificate_number: "شماره شناسنامه",
+  date_of_birth: "تاریخ تولد",
+  code: "کد تأیید",
+};
+
+const hiddenErrorKeys = new Set(["non_field_errors", "detail", "code"]);
+
+function presentError(key: string, value: string) {
+  const label = fieldLabels[key];
+  if (!label || value.includes(label)) return value;
+  return `${label}: ${value}`;
+}
+
+function visibleErrorKeys(step: WizardStep, accountType: AccountType, enteringCode: boolean): readonly string[] {
+  if (enteringCode) return [];
+  if (step === 2) return accountType === "individual" ? individualErrorKeys : legalErrorKeys;
+  if (step === 3) return contactErrorKeys;
+  return [];
+}
+
+/** Messages for fields that are not on the screen the user is looking at. */
+function offstepMessages(errors: Record<string, string>, visibleKeys: readonly string[], formError: string) {
+  const visible = new Set<string>(visibleKeys);
+  const messages: string[] = [];
+  for (const [key, value] of Object.entries(errors)) {
+    if (!value || visible.has(key) || hiddenErrorKeys.has(key)) continue;
+    const text = presentError(key, value);
+    if (text === formError || messages.includes(text)) continue;
+    messages.push(text);
+  }
+  return messages;
+}
+
+function leadingFieldMessage(errors: Record<string, string>) {
+  if (errors.code) return presentError("code", errors.code);
+  for (const [key, value] of Object.entries(errors)) {
+    if (!value || hiddenErrorKeys.has(key)) continue;
+    return presentError(key, value);
+  }
+  return "";
+}
+
+function hasFieldMessage(fields: Record<string, string>) {
+  return Object.entries(fields).some(([key, value]) => Boolean(value) && !hiddenErrorKeys.has(key));
+}
+
 const emptyDraft = (path: Path): Draft => ({
   accountType: "individual",
   path,
@@ -89,6 +170,7 @@ export function RegisterForm({
   const [apiStep, setApiStep] = useState<ApiStep>("details");
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [formError, setFormError] = useState("");
+  const [otpOwnsMessage, setOtpOwnsMessage] = useState(false);
   const [pending, setPending] = useState(false);
   const [now, setNow] = useState(0);
   const [resendAt, setResendAt] = useState(0);
@@ -142,9 +224,16 @@ export function RegisterForm({
     return next;
   }
 
+  function applyApiFailure(error: ApiError) {
+    setErrors(error.fields);
+    const banner = error.fields.non_field_errors || (hasFieldMessage(error.fields) ? "" : error.message);
+    setFormError(banner);
+  }
+
   async function start(event?: FormEvent<HTMLFormElement>) {
     event?.preventDefault();
     if (pending) return;
+    setOtpOwnsMessage(false);
     const payload = buildPayload(draft);
     if ("errors" in payload) {
       setErrors(payload.errors);
@@ -167,12 +256,8 @@ export function RegisterForm({
       setResendAt(started + codeLifetimeSeconds * 1000);
       setApiStep("code");
     } catch (error) {
-      if (error instanceof ApiError) {
-        setErrors(error.fields);
-        setFormError(error.fields.phone || error.fields.terms_accepted ? "" : error.message);
-      } else {
-        setFormError("ثبت‌نام انجام نشد.");
-      }
+      if (error instanceof ApiError) applyApiFailure(error);
+      else setFormError("ثبت‌نام انجام نشد.");
     } finally {
       setPending(false);
     }
@@ -181,11 +266,19 @@ export function RegisterForm({
   async function verify(code: string): Promise<Session> {
     setErrors({});
     setFormError("");
-    const result = await apiRequest<{ access: string; refresh: string; user: unknown }>("/auth/register/verify/", {
-      method: "POST",
-      body: { phone: normalizeIranMobile(draft.phone), code },
-    });
-    return { access: result.access, refresh: result.refresh, user: userFromApi(result.user) };
+    setOtpOwnsMessage(false);
+    try {
+      const result = await apiRequest<{ access: string; refresh: string; user: unknown }>("/auth/register/verify/", {
+        method: "POST",
+        body: { phone: normalizeIranMobile(draft.phone), code },
+      });
+      return { access: result.access, refresh: result.refresh, user: userFromApi(result.user) };
+    } catch (error) {
+      if (error instanceof ApiError) setErrors(error.fields);
+      else setFormError("ثبت‌نام انجام نشد.");
+      setOtpOwnsMessage(true);
+      throw error;
+    }
   }
 
   function goNextFromPath() {
@@ -195,16 +288,28 @@ export function RegisterForm({
   function goNextFromIdentity(event: FormEvent) {
     event.preventDefault();
     const next = validateIdentity();
-    if (Object.keys(next).length > 0) {
-      setErrors(next);
-      return;
-    }
-    setErrors({});
+    const owned = new Set<string>(visibleErrorKeys(2, draft.accountType, false));
+    setErrors((current) => {
+      const kept = Object.fromEntries(Object.entries(current).filter(([key]) => !owned.has(key)));
+      return { ...kept, ...next };
+    });
+    if (Object.keys(next).length > 0) return;
     setWizardStep(3);
   }
 
   const panelKey =
     apiStep === "code" ? "code" : showSuccess ? "success" : `wiz-${wizardStep}`;
+  const enteringCode = apiStep === "code";
+  const carried = offstepMessages(
+    errors,
+    visibleErrorKeys(wizardStep, draft.accountType, enteringCode),
+    formError,
+  );
+  const echoedByOtp = enteringCode && otpOwnsMessage ? leadingFieldMessage(errors) : "";
+  const carriedOnScreen = echoedByOtp ? carried.filter((message) => message !== echoedByOtp) : carried;
+  const alerts = (
+    <RegisterAlerts formError={echoedByOtp && formError === echoedByOtp ? "" : formError} messages={carriedOnScreen} />
+  );
 
   return (
     <div className="auth-face relative overflow-hidden">
@@ -256,6 +361,7 @@ export function RegisterForm({
             </div>
           ) : apiStep === "code" ? (
             <div className="grid gap-4">
+              {alerts}
               <OtpInput
                 key={resendAt}
                 disabled={pending}
@@ -269,7 +375,6 @@ export function RegisterForm({
                   }, reduceMotion ? 200 : 900);
                 }}
               />
-              {formError ? <p className="auth-face__error">{formError}</p> : null}
               <div className="auth-face__meta-row">
                 <button
                   type="button"
@@ -285,7 +390,10 @@ export function RegisterForm({
                   type="button"
                   className="auth-face__back"
                   disabled={pending}
-                  onClick={() => setApiStep("details")}
+                  onClick={() => {
+                    setOtpOwnsMessage(false);
+                    setApiStep("details");
+                  }}
                 >
                   اصلاح اطلاعات
                 </button>
@@ -293,6 +401,7 @@ export function RegisterForm({
             </div>
           ) : wizardStep === 1 ? (
             <div className="grid gap-4">
+              {alerts}
               <AccountType value={draft.accountType} onChange={(value) => update("accountType", value)} />
               <Intent value={draft.path} onChange={(value) => update("path", value)} />
               <button type="button" className="auth-face__cta" onClick={goNextFromPath}>
@@ -312,6 +421,7 @@ export function RegisterForm({
                 <Icon name="arrow" className="size-3.5" />
                 بازگشت
               </button>
+              {alerts}
               {draft.accountType === "individual" ? (
                 <>
                   <FaceField
@@ -488,6 +598,7 @@ export function RegisterForm({
                 <Icon name="arrow" className="size-3.5" />
                 بازگشت
               </button>
+              {alerts}
               <FaceField id={phoneId} label="شماره موبایل" icon="phone" error={errors.phone}>
                 <input
                   id={phoneId}
@@ -519,7 +630,6 @@ export function RegisterForm({
                 </span>
               </label>
               {errors.terms_accepted ? <p className="auth-face__error">{errors.terms_accepted}</p> : null}
-              {formError ? <p className="auth-face__error">{formError}</p> : null}
               <button type="submit" className="auth-face__cta" disabled={pending}>
                 {pending ? <span className="auth-face__cta-spinner" aria-hidden /> : null}
                 {pending ? "در حال ارسال کد…" : "دریافت کد تأیید"}
@@ -535,6 +645,20 @@ export function RegisterForm({
           )}
         </motion.div>
       </AnimatePresence>
+    </div>
+  );
+}
+
+function RegisterAlerts({ formError, messages }: { formError: string; messages: string[] }) {
+  const lines = formError ? [formError, ...messages] : messages;
+  if (lines.length === 0) return null;
+  return (
+    <div role="alert" className="grid gap-1">
+      {lines.map((message) => (
+        <p key={message} className="auth-face__error">
+          {message}
+        </p>
+      ))}
     </div>
   );
 }

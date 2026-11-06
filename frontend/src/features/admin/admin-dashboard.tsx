@@ -216,6 +216,7 @@ export function AdminDashboard({ guides }: { readonly guides: readonly Guide[] }
               { href: "/admin/reviews", label: "صف بررسی", icon: "shield" as const },
               { href: "/admin/plans", label: "پلن‌های فروش", icon: "plan" as const },
               { href: "/admin/plants", label: "نیروگاه‌ها", icon: "solarPanel" as const },
+              { href: "/admin/wallets", label: "کیف پول‌ها", icon: "coins" as const },
               { href: "/admin/equipment", label: "تجهیزات", icon: "solarPanel" as const },
               { href: "/admin/journal", label: "راهنماها", icon: "book" as const },
             ] as const

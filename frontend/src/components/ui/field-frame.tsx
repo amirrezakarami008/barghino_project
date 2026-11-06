@@ -56,7 +56,7 @@ export function FieldFrame({
         {label}
         {required ? <span className="text-danger"> *</span> : null}
       </label>
-      {children({ id, describedBy })}
+      <div className="relative">{children({ id, describedBy })}</div>
       <FieldMessages error={error} helperText={helperText} errorId={errorId} helperId={helperId} />
     </div>
   );

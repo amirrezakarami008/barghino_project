@@ -8,7 +8,7 @@ import {
   type HTMLAttributes,
   type ReactNode,
 } from "react";
-import { StatusPill } from "@/components/ui";
+import { StatusPill, useToast } from "@/components/ui";
 import { ApiError } from "@/features/auth/lib/api";
 import { identityFieldLabels as identityLabels } from "@/features/auth/lib/identity-completion";
 import { updateMyProfile } from "@/features/auth/lib/profile-api";
@@ -50,6 +50,7 @@ function isValidDateOfBirth(value: string): boolean {
 }
 
 export function ProfileDetails() {
+  const { push: toast } = useToast();
   const { profile, hydrateProfile } = useAuth();
   const formId = useId();
   const [companyApproval, setCompanyApproval] = useState<CompanyApproval>("none");
@@ -58,7 +59,6 @@ export function ProfileDetails() {
   const [draft, setDraft] = useState<ProfileDraft | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
-  const [saveOk, setSaveOk] = useState(false);
 
   useEffect(() => {
     if (!profile?.uuid) return;
@@ -125,7 +125,6 @@ export function ProfileDetails() {
       dateOfBirth: profile!.dateOfBirth ?? "",
     });
     setEditing(true);
-    setSaveOk(false);
     setSaveError("");
   }
 
@@ -133,7 +132,6 @@ export function ProfileDetails() {
     setEditing(false);
     setDraft(null);
     setSaveError("");
-    setSaveOk(false);
   }
 
   function patchDraft(patch: Partial<ProfileDraft>) {
@@ -144,7 +142,6 @@ export function ProfileDetails() {
       birthCertificateNumber: patch.birthCertificateNumber ?? birthCertificateNumber,
       dateOfBirth: patch.dateOfBirth ?? dateOfBirth,
     });
-    setSaveOk(false);
   }
 
   async function saveProfile(event: FormEvent<HTMLFormElement>): Promise<void> {
@@ -159,7 +156,6 @@ export function ProfileDetails() {
     }
     setSaving(true);
     setSaveError("");
-    setSaveOk(false);
     try {
       const user = await updateMyProfile({
         firstName: firstName.trim(),
@@ -174,7 +170,7 @@ export function ProfileDetails() {
       if (session) writeSession({ ...session, user });
       setDraft(null);
       setEditing(false);
-      setSaveOk(true);
+      toast({ tone: "success", title: "مشخصات ذخیره شد." });
     } catch (error) {
       const fields =
         error instanceof ApiError
@@ -395,12 +391,6 @@ export function ProfileDetails() {
                   {saving ? "در حال ذخیره…" : "ذخیره"}
                 </button>
               </div>
-            </div>
-          ) : saveOk ? (
-            <div className="profile-actions">
-              <p className="profile-actions-status profile-actions-status--ok" role="status">
-                مشخصات ذخیره شد.
-              </p>
             </div>
           ) : null}
         </form>

@@ -8,9 +8,11 @@ import {
   useMemo,
   useRef,
   useState,
-  type CSSProperties,
+  useSyncExternalStore,
+  type ReactElement,
   type ReactNode,
 } from "react";
+import { createPortal } from "react-dom";
 import { cn } from "@/shared/lib/cn";
 import { Alert } from "./alert";
 import { isAutoDismissAllowed } from "./alert-logic";
@@ -20,6 +22,7 @@ import "./alert.css";
 const MAX_TOASTS = 3;
 const DEFAULT_TTL_MS = 5000;
 const EXIT_MS = 220;
+const subscribeToClient = () => () => {};
 
 export type ToastTone = AlertVariant;
 
@@ -40,7 +43,7 @@ type ToastContextValue = {
 
 const ToastContext = createContext<ToastContextValue | null>(null);
 
-export function useToast() {
+export function useToast(): ToastContextValue {
   const ctx = useContext(ToastContext);
   if (!ctx) throw new Error("useToast must be used inside <ToastProvider>.");
   return ctx;
@@ -53,17 +56,20 @@ export function ToastProvider({
   children: ReactNode;
   /** Extra class for sticky mobile action bars offset. */
   mobileOffsetClassName?: string;
-}) {
-  const [items, setItems] = useState<ToastItem[]>([]);
+}): ReactElement {
+  const [items, setItems] = useState<(ToastItem & { instanceKey: number })[]>([]);
+  const sequence = useRef(0);
+  const isClient = useSyncExternalStore(subscribeToClient, () => true, () => false);
 
   const dismiss = useCallback((id: string) => {
     setItems((prev) => prev.filter((item) => item.id !== id));
   }, []);
 
   const push = useCallback((toast: Omit<ToastItem, "id"> & { id?: string }) => {
-    const id = toast.id ?? `toast-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    const instanceKey = ++sequence.current;
+    const id = toast.id ?? `toast-${instanceKey}`;
     setItems((prev) => {
-      const next = [...prev.filter((item) => item.id !== id), { ...toast, id }];
+      const next = [...prev.filter((item) => item.id !== id), { ...toast, id, instanceKey }];
       return next.slice(-MAX_TOASTS);
     });
     return id;
@@ -74,21 +80,24 @@ export function ToastProvider({
   return (
     <ToastContext value={value}>
       {children}
-      <div
-        className={cn("ui-toast-stack", mobileOffsetClassName)}
-        style={{ ["--toast-mobile-offset" as string]: "4.5rem" } as CSSProperties}
-        aria-live="polite"
-      >
-        {items.map((item) => (
-          <Toast key={item.id} {...item} onDismiss={() => dismiss(item.id)} />
-        ))}
-      </div>
+      {isClient ? createPortal(
+        <div
+          className={cn("ui-toast-stack", mobileOffsetClassName)}
+          role="region"
+          aria-label="پیام‌های سامانه"
+        >
+          {items.map((item) => (
+            <Toast key={item.instanceKey} {...item} onDismiss={dismiss} />
+          ))}
+        </div>,
+        document.body,
+      ) : null}
     </ToastContext>
   );
 }
 
 export type ToastProps = ToastItem & {
-  onDismiss?: () => void;
+  onDismiss?: (id: string) => void;
   className?: string;
 };
 
@@ -102,41 +111,52 @@ export function Toast({
   durationMs = DEFAULT_TTL_MS,
   onDismiss,
   className,
-}: ToastProps) {
+}: ToastProps): ReactElement {
   const resolved = variant ?? tone ?? "info";
   const [open, setOpen] = useState(true);
   const paused = useRef(false);
+  const hovered = useRef(false);
+  const focused = useRef(false);
   const remaining = useRef(durationMs);
   const started = useRef(0);
   const timer = useRef<number | null>(null);
+  const closeTimer = useRef<number | null>(null);
+  const closing = useRef(false);
   const actions = action ? [action] : undefined;
   const canAutoDismiss = isAutoDismissAllowed(resolved, Boolean(action));
 
-  const clearTimer = () => {
+  const clearTimer = useCallback(() => {
     if (timer.current != null) {
       window.clearTimeout(timer.current);
       timer.current = null;
     }
-  };
+  }, []);
 
   const requestClose = useCallback(() => {
+    if (closing.current) return;
+    closing.current = true;
+    clearTimer();
     setOpen(false);
-    window.setTimeout(() => onDismiss?.(), EXIT_MS);
-  }, [onDismiss]);
+    closeTimer.current = window.setTimeout(() => onDismiss?.(id), EXIT_MS);
+  }, [clearTimer, id, onDismiss]);
 
   const armTimer = useCallback(() => {
-    if (!canAutoDismiss) return;
+    if (!canAutoDismiss || paused.current || closing.current || durationMs <= 0) return;
     clearTimer();
     started.current = Date.now();
     timer.current = window.setTimeout(() => {
       requestClose();
     }, remaining.current);
-  }, [canAutoDismiss, requestClose]);
+  }, [canAutoDismiss, clearTimer, durationMs, requestClose]);
 
   useEffect(() => {
     armTimer();
     return clearTimer;
-  }, [armTimer]);
+  }, [armTimer, clearTimer]);
+
+  useEffect(() => () => {
+    if (closeTimer.current !== null) window.clearTimeout(closeTimer.current);
+  }, []);
 
   function pause() {
     if (!canAutoDismiss || paused.current) return;
@@ -146,7 +166,7 @@ export function Toast({
   }
 
   function resume() {
-    if (!canAutoDismiss || !paused.current) return;
+    if (!canAutoDismiss || !paused.current || hovered.current || focused.current) return;
     paused.current = false;
     armTimer();
   }
@@ -154,11 +174,23 @@ export function Toast({
   return (
     <div
       className={cn("ui-toast", className)}
-      onMouseEnter={pause}
-      onMouseLeave={resume}
-      onFocusCapture={pause}
+      onMouseEnter={() => {
+        hovered.current = true;
+        pause();
+      }}
+      onMouseLeave={() => {
+        hovered.current = false;
+        resume();
+      }}
+      onFocusCapture={() => {
+        focused.current = true;
+        pause();
+      }}
       onBlurCapture={(event) => {
-        if (!event.currentTarget.contains(event.relatedTarget as Node | null)) resume();
+        if (!event.currentTarget.contains(event.relatedTarget)) {
+          focused.current = false;
+          resume();
+        }
       }}
     >
       <Alert

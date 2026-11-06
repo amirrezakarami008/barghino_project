@@ -46,21 +46,3 @@
   line-height: var(--leading-caption);
   color: var(--foreground-muted);
 }
-
-.home-plans__cta-primary {
-  background-image: var(--grad-sun);
-  color: var(--primary-foreground);
-  box-shadow: var(--shadow-sun);
-}
-
-.home-plans__cta-outline {
-  border: 1px solid var(--border);
-  background-image: none;
-  background-color: transparent;
-  color: var(--foreground);
-  box-shadow: none;
-}
-
-.home-plans__cta-outline:hover {
-  background-color: color-mix(in srgb, var(--foreground) 4%, var(--surface));
-}

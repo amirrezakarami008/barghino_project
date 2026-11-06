@@ -4,14 +4,8 @@ import { type ReactElement } from "react";
 import {
   Button,
   Modal,
-  Tabs,
-  TabsContent,
-  TabsList,
-  TabsTrigger,
 } from "@/components/ui";
 import { AdminPlantDevicesPanel } from "./admin-plant-devices";
-import { AdminPlantProductionPanel } from "./admin-plant-production";
-import { AdminPlantReadingsPanel } from "./admin-plant-readings";
 import type { AdminPlant } from "./admin-plants-api";
 
 export function AdminPlantMonitoring({
@@ -25,8 +19,8 @@ export function AdminPlantMonitoring({
     <Modal
       open
       onClose={onClose}
-      title={plant.name}
-      description="بوردها، قرائت‌های خام و نمودار تولید. کلید API فقط یک‌بار نمایش داده می‌شود."
+      title={`مدیریت بوردها · ${plant.name}`}
+      description="ثبت و مدیریت بوردهای متصل به نیروگاه. کلید API فقط هنگام ثبت یا نوسازی نمایش داده می‌شود."
       className="max-w-3xl"
       footer={
         <div className="flex justify-end">
@@ -36,22 +30,7 @@ export function AdminPlantMonitoring({
         </div>
       }
     >
-      <Tabs defaultValue="devices">
-        <TabsList aria-label="بخش‌های مانیتورینگ نیروگاه">
-          <TabsTrigger value="devices">بوردها</TabsTrigger>
-          <TabsTrigger value="readings">قرائت‌ها</TabsTrigger>
-          <TabsTrigger value="production">تولید</TabsTrigger>
-        </TabsList>
-        <TabsContent value="devices">
-          <AdminPlantDevicesPanel plant={plant} />
-        </TabsContent>
-        <TabsContent value="readings">
-          <AdminPlantReadingsPanel plant={plant} />
-        </TabsContent>
-        <TabsContent value="production">
-          <AdminPlantProductionPanel plant={plant} />
-        </TabsContent>
-      </Tabs>
+      <AdminPlantDevicesPanel plant={plant} />
     </Modal>
   );
 }

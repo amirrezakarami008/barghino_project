@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useId, useRef, useState, type FormEvent, type ReactElement } from "react";
-import { motion, useReducedMotion } from "framer-motion";
+import { useCallback, useEffect, useId, useRef, useState, type FormEvent, type ReactElement } from "react";
+import { useReducedMotion } from "framer-motion";
 import {
   Alert,
   Button,
@@ -10,6 +10,8 @@ import {
   Input,
   Select,
   Skeleton,
+  StatusPill,
+  useToast,
 } from "@/components/ui";
 import { ApiError } from "@/features/auth/lib/api";
 import { PanelArt } from "@/features/panel/panel-art";
@@ -141,17 +143,13 @@ function draftToWrite(draft: Draft): EquipmentWrite | string {
   };
 }
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 12 },
-  show: { opacity: 1, y: 0 },
-};
-
 export function AdminEquipment(): ReactElement {
-  const reduceMotion = useReducedMotion();
+  const { push: toast } = useToast();
   const [items, setItems] = useState<readonly EquipmentItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState("");
-  const [notice, setNotice] = useState("");
+  const [updating, setUpdating] = useState<readonly string[]>([]);
+  const flagRequests = useRef(new Set<string>());
   const [editing, setEditing] = useState<EquipmentItem | null | undefined>(undefined);
   const [deleting, setDeleting] = useState<EquipmentItem | null>(null);
   const [deletePending, setDeletePending] = useState(false);
@@ -160,7 +158,7 @@ export function AdminEquipment(): ReactElement {
   const [applied, setApplied] = useState<Filters>(emptyFilters);
   const [attempt, setAttempt] = useState(0);
 
-  async function load(signal?: AbortSignal): Promise<void> {
+  const load = useCallback(async (signal?: AbortSignal): Promise<void> => {
     setLoading(true);
     setLoadError("");
     try {
@@ -173,7 +171,7 @@ export function AdminEquipment(): ReactElement {
     } finally {
       if (!signal?.aborted) setLoading(false);
     }
-  }
+  }, [applied]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -181,61 +179,56 @@ export function AdminEquipment(): ReactElement {
       void load(controller.signal);
     });
     return () => controller.abort();
-  }, [attempt, applied]);
+  }, [attempt, load]);
 
   async function toggleFlag(
     item: EquipmentItem,
     field: "is_active" | "show_in_price_list",
     value: boolean,
   ): Promise<void> {
+    if (flagRequests.current.has(item.uuid)) return;
+    flagRequests.current.add(item.uuid);
+    setUpdating((current) => [...current, item.uuid]);
     try {
       const updated = await patchEquipment(item.uuid, { [field]: value });
       setItems((current) => current.map((entry) => (entry.uuid === item.uuid ? { ...entry, ...updated } : entry)));
-      setNotice("وضعیت تجهیز ذخیره شد.");
+      toast({ tone: "success", title: "وضعیت تجهیز ذخیره شد." });
     } catch (error) {
-      setNotice(error instanceof ApiError ? error.message : "ذخیره وضعیت انجام نشد.");
+      toast({ tone: "danger", title: error instanceof ApiError ? error.message : "ذخیره وضعیت انجام نشد." });
+    } finally {
+      flagRequests.current.delete(item.uuid);
+      setUpdating((current) => current.filter((uuid) => uuid !== item.uuid));
     }
   }
 
-  const motionProps = reduceMotion
-    ? {}
-    : {
-        initial: "hidden" as const,
-        animate: "show" as const,
-        variants: {
-          hidden: {},
-          show: { transition: { staggerChildren: 0.05 } },
-        },
-      };
+  const hasFilters = Boolean(applied.search || applied.category || applied.price_mode || applied.is_active);
+  const hasFilterDraft = Boolean(filters.search || filters.category || filters.price_mode || filters.is_active);
+
+  function clearFilters(): void {
+    setFilters(emptyFilters());
+    setApplied(emptyFilters());
+  }
 
   return (
     <>
-      <motion.div className="admin-workspace admin-equipment-page" {...motionProps}>
-        <motion.section className="admin-ws-hero" variants={reduceMotion ? undefined : fadeUp}>
-          <div className="min-w-0">
-            <p className="admin-ws-hero-eyebrow">کاتالوگ نصب</p>
-            <h2 className="admin-ws-hero-title">تجهیزات نیروگاه</h2>
-            <p className="admin-ws-hero-body">
-              پنل، اینورتر و اقلام جانبی را با قیمت و حالت محاسبه تعریف کنید تا برآورد نصب از همین کاتالوگ ساخته شود.
-            </p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              <Button variant="primary" className="admin-ws-hero-cta" onClick={() => setEditing(null)}>
-                <Icon name="plus" className="size-4" />
-                تجهیز جدید
-              </Button>
-              <Button variant="secondary" onClick={() => setAttempt((value) => value + 1)}>
-                تازه‌سازی
-              </Button>
-            </div>
+      <div className="admin-equipment-page">
+        <header className="admin-equipment-header">
+          <div>
+            <h2>تجهیزات نیروگاه</h2>
+            <p>مدیریت تجهیزات و قیمت‌های مورد استفاده در برآورد نصب</p>
           </div>
-          <div className="admin-ws-hero-art">
-            <PanelArt name="stat-plants" width={160} height={160} className="admin-ws-hero-image" />
+          <div className="admin-equipment-header-actions">
+            <Button variant="primary" onClick={() => setEditing(null)}>
+              <Icon name="plus" className="size-4" />
+              تجهیز جدید
+            </Button>
+            <Button variant="secondary" disabled={loading} onClick={() => setAttempt((value) => value + 1)}>
+              {loading ? "در حال دریافت…" : "تازه‌سازی"}
+            </Button>
           </div>
-        </motion.section>
+        </header>
 
-        {notice ? <Alert tone="success" title={notice} /> : null}
-
-        <motion.section className="admin-ws-panel" variants={reduceMotion ? undefined : fadeUp}>
+        <section className="admin-equipment-filter-panel" aria-label="جست‌وجو و فیلتر تجهیزات">
           <form
             className="admin-equipment-filters"
             onSubmit={(event) => {
@@ -245,57 +238,61 @@ export function AdminEquipment(): ReactElement {
           >
             <Input
               label="جست‌وجو"
+              type="search"
+              className="admin-equipment-search"
               value={filters.search}
-              placeholder="نام یا برند"
+              placeholder="جست‌وجوی نام یا برند تجهیز"
               onChange={(event) => setFilters((current) => ({ ...current, search: event.target.value }))}
             />
             <Select
               label="دسته"
               value={filters.category}
-              options={EQUIPMENT_CATEGORIES.map((entry) => ({ value: entry.value, label: entry.label }))}
-              placeholder="همه"
+              options={[{ value: "", label: "همه دسته‌ها" }, ...EQUIPMENT_CATEGORIES]}
               onChange={(event) => setFilters((current) => ({ ...current, category: event.target.value }))}
-            />
-            <Select
-              label="حالت قیمت"
-              value={filters.price_mode}
-              options={EQUIPMENT_PRICE_MODES.map((entry) => ({ value: entry.value, label: entry.label }))}
-              placeholder="همه"
-              onChange={(event) => setFilters((current) => ({ ...current, price_mode: event.target.value }))}
             />
             <Select
               label="وضعیت"
               value={filters.is_active}
               options={[
+                { value: "", label: "همه وضعیت‌ها" },
                 { value: "true", label: "فعال" },
                 { value: "false", label: "غیرفعال" },
               ]}
-              placeholder="همه"
               onChange={(event) => setFilters((current) => ({ ...current, is_active: event.target.value }))}
             />
+            <Select
+              label="حالت قیمت"
+              className="admin-equipment-filter-price"
+              value={filters.price_mode}
+              options={[{ value: "", label: "همه حالت‌ها" }, ...EQUIPMENT_PRICE_MODES]}
+              onChange={(event) => setFilters((current) => ({ ...current, price_mode: event.target.value }))}
+            />
             <div className="admin-equipment-filters-actions">
-              <Button type="submit" variant="secondary">
+              <Button type="submit" variant="secondary" disabled={loading}>
+                <Icon name="search" className="size-4" />
                 اعمال فیلتر
               </Button>
               <Button
                 type="button"
                 variant="ghost"
-                onClick={() => {
-                  const next = emptyFilters();
-                  setFilters(next);
-                  setApplied(next);
-                }}
+                disabled={!hasFilters && !hasFilterDraft}
+                onClick={clearFilters}
               >
-                پاک کردن
+                پاک کردن فیلترها
               </Button>
             </div>
           </form>
-        </motion.section>
+        </section>
+
+        <div className="admin-equipment-list-heading">
+          <h3>{hasFilters ? "نتایج جست‌وجو" : "فهرست تجهیزات"}</h3>
+          {!loading && !loadError ? <span>{faNumber(items.length)} تجهیز</span> : null}
+        </div>
 
         {loading ? (
-          <div className="admin-ws-list">
-            <Skeleton className="h-24 rounded-[18px]" />
-            <Skeleton className="h-24 rounded-[18px]" />
+          <div className="admin-equipment-list" role="status" aria-label="در حال دریافت تجهیزات">
+            <Skeleton className="h-48 rounded-xl" />
+            <Skeleton className="h-48 rounded-xl" />
           </div>
         ) : loadError ? (
           <Alert tone="danger" title={loadError}>
@@ -304,72 +301,83 @@ export function AdminEquipment(): ReactElement {
             </Button>
           </Alert>
         ) : items.length === 0 ? (
-          <div className="admin-ws-empty">
+          <div className="admin-equipment-empty">
             <PanelArt name="installs/empty" width={140} height={140} className="admin-ws-empty-art" />
             <EmptyState
               hideIcon
               className="border-0 bg-transparent p-0 shadow-none"
-              title="هنوز تجهیزی ثبت نشده"
-              description="اولین پنل، اینورتر یا قطعهٔ جانبی را با قیمت تومان اضافه کنید."
+              title={hasFilters ? "تجهیزی با این فیلترها پیدا نشد" : "هنوز تجهیزی ثبت نشده"}
+              description={hasFilters ? "فیلترها را تغییر دهید یا پاک کنید تا تجهیزات دیگر نمایش داده شوند." : "اولین پنل، اینورتر یا قطعهٔ جانبی را به کاتالوگ اضافه کنید."}
               icon="solarPanel"
               action={
-                <Button variant="primary" onClick={() => setEditing(null)}>
-                  تعریف تجهیز
+                <Button variant={hasFilters ? "secondary" : "primary"} onClick={hasFilters ? clearFilters : () => setEditing(null)}>
+                  {hasFilters ? "پاک کردن فیلترها" : "تجهیز جدید"}
                 </Button>
               }
             />
           </div>
         ) : (
           <>
-            <p className="admin-ws-result">{faNumber(items.length)} تجهیز در فهرست</p>
-            <ul className="admin-ws-list" aria-label="فهرست تجهیزات">
+            <ul className="admin-equipment-list" aria-label="فهرست تجهیزات">
               {items.map((item) => (
-                <motion.li key={item.uuid} variants={reduceMotion ? undefined : fadeUp}>
+                <li key={item.uuid}>
                   <article className="admin-equipment-row">
-                    <div className="min-w-0">
-                      <h3 className="admin-equipment-row-title">{item.name}</h3>
-                      <p className="admin-equipment-row-meta">
-                        {equipmentCategoryLabel(item.category)}
-                        {item.brand.trim() ? ` · ${item.brand.trim()}` : ""}
-                        {item.power_watts != null ? ` · ${faNumber(item.power_watts)} وات` : ""}
-                      </p>
-                      <div className="admin-equipment-row-chips">
-                        <span className="admin-ws-chip">{item.is_active ? "فعال" : "غیرفعال"}</span>
-                        {item.show_in_price_list ? <span className="admin-ws-chip">لیست قیمت</span> : null}
-                        <span className="admin-ws-chip">{equipmentPriceModeLabel(item.price_mode)}</span>
+                    <div className="admin-equipment-identity">
+                      <div className="admin-equipment-category-icon" aria-hidden>
+                        <Icon name={item.category === "panel" ? "solarPanel" : item.category === "inverter" ? "bolt" : "settings"} className="size-6" />
+                      </div>
+                      <div className="min-w-0">
+                        <p className="admin-equipment-category">{equipmentCategoryLabel(item.category)}</p>
+                        <h3 className="admin-equipment-row-title">{item.name}</h3>
+                        <p className="admin-equipment-row-meta">
+                          <bdi>{item.brand.trim() || "بدون برند"}</bdi>
+                          {item.power_watts != null ? `، ${faNumber(item.power_watts)} وات` : ""}
+                        </p>
+                        <div className="admin-equipment-status">
+                          <StatusPill status={item.is_active ? "active" : "closed"} label={item.is_active ? "فعال در برآورد" : "غیرفعال"} />
+                          {item.show_in_price_list ? <span>قابل نمایش در لیست قیمت</span> : null}
+                        </div>
                       </div>
                     </div>
 
-                    <div className="admin-equipment-row-metrics">
-                      <div className="admin-equipment-metric">
-                        <span>قیمت</span>
-                        <strong dir="ltr">{formatEquipmentMoney(item.price_toman)} تومان</strong>
+                    <dl className="admin-equipment-price">
+                      <div>
+                        <dt>قیمت تجهیز</dt>
+                        <dd><bdi>{formatEquipmentMoney(item.price_toman)}</bdi> <span>تومان</span></dd>
                       </div>
-                      <div className="admin-equipment-metric">
-                        <span>{item.price_mode === "per_unit" ? "واحد / kWp" : "حالت محاسبه"}</span>
-                        <strong dir="ltr">
-                          {item.price_mode === "per_unit"
-                            ? formatEquipmentUnits(item.units_per_kwp)
-                            : equipmentPriceModeLabel(item.price_mode)}
-                        </strong>
+                      <div className="admin-equipment-price-mode">
+                        <dt className="sr-only">حالت قیمت‌گذاری</dt>
+                        <dd>{equipmentPriceModeLabel(item.price_mode)}</dd>
                       </div>
-                    </div>
+                      {item.price_mode === "per_unit" ? (
+                        <div className="admin-equipment-quantity">
+                          <dt>تعداد در هر کیلووات‌پیک</dt>
+                          <dd>{formatEquipmentUnits(item.units_per_kwp)}</dd>
+                        </div>
+                      ) : null}
+                    </dl>
 
                     <div className="admin-equipment-row-foot">
                       <div className="admin-equipment-toggles">
                         <label>
                           <input
                             type="checkbox"
+                            role="switch"
+                            aria-label={`فعال در برآورد: ${item.name}`}
+                            disabled={updating.includes(item.uuid)}
                             checked={item.is_active}
                             onChange={(event) => {
                               void toggleFlag(item, "is_active", event.target.checked);
                             }}
                           />
-                          فعال
+                          فعال در برآورد
                         </label>
                         <label>
                           <input
                             type="checkbox"
+                            role="switch"
+                            aria-label={`نمایش در لیست قیمت: ${item.name}`}
+                            disabled={updating.includes(item.uuid)}
                             checked={item.show_in_price_list}
                             onChange={(event) => {
                               void toggleFlag(item, "show_in_price_list", event.target.checked);
@@ -379,35 +387,40 @@ export function AdminEquipment(): ReactElement {
                         </label>
                       </div>
                       <div className="admin-equipment-actions">
-                        <Button variant="secondary" size="sm" onClick={() => setEditing(item)}>
+                        <Button variant="secondary" size="sm" disabled={updating.includes(item.uuid)} aria-label={`ویرایش ${item.name}`} onClick={() => setEditing(item)}>
+                          <Icon name="edit" className="size-4" />
                           ویرایش
                         </Button>
                         <Button
                           variant="ghost"
                           size="sm"
+                          className="admin-equipment-delete"
+                          aria-label={`حذف ${item.name}`}
+                          disabled={updating.includes(item.uuid)}
                           onClick={() => {
                             setDeleteError("");
                             setDeleting(item);
                           }}
                         >
+                          <Icon name="trash" className="size-4" />
                           حذف
                         </Button>
                       </div>
                     </div>
                   </article>
-                </motion.li>
+                </li>
               ))}
             </ul>
           </>
         )}
-      </motion.div>
+      </div>
 
       {editing !== undefined ? (
         <EquipmentEditor
           item={editing}
           onClose={() => setEditing(undefined)}
           onSaved={async () => {
-            setNotice(editing ? "تغییرات تجهیز ذخیره شد." : "تجهیز جدید ساخته شد.");
+            toast({ tone: "success", title: editing ? "تغییرات تجهیز ذخیره شد." : "تجهیز جدید ساخته شد." });
             setEditing(undefined);
             await load();
           }}
@@ -424,7 +437,7 @@ export function AdminEquipment(): ReactElement {
           setDeletePending(true);
           void deleteEquipment(deleting.uuid)
             .then(async () => {
-              setNotice(`تجهیز «${deleting.name}» حذف شد.`);
+              toast({ tone: "success", title: `تجهیز «${deleting.name}» حذف شد.` });
               setDeleting(null);
               await load();
             })

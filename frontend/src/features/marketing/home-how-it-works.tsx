@@ -1,8 +1,7 @@
 "use client";
 
-import { motion, useInView, useReducedMotion } from "framer-motion";
-import { useRef } from "react";
-import { Reveal } from "@/features/marketing/reveal";
+import { motion, useReducedMotion } from "framer-motion";
+import { revealClassName, useReveal } from "@/features/marketing/reveal";
 import { formatFa } from "@/shared/lib/fa";
 import { Icon, type IconName } from "@/shared/ui/icon";
 import "./home-how-it-works.css";
@@ -46,18 +45,17 @@ const steps: {
 ];
 
 export function HomeHowItWorks() {
-  const trackRef = useRef<HTMLDivElement>(null);
-  const inView = useInView(trackRef, { once: true, amount: 0.35 });
+  const { ref, visible, armed } = useReveal<HTMLDivElement>();
   const reduceMotion = useReducedMotion();
 
-  const lineTransition = reduceMotion
+  const lineTransition = reduceMotion || !visible
     ? { duration: 0 }
-    : { duration: 0.3, ease: [0.22, 1, 0.36, 1] as const, delay: 0.08 };
+    : { duration: 0.22, ease: [0.22, 1, 0.36, 1] as const };
 
   return (
     <section className="home-how" aria-labelledby="home-how-title">
       <div className="home-how__inner">
-        <Reveal>
+        <div ref={ref} className={revealClassName(visible, armed)}>
           <header className="mx-auto max-w-2xl text-center">
             <h2 id="home-how-title" className="text-h2">
               چطور کار می‌کند؟
@@ -68,12 +66,12 @@ export function HomeHowItWorks() {
           </header>
 
           <div className="home-how__panel">
-            <div ref={trackRef} className="home-how__track">
+            <div className="home-how__track">
               <div className="home-how__rail" aria-hidden>
                 <motion.div
                   className="home-how__rail-fill"
-                  initial={{ scaleX: 0 }}
-                  animate={{ scaleX: inView ? 1 : 0 }}
+                  initial={false}
+                  animate={{ scaleX: visible ? 1 : 0 }}
                   transition={lineTransition}
                 />
               </div>
@@ -81,40 +79,15 @@ export function HomeHowItWorks() {
               <div className="home-how__v-line" aria-hidden>
                 <motion.div
                   className="home-how__v-line-fill"
-                  initial={{ scaleY: 0 }}
-                  animate={{ scaleY: inView ? 1 : 0 }}
+                  initial={false}
+                  animate={{ scaleY: visible ? 1 : 0 }}
                   transition={lineTransition}
                 />
               </div>
 
-              <motion.ol
-                className="home-how__list"
-                initial="hidden"
-                animate={inView ? "show" : "hidden"}
-                variants={{
-                  hidden: {},
-                  show: {
-                    transition: {
-                      staggerChildren: reduceMotion ? 0 : 0.06,
-                      delayChildren: reduceMotion ? 0 : 0.04,
-                    },
-                  },
-                }}
-              >
+              <ol className="home-how__list">
                 {steps.map((step, index) => (
-                  <motion.li
-                    key={step.id}
-                    className="home-how__step"
-                    variants={{
-                      hidden: { opacity: 0, y: reduceMotion ? 0 : 16 },
-                      show: { opacity: 1, y: 0 },
-                    }}
-                    transition={
-                      reduceMotion
-                        ? { duration: 0 }
-                        : { duration: 0.28, ease: [0.22, 1, 0.36, 1] }
-                    }
-                  >
+                  <li key={step.id} className="home-how__step">
                     <span className="home-how__index" aria-hidden>
                       {formatFa(index + 1)}
                     </span>
@@ -125,12 +98,12 @@ export function HomeHowItWorks() {
                       <h3 className="home-how__title">{step.label}</h3>
                       <p className="home-how__desc">{step.description}</p>
                     </div>
-                  </motion.li>
+                  </li>
                 ))}
-              </motion.ol>
+              </ol>
             </div>
           </div>
-        </Reveal>
+        </div>
       </div>
     </section>
   );

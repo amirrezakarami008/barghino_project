@@ -17,6 +17,17 @@ export class ApiError extends Error {
   }
 }
 
+const formLevelErrorKeys = new Set(["non_field_errors", "detail"]);
+
+/** Prefer a field message over the generic request fallback. */
+export function apiErrorText(error: ApiError): string {
+  if (error.fields.code) return error.fields.code;
+  for (const [key, value] of Object.entries(error.fields)) {
+    if (value && !formLevelErrorKeys.has(key)) return value;
+  }
+  return error.fields.non_field_errors || error.message;
+}
+
 type RequestOptions = {
   method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   body?: unknown;
@@ -24,6 +35,8 @@ type RequestOptions = {
   retry?: boolean;
   signal?: AbortSignal;
   responseType?: "json" | "blob";
+  /** Extra request headers (e.g. Idempotency-Key). */
+  headers?: Record<string, string>;
 };
 
 let refreshing: Promise<string | null> | null = null;
@@ -32,6 +45,11 @@ export async function apiRequest<T>(path: string, options: RequestOptions = {}):
   const headers = new Headers({ Accept: "application/json" });
   const isMultipart = typeof FormData !== "undefined" && options.body instanceof FormData;
   if (options.body !== undefined && !isMultipart) headers.set("Content-Type", "application/json");
+  if (options.headers) {
+    for (const [key, value] of Object.entries(options.headers)) {
+      if (value) headers.set(key, value);
+    }
+  }
   if (options.auth) {
     const access = readSession()?.access;
     if (access) headers.set("Authorization", `Bearer ${access}`);

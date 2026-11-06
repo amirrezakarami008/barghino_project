@@ -12,6 +12,7 @@ import {
   Skeleton,
   StatusPill,
   Textarea,
+  useToast,
 } from "@/components/ui";
 import { SignaturePreview } from "@/features/contracts";
 import { plantError } from "@/features/plants";
@@ -75,6 +76,7 @@ const fadeUp = {
 };
 
 export function AdminReviews(): ReactElement {
+  const { push: toast } = useToast();
   const reduceMotion = useReducedMotion();
   const router = useRouter();
   const pathname = usePathname();
@@ -84,12 +86,10 @@ export function AdminReviews(): ReactElement {
   const [attempt, setAttempt] = useState(0);
   const [result, setResult] = useState<{ readonly key: string; readonly state: State }>();
   const [modal, setModal] = useState<Modal>();
-  const [notice, setNotice] = useState("");
   const key = `${kind}:${page}:${attempt}`;
   const state: State = result?.key === key ? result.state : { status: "loading" };
 
   function selectKind(next: ReviewKind): void {
-    setNotice("");
     setModal(undefined);
     setPage(1);
     const params = new URLSearchParams(searchParams.toString());
@@ -115,7 +115,9 @@ export function AdminReviews(): ReactElement {
 
   function saved(decision: "approved" | "rejected" | "renewed" | "staff"): void {
     setModal(undefined);
-    setNotice(
+    toast({
+      tone: "success",
+      title:
       decision === "approved"
         ? kind === "installs"
           ? "رسانهٔ درخواست نصب تأیید شد."
@@ -127,14 +129,14 @@ export function AdminReviews(): ReactElement {
           : decision === "renewed"
             ? "تمدید قرارداد اعمال شد."
             : "اقدام کارکنان ثبت شد.",
-    );
+    });
     setPage(1);
     setAttempt((value) => value + 1);
   }
 
   function staffSaved(message: string): void {
     setModal(undefined);
-    setNotice(message);
+    toast({ tone: "success", title: message });
     setPage(1);
     setAttempt((value) => value + 1);
   }
@@ -190,8 +192,6 @@ export function AdminReviews(): ReactElement {
             ))}
           </div>
         </motion.div>
-
-        {notice ? <Alert tone="success" title={notice} /> : null}
 
         <ReviewQueuePanel
           kind={kind}

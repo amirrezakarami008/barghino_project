@@ -88,7 +88,7 @@ function record(value: unknown): Record<string, unknown> {
 }
 
 function queuePath(kind: Exclude<ReviewKind, "installs">): string {
-  if (kind === "contracts") return "/contracts/";
+  if (kind === "contracts") return "/staff/contracts/";
   if (kind === "renewals") return "/staff/contracts/renewals/";
   return `/staff/${kind}/`;
 }
@@ -273,6 +273,7 @@ export async function getReviewQueue(
 
   const params = new URLSearchParams({ page: String(page), page_size: "12" });
   if (search.trim()) params.set("search", search.trim());
+  if (kind === "branches" || kind === "plants") params.set("status", "pending");
   const raw = await apiRequest<unknown>(`${queuePath(kind)}?${params}`, { auth: true, signal });
 
   if (kind === "branches") {

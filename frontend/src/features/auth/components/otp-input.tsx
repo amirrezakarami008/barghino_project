@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef, useState, type CSSProperties, type KeyboardEvent } from "react";
-import { ApiError } from "@/features/auth/lib/api";
+import { ApiError, apiErrorText } from "@/features/auth/lib/api";
 import { digitsOnly } from "@/features/auth/lib/phone";
 import { faDigits } from "@/shared/lib/fa";
 import { Icon } from "@/shared/ui/icon";
@@ -114,7 +114,7 @@ export function OtpInput<T>({ length = 6, disabled = false, onVerify, onVerified
     }
 
     setError(outcome.cause instanceof ApiError
-      ? outcome.cause.fields.code ?? outcome.cause.message
+      ? apiErrorText(outcome.cause)
       : "تأیید کد انجام نشد. دوباره تلاش کنید.");
     setPhase("error");
     await pause(reducedMotion ? 100 : 420, signal);
